@@ -1,0 +1,34 @@
+import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
+import { LoginComponent } from './features/auth/login.component';
+import { OtpLoginComponent } from './features/auth/otp-login.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
+import { ResetPasswordComponent } from './features/auth/reset-password.component';
+import { ChangePasswordComponent } from './features/auth/change-password.component';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { UsersComponent } from './features/users/users.component';
+import { EventsComponent } from './features/events/events.component';
+import { TemplateEditorComponent } from './features/templates/template-editor.component';
+import { AiWishesComponent } from './features/ai-wishes/ai-wishes.component';
+import { EmailPreviewComponent } from './features/email-preview/email-preview.component';
+import { EmailStatusComponent } from './features/email-status/email-status.component';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'otp-login', component: OtpLoginComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
+  { path: '', canActivate: [authGuard], children: [
+    { path: 'dashboard', component: DashboardComponent },
+    { path: 'change-password', component: ChangePasswordComponent },
+    { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
+    { path: 'events', component: EventsComponent },
+    { path: 'templates', component: TemplateEditorComponent, canActivate: [adminGuard] },
+    { path: 'ai-wishes', component: AiWishesComponent },
+    { path: 'email-preview', component: EmailPreviewComponent },
+    { path: 'email-status', component: EmailStatusComponent },
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+  ]},
+  { path: '**', redirectTo: 'dashboard' }
+];
