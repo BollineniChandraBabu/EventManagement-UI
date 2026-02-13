@@ -1,1 +1,12 @@
+.status-card {
+  border: 1px solid #e5ebfa;
+}
 
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.pagination-controls .btn[disabled] {
+  opacity: 1;
+}
