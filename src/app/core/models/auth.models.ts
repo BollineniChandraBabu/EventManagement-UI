@@ -19,3 +19,16 @@ export interface OtpVerifyRequest {
   email: string;
   otp: string;
 }
+
+
+export interface UserProfile {
+  fullName: string;
+  email: string;
+  phoneNumber?: string;
+}
+
+export interface UpdateUserProfileRequest {
+  fullName: string;
+  email: string;
+  phoneNumber?: string;
+}

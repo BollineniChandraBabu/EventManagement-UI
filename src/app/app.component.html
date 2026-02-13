@@ -13,7 +13,7 @@
         <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.role()==='ADMIN'" routerLink="/templates">Templates</a>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <a class="btn btn-light btn-sm btn-rounded" routerLink="/change-password">Change Password</a>
+        <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
         <button class="btn btn-danger btn-sm btn-rounded" (click)="auth.logout()">Logout</button>
       </div>
     </ng-container>

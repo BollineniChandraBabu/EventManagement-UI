@@ -1,0 +1,58 @@
+<div class="page account-page">
+  <section class="account-header panel">
+    <div>
+      <p class="eyebrow">Account center</p>
+      <h2 class="page-title mb-2">Manage your profile & security</h2>
+      <p class="text-muted mb-0">One place for password, contact details, and account preferences.</p>
+    </div>
+    <i class="fa-regular fa-circle-user"></i>
+  </section>
+
+  <div class="account-grid">
+    <mat-card class="account-card">
+      <h3>Profile details</h3>
+      <p class="text-muted">Keep your personal information up to date.</p>
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Full name</mat-label>
+          <input matInput formControlName="fullName" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Phone number</mat-label>
+          <input matInput formControlName="phoneNumber" />
+        </mat-form-field>
+        <div>
+          <button mat-flat-button color="primary">Save profile</button>
+        </div>
+      </form>
+      <p *ngIf="accountMsg()" class="form-feedback">{{ accountMsg() }}</p>
+    </mat-card>
+
+    <mat-card class="account-card">
+      <h3>Change password</h3>
+      <p class="text-muted">Use a strong password with 8+ characters.</p>
+      <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()" class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Current password</mat-label>
+          <input matInput type="password" formControlName="currentPassword" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>New password</mat-label>
+          <input matInput type="password" formControlName="newPassword" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm new password</mat-label>
+          <input matInput type="password" formControlName="confirmPassword" />
+        </mat-form-field>
+        <div>
+          <button mat-flat-button color="primary">Update password</button>
+        </div>
+      </form>
+      <p *ngIf="passwordMsg()" class="form-feedback">{{ passwordMsg() }}</p>
+    </mat-card>
+  </div>
+</div>
