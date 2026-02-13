@@ -20,7 +20,7 @@ import { ApiService } from '../../core/services/api.service';
     <mat-form-field><mat-label>Role</mat-label><mat-select formControlName="role"><mat-option value="USER">USER</mat-option><mat-option value="ADMIN">ADMIN</mat-option></mat-select></mat-form-field>
     <button mat-raised-button color="primary" type="button" (click)="save()">Create / Edit User</button>
   </form>
-  <table mat-table [dataSource]="users$ | async ?? []">
+  <table mat-table [dataSource]="users$ | async || []">
     <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let e">{{ e.name }}</td></ng-container>
     <ng-container matColumnDef="email"><th mat-header-cell *matHeaderCellDef>Email</th><td mat-cell *matCellDef="let e">{{ e.email }}</td></ng-container>
     <ng-container matColumnDef="role"><th mat-header-cell *matHeaderCellDef>Role</th><td mat-cell *matCellDef="let e">{{ e.role }}</td></ng-container>

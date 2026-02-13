@@ -2,3 +2,8 @@ node_modules/
 dist/
 .angular/
 coverage/
+.idea/dbnavigator.xml
+.idea/EventManagement-UI.iml
+.idea/modules.xml
+.idea/vcs.xml
+package-lock.json
