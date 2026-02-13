@@ -19,6 +19,12 @@ export class LoginComponent {
     rememberMe: [true]
   });
 
+  showPassword = false;
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
   submit() {
     if (this.form.invalid) return;
     this.auth.login(this.form.getRawValue()).subscribe(() => this.router.navigate(['/dashboard']));

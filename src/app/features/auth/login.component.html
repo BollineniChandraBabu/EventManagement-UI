@@ -10,7 +10,17 @@
       </div>
       <div>
         <label class="form-label">Password</label>
-        <input class="form-control" type="password" formControlName="password" />
+        <div class="input-group">
+          <input class="form-control" [type]="showPassword ? 'text' : 'password'" formControlName="password" />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
+        </div>
       </div>
       <div class="d-flex align-items-center">
         <div class="form-check mt-3">
