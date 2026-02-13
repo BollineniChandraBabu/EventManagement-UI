@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { LoginComponent } from './features/auth/login.component';
 import { OtpLoginComponent } from './features/auth/otp-login.component';
@@ -15,7 +16,7 @@ import { EmailPreviewComponent } from './features/email-preview/email-preview.co
 import { EmailStatusComponent } from './features/email-status/email-status.component';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
+  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'otp-login', component: OtpLoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
