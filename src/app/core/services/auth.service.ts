@@ -77,12 +77,18 @@ export class AuthService {
     this.scheduleAutoLogout(response.expiresIn);
   }
 
-  private scheduleAutoLogout(expiresInSeconds: number): void {
+  private scheduleAutoLogout(expiresInSeconds?: number): void {
     this.cancelTimers();
 
-    this.tokenExpiryTimeout = setTimeout(() => this.logout(), expiresInSeconds * 1000);
+    if (!Number.isFinite(expiresInSeconds) || (expiresInSeconds ?? 0) <= 0) {
+      return;
+    }
 
-    const refreshInMs = Math.max(expiresInSeconds - 30, 1) * 1000;
+    const validExpiry = expiresInSeconds as number;
+    const expiryMs = validExpiry * 1000;
+    this.tokenExpiryTimeout = setTimeout(() => this.logout(), expiryMs);
+
+    const refreshInMs = Math.max(validExpiry - 30, 1) * 1000;
     this.refreshTimerSub = timer(refreshInMs).subscribe(() => {
       this.refreshToken().subscribe({ error: () => this.logout() });
     });
