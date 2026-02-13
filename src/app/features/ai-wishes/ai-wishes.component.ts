@@ -32,7 +32,7 @@ export class AiWishesComponent {
       return;
     }
 
-    this.api.aiWish(this.form.getRawValue()).subscribe((res) => this.result = res.message);
+    this.api.aiWish(this.form.getRawValue()).subscribe((res) => this.result = res.htmlMessage);
   }
 
   useAsTemplate() {

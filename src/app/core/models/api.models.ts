@@ -53,6 +53,8 @@ export interface AiWishRequest {
 
 export interface AiWishResponse {
   message: string;
+  htmlMessage: string;
+  subject: string;
 }
 
 export interface TemplateVersion {
