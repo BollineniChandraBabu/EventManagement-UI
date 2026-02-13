@@ -10,13 +10,8 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   standalone: true,
   imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
-  template: `<div class="page"><mat-card>
-    <h2>Reset Password</h2>
-    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
-      <mat-form-field><mat-label>New Password</mat-label><input matInput type="password" formControlName="newPassword"></mat-form-field>
-      <button mat-raised-button color="primary">Reset password</button>
-    </form>
-  </mat-card></div>`
+  templateUrl: './reset-password.component.html',
+  styleUrl: './reset-password.component.css'
 })
 export class ResetPasswordComponent {
   private fb = inject(FormBuilder);

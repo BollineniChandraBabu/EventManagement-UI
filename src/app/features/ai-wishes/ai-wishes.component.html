@@ -1,0 +1,15 @@
+<div class="page">
+  <mat-card>
+    <h2>AI Wish Generator</h2>
+    <form [formGroup]="form" class="form-grid">
+      <mat-form-field><mat-label>Name</mat-label><input matInput formControlName="name"></mat-form-field>
+      <mat-form-field><mat-label>Relation</mat-label><input matInput formControlName="relation"></mat-form-field>
+      <mat-form-field><mat-label>Event</mat-label><input matInput formControlName="event"></mat-form-field>
+      <mat-form-field><mat-label>Tone</mat-label><input matInput formControlName="tone"></mat-form-field>
+      <mat-form-field><mat-label>Language</mat-label><input matInput formControlName="language"></mat-form-field>
+      <button mat-raised-button color="primary" type="button" (click)="generate()">Generate</button>
+    </form>
+    <mat-form-field class="result-field"><mat-label>Editable result</mat-label><textarea matInput rows="4" [(ngModel)]="result"></textarea></mat-form-field>
+    <button mat-button (click)="useAsTemplate()">Use as template</button>
+  </mat-card>
+</div>

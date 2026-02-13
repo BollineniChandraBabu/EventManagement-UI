@@ -8,15 +8,8 @@ import { ApiService } from '../../core/services/api.service';
 @Component({
   standalone: true,
   imports: [FormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule],
-  template: `<div class="page"><mat-card>
-    <h2>Email Preview</h2>
-    <mat-button-toggle-group [(ngModel)]="mode">
-      <mat-button-toggle value="desktop">Desktop</mat-button-toggle>
-      <mat-button-toggle value="mobile">Mobile</mat-button-toggle>
-    </mat-button-toggle-group>
-    <iframe class="preview-frame" [class.mobile]="mode==='mobile'" [srcdoc]="htmlString" height="450"></iframe>
-    <button mat-raised-button color="primary" (click)="sendTest()">Test email to myself</button>
-  </mat-card></div>`
+  templateUrl: './email-preview.component.html',
+  styleUrl: './email-preview.component.css'
 })
 export class EmailPreviewComponent {
   private api = inject(ApiService);

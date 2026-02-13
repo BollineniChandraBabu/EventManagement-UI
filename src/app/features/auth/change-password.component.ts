@@ -9,14 +9,8 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   standalone: true,
   imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
-  template: `<div class="page"><mat-card>
-    <h2>Change Password</h2>
-    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
-      <mat-form-field><mat-label>Current Password</mat-label><input matInput type="password" formControlName="currentPassword"></mat-form-field>
-      <mat-form-field><mat-label>New Password</mat-label><input matInput type="password" formControlName="newPassword"></mat-form-field>
-      <button mat-raised-button color="primary">Change Password</button>
-    </form>
-  </mat-card></div>`
+  templateUrl: './change-password.component.html',
+  styleUrl: './change-password.component.css'
 })
 export class ChangePasswordComponent {
   private fb = inject(FormBuilder);
