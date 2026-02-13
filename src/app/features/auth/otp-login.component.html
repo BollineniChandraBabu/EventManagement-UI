@@ -1,8 +1,46 @@
-<div class="page"><mat-card>
-  <h2>OTP Login</h2>
-  <form [formGroup]="form" class="form-grid">
-    <mat-form-field><mat-label>Email</mat-label><input matInput formControlName="email"></mat-form-field>
-    <mat-form-field><mat-label>OTP</mat-label><input matInput formControlName="otp"></mat-form-field>
-    <button mat-button type="button" (click)="sendOtp()">Send OTP</button>
-    <button mat-raised-button color="primary" type="button" (click)="verifyOtp()">Verify OTP</button>
-  </form></mat-card></div>
+<div class="page">
+  <section class="panel mx-auto auth-panel">
+    <h2 class="page-title">OTP Login</h2>
+    <p class="text-secondary mb-4">Sign in quickly with a one-time password sent to your email.</p>
+
+    <form [formGroup]="form" class="otp-form" (ngSubmit)="verifyOtp()">
+      <div>
+        <label class="form-label" for="otpEmail">Email</label>
+        <input id="otpEmail" class="form-control" type="email" formControlName="email" placeholder="you@example.com" />
+        <small class="text-danger" *ngIf="form.controls.email.touched && form.controls.email.invalid">
+          Please enter a valid email address.
+        </small>
+      </div>
+
+      <div>
+        <label class="form-label" for="otpCode">OTP Code</label>
+        <input id="otpCode" class="form-control" type="text" formControlName="otp" placeholder="Enter OTP" />
+        <small class="text-danger" *ngIf="form.controls.otp.touched && form.controls.otp.invalid">
+          Enter the OTP code received on email (4–6 digits).
+        </small>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button class="btn btn-outline-primary" type="button" (click)="sendOtp()" [disabled]="isSendingOtp">
+          {{ isSendingOtp ? 'Sending...' : (otpSent ? 'Resend OTP' : 'Send OTP') }}
+        </button>
+        <button class="btn btn-primary" type="submit" [disabled]="isVerifying">
+          {{ isVerifying ? 'Verifying...' : 'Verify & Login' }}
+        </button>
+      </div>
+
+      <div *ngIf="otpSent" class="alert alert-success py-2 mt-2 mb-0">
+        OTP sent. Please check your inbox.
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger py-2 mt-2 mb-0">
+        {{ errorMessage }}
+      </div>
+
+      <div class="auth-links mt-2">
+        <a routerLink="/login">Back to password login</a>
+        <a routerLink="/forgot-password">Forgot password?</a>
+      </div>
+    </form>
+  </section>
+</div>

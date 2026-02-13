@@ -1,1 +1,14 @@
+.auth-panel {
+  max-width: 720px;
+}
 
+.otp-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
