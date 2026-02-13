@@ -7,6 +7,7 @@ import { OtpLoginComponent } from './features/auth/otp-login.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
 import { ResetPasswordComponent } from './features/auth/reset-password.component';
 import { ChangePasswordComponent } from './features/auth/change-password.component';
+import { AccountManagementComponent } from './features/account/account-management.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { UsersComponent } from './features/users/users.component';
 import { EventsComponent } from './features/events/events.component';
@@ -22,6 +23,7 @@ export const routes: Routes = [
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: '', canActivate: [authGuard], children: [
     { path: 'dashboard', component: DashboardComponent },
+    { path: 'account', component: AccountManagementComponent },
     { path: 'change-password', component: ChangePasswordComponent },
     { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
     { path: 'events', component: EventsComponent },

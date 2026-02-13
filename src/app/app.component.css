@@ -6,3 +6,9 @@
 .app-shell {
   min-height: calc(100vh - 72px);
 }
+
+
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+}
