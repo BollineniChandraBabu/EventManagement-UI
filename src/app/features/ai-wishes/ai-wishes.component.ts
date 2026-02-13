@@ -1,14 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule, FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { ApiService } from '../../core/services/api.service';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [FormsModule, ReactiveFormsModule],
   templateUrl: './ai-wishes.component.html',
   styleUrl: './ai-wishes.component.css'
 })

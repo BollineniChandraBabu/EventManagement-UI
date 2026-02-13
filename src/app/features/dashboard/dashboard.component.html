@@ -1,9 +1,21 @@
-<div class="page">
-    <h2>Dashboard</h2>
-    <div class="kpi-grid" *ngIf="data$ | async as data">
-      <mat-card>Total users: {{ data.totalUsers }}</mat-card>
-      <mat-card>Upcoming events: {{ data.upcomingEvents }}</mat-card>
-      <mat-card>Emails sent today: {{ data.emailsSentToday }}</mat-card>
-      <mat-card>Failed emails: {{ data.failedEmails }}</mat-card>
+<div class="page" *ngIf="data$ | async as data">
+  <h2 class="page-title">Dashboard</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total users</div>
+      <div class="kpi-value">{{ data.totalUsers }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Upcoming events</div>
+      <div class="kpi-value">{{ data.upcomingEvents }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Emails sent today</div>
+      <div class="kpi-value">{{ data.emailsSentToday }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Failed emails</div>
+      <div class="kpi-value">{{ data.failedEmails }}</div>
     </div>
   </div>
+</div>
