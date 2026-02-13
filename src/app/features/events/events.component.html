@@ -1,0 +1,15 @@
+<div class="page"><mat-card>
+    <h2>Create Event</h2>
+    <form [formGroup]="form" class="form-grid">
+      <mat-form-field><mat-label>Name</mat-label><input matInput formControlName="name"></mat-form-field>
+      <mat-form-field><mat-label>Type</mat-label><mat-select formControlName="type"><mat-option *ngFor="let t of types" [value]="t">{{ t }}</mat-option></mat-select></mat-form-field>
+      <mat-form-field><mat-label>Festival</mat-label><input matInput formControlName="festival"></mat-form-field>
+      <mat-form-field><mat-label>Date</mat-label><input matInput type="date" formControlName="eventDate"></mat-form-field>
+      <mat-slide-toggle formControlName="recurring">Recurring</mat-slide-toggle>
+      <mat-form-field><mat-label>Wish</mat-label><input matInput formControlName="wish"></mat-form-field>
+      <button mat-button type="button" (click)="generateWish()">AI generate wish</button>
+      <button mat-raised-button color="primary" type="button" (click)="save()">Preview & Save</button>
+    </form>
+    <p><b>Preview:</b> {{ form.controls.wish.value }}</p>
+    <mat-list><mat-list-item *ngFor="let e of (events$ | async) ?? []">{{e.name}} - {{e.type}} - {{e.eventDate}}</mat-list-item></mat-list>
+  </mat-card></div>

@@ -9,19 +9,8 @@ import { ApiService } from '../../core/services/api.service';
 @Component({
   standalone: true,
   imports: [FormsModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
-  template: `<div class="page"><mat-card>
-    <h2>AI Wish Generator</h2>
-    <form [formGroup]="form" class="form-grid">
-      <mat-form-field><mat-label>Name</mat-label><input matInput formControlName="name"></mat-form-field>
-      <mat-form-field><mat-label>Relation</mat-label><input matInput formControlName="relation"></mat-form-field>
-      <mat-form-field><mat-label>Event</mat-label><input matInput formControlName="event"></mat-form-field>
-      <mat-form-field><mat-label>Tone</mat-label><input matInput formControlName="tone"></mat-form-field>
-      <mat-form-field><mat-label>Language</mat-label><input matInput formControlName="language"></mat-form-field>
-      <button mat-raised-button color="primary" type="button" (click)="generate()">Generate</button>
-    </form>
-    <mat-form-field style="width:100%"><mat-label>Editable result</mat-label><textarea matInput rows="4" [(ngModel)]="result"></textarea></mat-form-field>
-    <button mat-button (click)="useAsTemplate()">Use as template</button>
-  </mat-card></div>`
+  templateUrl: './ai-wishes.component.html',
+  styleUrl: './ai-wishes.component.css'
 })
 export class AiWishesComponent {
   private fb = inject(FormBuilder);

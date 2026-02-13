@@ -11,18 +11,8 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSlideToggleModule],
-  template: `
-  <div class="page"><mat-card>
-    <h2>Login</h2>
-    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
-      <mat-form-field><mat-label>Email</mat-label><input matInput formControlName="email"></mat-form-field>
-      <mat-form-field><mat-label>Password</mat-label><input matInput type="password" formControlName="password"></mat-form-field>
-      <mat-slide-toggle formControlName="rememberMe">Remember Me</mat-slide-toggle>
-      <button mat-raised-button color="primary">Login</button>
-      <a mat-button routerLink="/otp-login">OTP Login</a>
-      <a mat-button routerLink="/forgot-password">Forgot Password</a>
-    </form>
-  </mat-card></div>`
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);

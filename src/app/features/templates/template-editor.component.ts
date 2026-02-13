@@ -9,19 +9,8 @@ import grapesjs from 'grapesjs';
 @Component({
   standalone: true,
   imports: [CommonModule, MatCardModule, MatButtonModule, MatListModule, AsyncPipe],
-  template: `<div class="page"><mat-card>
-    <h2>Template Editor (GrapesJS)</h2>
-    <div style="margin-bottom:8px">Variables: {{'{{name}}'}}, {{'{{relation}}'}}, {{'{{eventDate}}'}}, {{'{{festival}}'}}</div>
-    <div #editor style="height: 420px; border: 1px solid #ddd"></div>
-    <button mat-raised-button color="primary" (click)="saveTemplate()">Save template</button>
-    <h3>Version history</h3>
-    <mat-list>
-      <mat-list-item *ngFor="let v of (versions$ | async) ?? []">
-        #{{v.id}} - {{v.updatedAt}}
-        <button mat-button (click)="restore(v.id)">Restore</button>
-      </mat-list-item>
-    </mat-list>
-  </mat-card></div>`
+  templateUrl: './template-editor.component.html',
+  styleUrl: './template-editor.component.css'
 })
 export class TemplateEditorComponent implements AfterViewInit {
   @ViewChild('editor', { static: true }) editorEl!: ElementRef<HTMLDivElement>;

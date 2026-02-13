@@ -10,14 +10,8 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   standalone: true,
   imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
-  template: `<div class="page"><mat-card>
-  <h2>OTP Login</h2>
-  <form [formGroup]="form" class="form-grid">
-    <mat-form-field><mat-label>Email</mat-label><input matInput formControlName="email"></mat-form-field>
-    <mat-form-field><mat-label>OTP</mat-label><input matInput formControlName="otp"></mat-form-field>
-    <button mat-button type="button" (click)="sendOtp()">Send OTP</button>
-    <button mat-raised-button color="primary" type="button" (click)="verifyOtp()">Verify OTP</button>
-  </form></mat-card></div>`
+  templateUrl: './otp-login.component.html',
+  styleUrl: './otp-login.component.css'
 })
 export class OtpLoginComponent {
   private fb = inject(FormBuilder);

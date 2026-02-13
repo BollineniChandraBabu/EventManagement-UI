@@ -9,13 +9,8 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   standalone: true,
   imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
-  template: `<div class="page"><mat-card>
-    <h2>Forgot Password</h2>
-    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
-      <mat-form-field><mat-label>Email</mat-label><input matInput formControlName="email"></mat-form-field>
-      <button mat-raised-button color="primary">Send reset link</button>
-    </form>
-  </mat-card></div>`
+  templateUrl: './forgot-password.component.html',
+  styleUrl: './forgot-password.component.css'
 })
 export class ForgotPasswordComponent {
   private fb = inject(FormBuilder);
