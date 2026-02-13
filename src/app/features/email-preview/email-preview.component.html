@@ -5,6 +5,6 @@
       <mat-button-toggle value="mobile">Mobile</mat-button-toggle>
     </mat-button-toggle-group>
     <iframe class="preview-frame" [class.mobile]="mode==='mobile'" [srcdoc]="htmlString" height="450"></iframe>
-    <button mat-raised-button color="primary" (click)="sendTest()" [disabled]="!isAdmin">Test email to myself</button>
-    <div class="alert alert-info mt-3" *ngIf="!isAdmin">Read-only access: only admins can send test emails.</div>
+    <button mat-raised-button color="primary" (click)="sendTest()" [disabled]="!isAdmin()">Test email to myself</button>
+    <div class="alert alert-info mt-3" *ngIf="!isAdmin()">Read-only access: only admins can send test emails.</div>
   </mat-card></div>

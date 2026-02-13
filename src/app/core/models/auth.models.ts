@@ -1,3 +1,5 @@
+import { UserRole } from '../constants/roles.constants';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -8,7 +10,7 @@ export interface TokenResponse {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
-  role: 'ADMIN' | 'USER';
+  role: UserRole;
 }
 
 export interface OtpRequest {

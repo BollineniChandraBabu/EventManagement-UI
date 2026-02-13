@@ -15,7 +15,7 @@ export class EventsComponent {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
 
-  readonly isAdmin = this.auth.role() === 'ADMIN';
+  readonly isAdmin = this.auth.isAdmin;
   types = ['Birthday', 'Anniversary', 'Engagement', 'Festival'];
   events$ = this.api.events();
   form = this.fb.nonNullable.group({
@@ -28,7 +28,7 @@ export class EventsComponent {
   });
 
   generateWish() {
-    if (!this.isAdmin || !this.form.controls.name.value) {
+    if (!this.isAdmin() || !this.form.controls.name.value) {
       this.form.controls.name.markAsTouched();
       return;
     }
@@ -42,7 +42,7 @@ export class EventsComponent {
   }
 
   save() {
-    if (!this.isAdmin || this.form.invalid) {
+    if (!this.isAdmin() || this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }

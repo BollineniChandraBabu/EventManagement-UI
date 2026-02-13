@@ -1,6 +1,6 @@
 .account-page {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .account-header {
@@ -8,11 +8,23 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  background: linear-gradient(135deg, #f7f9ff, #eef3ff);
+  border: 1px solid #dfe8ff;
 }
 
-.account-header i {
-  font-size: 3rem;
-  color: #5e6ad2;
+.avatar-pill {
+  width: 74px;
+  height: 74px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 30% 30%, #7d8dff, #4c5bd0);
+  box-shadow: 0 12px 26px rgba(70, 87, 184, 0.32);
+}
+
+.avatar-pill i {
+  font-size: 2.1rem;
+  color: #fff;
 }
 
 .eyebrow {
@@ -26,7 +38,7 @@
 
 .account-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
 }
 
@@ -34,11 +46,22 @@
   border-radius: 1rem;
   border: 1px solid #e4e9f6;
   box-shadow: 0 10px 26px rgba(38, 63, 128, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.account-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(38, 63, 128, 0.16);
 }
 
 .account-card h3 {
   font-size: 1.2rem;
   margin-bottom: 0.25rem;
+}
+
+.account-card--highlight {
+  background: linear-gradient(180deg, #fff, #f8faff);
+  border-color: #d8e1ff;
 }
 
 .form-feedback {
