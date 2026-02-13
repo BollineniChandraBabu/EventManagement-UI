@@ -1,30 +1,100 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import {
+  AiWishRequest,
+  AiWishResponse,
+  ApiResponse,
+  AppUser,
+  DashboardStats,
+  EmailStatus,
+  EventItem,
+  SaveEventPayload,
+  SaveTemplatePayload,
+  SaveUserPayload,
+  TemplateVersion
+} from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
 
-  getDashboard(): Observable<{ totalUsers: number; upcomingEvents: number; emailsSentToday: number; failedEmails: number }> {
-    return this.http.get<{ totalUsers: number; upcomingEvents: number; emailsSentToday: number; failedEmails: number }>(`${environment.apiUrl}/dashboard`);
+  getDashboard(): Observable<DashboardStats> {
+    return this.http.get<ApiResponse<DashboardStats>>(`${environment.apiUrl}/dashboard`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
-  users() { return this.http.get<any[]>(`${environment.apiUrl}/users`); }
-  saveUser(payload: any) { return this.http.post(`${environment.apiUrl}/users`, payload); }
-  updateUser(id: number, payload: any) { return this.http.put(`${environment.apiUrl}/users/${id}`, payload); }
-  deactivateUser(id: number) { return this.http.patch(`${environment.apiUrl}/users/${id}/deactivate`, {}); }
+  users(): Observable<AppUser[]> {
+    return this.http.get<ApiResponse<AppUser[]>>(`${environment.apiUrl}/users`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
 
-  events() { return this.http.get<any[]>(`${environment.apiUrl}/events`); }
-  saveEvent(payload: any) { return this.http.post(`${environment.apiUrl}/events`, payload); }
-  aiWish(payload: any) { return this.http.post<{ message: string }>(`${environment.apiUrl}/wishes/generate`, payload); }
+  saveUser(payload: SaveUserPayload) {
+    return this.http.post(`${environment.apiUrl}/users`, payload);
+  }
 
-  saveTemplate(payload: any) { return this.http.post(`${environment.apiUrl}/templates`, payload); }
-  templateVersions() { return this.http.get<any[]>(`${environment.apiUrl}/templates/versions`); }
-  restoreTemplate(id: number) { return this.http.post(`${environment.apiUrl}/templates/restore/${id}`, {}); }
+  updateUser(id: number, payload: SaveUserPayload) {
+    return this.http.put(`${environment.apiUrl}/users/${id}`, payload);
+  }
 
-  emailStatuses() { return this.http.get<any[]>(`${environment.apiUrl}/emails/status`); }
-  retryEmail(id: number) { return this.http.post(`${environment.apiUrl}/emails/${id}/retry`, {}); }
-  sendTestEmail(html: string) { return this.http.post(`${environment.apiUrl}/emails/test`, { html }); }
+  deactivateUser(id: number) {
+    return this.http.patch(`${environment.apiUrl}/users/${id}/deactivate`, {});
+  }
+
+  events(): Observable<EventItem[]> {
+    return this.http.get<ApiResponse<EventItem[]>>(`${environment.apiUrl}/events`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  saveEvent(payload: SaveEventPayload) {
+    return this.http.post(`${environment.apiUrl}/events`, payload);
+  }
+
+  aiWish(payload: AiWishRequest): Observable<AiWishResponse> {
+    return this.http.post<AiWishResponse>(`${environment.apiUrl}/wishes/generate`, payload);
+  }
+
+  saveTemplate(payload: SaveTemplatePayload) {
+    return this.http.post(`${environment.apiUrl}/templates`, payload);
+  }
+
+  templateVersions(): Observable<TemplateVersion[]> {
+    return this.http.get<ApiResponse<TemplateVersion[]>>(`${environment.apiUrl}/templates/versions`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  restoreTemplate(id: number) {
+    return this.http.post(`${environment.apiUrl}/templates/restore/${id}`, {});
+  }
+
+  emailStatuses(): Observable<EmailStatus[]> {
+    return this.http.get<ApiResponse<EmailStatus[]>>(`${environment.apiUrl}/emails/status`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  retryEmail(id: number) {
+    return this.http.post(`${environment.apiUrl}/emails/${id}/retry`, {});
+  }
+
+  sendTestEmail(html: string) {
+    return this.http.post(`${environment.apiUrl}/emails/test`, { html });
+  }
+
+  private unwrap<T>(response: ApiResponse<T>): T {
+    if (typeof response === 'object' && response !== null && 'data' in response) {
+      return response.data;
+    }
+
+    if (typeof response === 'object' && response !== null && 'content' in response) {
+      return response.content;
+    }
+
+    return response as T;
+  }
 }
