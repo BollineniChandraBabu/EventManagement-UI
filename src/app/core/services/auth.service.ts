@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, timer } from 'rxjs';
+import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
 
@@ -13,8 +13,9 @@ const ROLE = 'fw_role';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly isAuthed = signal(!!localStorage.getItem(ACCESS_TOKEN));
+  private readonly isAuthed = signal(this.hasToken());
   private tokenExpiryTimeout?: ReturnType<typeof setTimeout>;
+  private refreshTimerSub?: Subscription;
 
   readonly authenticated = computed(() => this.isAuthed());
   readonly role = computed(() => localStorage.getItem(ROLE) ?? 'USER');
@@ -54,34 +55,70 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(REFRESH_TOKEN);
-    localStorage.removeItem(ROLE);
+    this.clearStoredSession();
     this.isAuthed.set(false);
-    if (this.tokenExpiryTimeout) {
-      clearTimeout(this.tokenExpiryTimeout);
-    }
+    this.cancelTimers();
     this.router.navigate(['/login']);
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(ACCESS_TOKEN);
+    return this.getStoredValue(ACCESS_TOKEN);
   }
 
   private setSession(response: TokenResponse, rememberMe: boolean): void {
-    const storage = rememberMe ? localStorage : sessionStorage;
+    const storage = this.getStorage(rememberMe);
+
+    this.clearStoredSession();
     storage.setItem(ACCESS_TOKEN, response.accessToken);
     storage.setItem(REFRESH_TOKEN, response.refreshToken);
     storage.setItem(ROLE, response.role);
+
     this.isAuthed.set(true);
     this.scheduleAutoLogout(response.expiresIn);
   }
 
   private scheduleAutoLogout(expiresInSeconds: number): void {
+    this.cancelTimers();
+
+    this.tokenExpiryTimeout = setTimeout(() => this.logout(), expiresInSeconds * 1000);
+
+    const refreshInMs = Math.max(expiresInSeconds - 30, 1) * 1000;
+    this.refreshTimerSub = timer(refreshInMs).subscribe(() => {
+      this.refreshToken().subscribe({ error: () => this.logout() });
+    });
+  }
+
+  private getStorage(rememberMe: boolean): Storage {
+    return rememberMe ? localStorage : sessionStorage;
+  }
+
+  private getStoredValue(key: string): string | null {
+    return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+  }
+
+  private hasToken(): boolean {
+    return !!this.getStoredValue(ACCESS_TOKEN);
+  }
+
+  private clearStoredSession(): void {
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(REFRESH_TOKEN);
+    localStorage.removeItem(ROLE);
+
+    sessionStorage.removeItem(ACCESS_TOKEN);
+    sessionStorage.removeItem(REFRESH_TOKEN);
+    sessionStorage.removeItem(ROLE);
+  }
+
+  private cancelTimers(): void {
     if (this.tokenExpiryTimeout) {
       clearTimeout(this.tokenExpiryTimeout);
+      this.tokenExpiryTimeout = undefined;
     }
-    this.tokenExpiryTimeout = setTimeout(() => this.logout(), expiresInSeconds * 1000);
-    timer(Math.max(expiresInSeconds - 30, 1) * 1000).subscribe(() => this.refreshToken().subscribe());
+
+    if (this.refreshTimerSub) {
+      this.refreshTimerSub.unsubscribe();
+      this.refreshTimerSub = undefined;
+    }
   }
 }
