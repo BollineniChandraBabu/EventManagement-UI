@@ -15,7 +15,7 @@ export class AiWishesComponent {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
 
-  readonly isAdmin = this.auth.role() === 'ADMIN';
+  readonly isAdmin = this.auth.isAdmin;
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -36,7 +36,7 @@ export class AiWishesComponent {
   }
 
   useAsTemplate() {
-    if (!this.isAdmin || !this.result.trim()) {
+    if (!this.isAdmin() || !this.result.trim()) {
       return;
     }
 

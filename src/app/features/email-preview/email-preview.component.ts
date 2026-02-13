@@ -17,12 +17,12 @@ export class EmailPreviewComponent {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
 
-  readonly isAdmin = this.auth.role() === 'ADMIN';
+  readonly isAdmin = this.auth.isAdmin;
   mode: 'desktop' | 'mobile' = 'desktop';
   htmlString = '<h3>Hello {{name}}</h3><p>Your event is on {{eventDate}}</p>';
 
   sendTest() {
-    if (!this.isAdmin) {
+    if (!this.isAdmin()) {
       return;
     }
 

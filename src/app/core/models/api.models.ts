@@ -1,3 +1,5 @@
+import { UserRole } from '../constants/roles.constants';
+
 export type ApiResponse<T> = T | { data: T } | { content: T };
 
 export interface DashboardStats {
@@ -6,8 +8,6 @@ export interface DashboardStats {
   emailsSentToday: number;
   failedEmails: number;
 }
-
-export type UserRole = 'ADMIN' | 'USER';
 
 export interface AppUser {
   id: number;

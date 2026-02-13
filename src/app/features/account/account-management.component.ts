@@ -87,4 +87,8 @@ export class AccountManagementComponent {
       error: () => this.passwordMsg.set('Could not change password. Please verify your current password.')
     });
   }
+
+  logout(): void {
+    this.auth.logout();
+  }
 }

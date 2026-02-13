@@ -5,7 +5,9 @@
       <h2 class="page-title mb-2">Manage your profile & security</h2>
       <p class="text-muted mb-0">One place for password, contact details, and account preferences.</p>
     </div>
-    <i class="fa-regular fa-circle-user"></i>
+    <div class="avatar-pill">
+      <i class="fa-regular fa-circle-user"></i>
+    </div>
   </section>
 
   <div class="account-grid">
@@ -53,6 +55,17 @@
         </div>
       </form>
       <p *ngIf="passwordMsg()" class="form-feedback">{{ passwordMsg() }}</p>
+    </mat-card>
+
+    <mat-card class="account-card account-card--highlight">
+      <h3>Session</h3>
+      <p class="text-muted">Sign out from this device when you're done, especially on shared systems.</p>
+      <div>
+        <button mat-stroked-button color="warn" (click)="logout()">
+          <i class="fa-solid fa-right-from-bracket me-2"></i>
+          Logout
+        </button>
+      </div>
     </mat-card>
   </div>
 </div>

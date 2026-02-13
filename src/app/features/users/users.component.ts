@@ -8,7 +8,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../core/services/api.service';
-import { AppUser, UserRole } from '../../core/models/api.models';
+import { AppUser } from '../../core/models/api.models';
+import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
 
 @Component({
   standalone: true,
@@ -22,12 +23,14 @@ export class UsersComponent {
 
   cols = ['name', 'email', 'role', 'actions'];
   users$ = this.api.users();
+  readonly ROLE_ADMIN = ROLE_ADMIN;
+  readonly ROLE_USER = ROLE_USER;
 
   form = this.fb.nonNullable.group({
     id: [0],
     name: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
-    role: ['USER' as UserRole, [Validators.required]]
+    role: [ROLE_USER as UserRole, [Validators.required]]
   });
 
   save() {
@@ -54,7 +57,7 @@ export class UsersComponent {
   }
 
   resetForm() {
-    this.form.reset({ id: 0, name: '', email: '', role: 'USER' });
+    this.form.reset({ id: 0, name: '', email: '', role: ROLE_USER });
   }
 
   deactivate(id: number) {

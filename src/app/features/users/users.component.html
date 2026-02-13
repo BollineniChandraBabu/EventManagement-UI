@@ -3,7 +3,7 @@
   <form [formGroup]="form" class="form-grid">
     <mat-form-field><mat-label>Name</mat-label><input matInput formControlName="name"></mat-form-field>
     <mat-form-field><mat-label>Email</mat-label><input matInput formControlName="email"></mat-form-field>
-    <mat-form-field><mat-label>Role</mat-label><mat-select formControlName="role"><mat-option value="USER">USER</mat-option><mat-option value="ADMIN">ADMIN</mat-option></mat-select></mat-form-field>
+    <mat-form-field><mat-label>Role</mat-label><mat-select formControlName="role"><mat-option [value]="ROLE_USER">{{ ROLE_USER }}</mat-option><mat-option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</mat-option></mat-select></mat-form-field>
     <div class="d-flex gap-2">
       <button mat-raised-button color="primary" type="button" (click)="save()">{{ form.controls.id.value ? 'Update User' : 'Create User' }}</button>
       <button mat-stroked-button type="button" (click)="resetForm()">Clear</button>

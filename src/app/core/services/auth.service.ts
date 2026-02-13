@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse, UpdateUserProfileRequest, UserProfile } from '../models/auth.models';
+import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
 
 const ACCESS_TOKEN = 'fw_access_token';
 const REFRESH_TOKEN = 'fw_refresh_token';
@@ -17,8 +18,11 @@ export class AuthService {
   private tokenExpiryTimeout?: ReturnType<typeof setTimeout>;
   private refreshTimerSub?: Subscription;
 
+  readonly ROLE_ADMIN = ROLE_ADMIN;
+  readonly ROLE_USER = ROLE_USER;
   readonly authenticated = computed(() => this.isAuthed());
-  readonly role = computed(() => localStorage.getItem(ROLE) ?? 'USER');
+  readonly role = computed(() => (localStorage.getItem(ROLE) ?? sessionStorage.getItem(ROLE) ?? ROLE_USER));
+  readonly isAdmin = computed(() => this.role() === ROLE_ADMIN);
 
   login(request: LoginRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/login`, request).pipe(
