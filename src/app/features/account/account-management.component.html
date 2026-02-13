@@ -1,71 +1,110 @@
 <div class="page account-page">
-  <section class="account-header panel">
-    <div>
-      <p class="eyebrow">Account center</p>
-      <h2 class="page-title mb-2">Manage your profile & security</h2>
-      <p class="text-muted mb-0">One place for password, contact details, and account preferences.</p>
-    </div>
-    <div class="avatar-pill">
-      <i class="fa-regular fa-circle-user"></i>
+  <section class="account-hero card border-0 shadow-4 rounded-6 overflow-hidden">
+    <div class="card-body p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between gap-4 align-items-md-center">
+      <div>
+        <p class="text-uppercase fw-semibold text-primary mb-2 small letter-spacing">Account center</p>
+        <h2 class="page-title mb-2">Manage your profile & security</h2>
+        <p class="text-muted mb-0">Update your contact information, secure your account, and control your active session.</p>
+      </div>
+      <div class="account-avatar">
+        <i class="fa-regular fa-circle-user"></i>
+      </div>
     </div>
   </section>
 
-  <div class="account-grid">
-    <mat-card class="account-card">
-      <h3>Profile details</h3>
-      <p class="text-muted">Keep your personal information up to date.</p>
-      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Full name</mat-label>
-          <input matInput formControlName="fullName" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Phone number</mat-label>
-          <input matInput formControlName="phoneNumber" />
-        </mat-form-field>
-        <div>
-          <button mat-flat-button color="primary">Save profile</button>
-        </div>
-      </form>
-      <p *ngIf="accountMsg()" class="form-feedback">{{ accountMsg() }}</p>
-    </mat-card>
+  <div class="row g-4 align-items-stretch">
+    <div class="col-12 col-xl-7">
+      <div class="card border-0 shadow-3 rounded-5 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="section-icon bg-primary-subtle text-primary"><i class="fa-solid fa-id-badge"></i></span>
+            <div>
+              <h3 class="h5 mb-1">Profile details</h3>
+              <p class="text-muted mb-0">Keep your personal details current for notifications and account recovery.</p>
+            </div>
+          </div>
 
-    <mat-card class="account-card">
-      <h3>Change password</h3>
-      <p class="text-muted">Use a strong password with 8+ characters.</p>
-      <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()" class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Current password</mat-label>
-          <input matInput type="password" formControlName="currentPassword" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>New password</mat-label>
-          <input matInput type="password" formControlName="newPassword" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Confirm new password</mat-label>
-          <input matInput type="password" formControlName="confirmPassword" />
-        </mat-form-field>
-        <div>
-          <button mat-flat-button color="primary">Update password</button>
-        </div>
-      </form>
-      <p *ngIf="passwordMsg()" class="form-feedback">{{ passwordMsg() }}</p>
-    </mat-card>
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="row g-3" novalidate>
+            <div class="col-12">
+              <label for="fullName" class="form-label">Full name</label>
+              <input id="fullName" type="text" class="form-control" formControlName="fullName" placeholder="e.g., Alex Morgan" />
+            </div>
 
-    <mat-card class="account-card account-card--highlight">
-      <h3>Session</h3>
-      <p class="text-muted">Sign out from this device when you're done, especially on shared systems.</p>
-      <div>
-        <button mat-stroked-button color="warn" (click)="logout()">
-          <i class="fa-solid fa-right-from-bracket me-2"></i>
-          Logout
-        </button>
+            <div class="col-12 col-md-6">
+              <label for="email" class="form-label">Email address</label>
+              <input id="email" type="email" class="form-control" formControlName="email" placeholder="name@example.com" />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label for="phoneNumber" class="form-label">Phone number</label>
+              <input id="phoneNumber" type="text" class="form-control" formControlName="phoneNumber" placeholder="Optional" />
+            </div>
+
+            <div class="col-12 d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="fa-solid fa-floppy-disk me-2"></i>Save profile
+              </button>
+            </div>
+          </form>
+
+          <div *ngIf="accountMsg()" class="alert alert-info d-flex align-items-center gap-2 mt-4 mb-0" role="alert">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>{{ accountMsg() }}</span>
+          </div>
+        </div>
       </div>
-    </mat-card>
+    </div>
+
+    <div class="col-12 col-xl-5">
+      <div class="card border-0 shadow-3 rounded-5 h-100 mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="section-icon bg-warning-subtle text-warning-emphasis"><i class="fa-solid fa-shield-halved"></i></span>
+            <div>
+              <h3 class="h5 mb-1">Change password</h3>
+              <p class="text-muted mb-0">Use at least 8 characters and avoid reused passwords.</p>
+            </div>
+          </div>
+
+          <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()" class="row g-3" novalidate>
+            <div class="col-12">
+              <label for="currentPassword" class="form-label">Current password</label>
+              <input id="currentPassword" type="password" class="form-control" formControlName="currentPassword" />
+            </div>
+
+            <div class="col-12">
+              <label for="newPassword" class="form-label">New password</label>
+              <input id="newPassword" type="password" class="form-control" formControlName="newPassword" />
+            </div>
+
+            <div class="col-12">
+              <label for="confirmPassword" class="form-label">Confirm new password</label>
+              <input id="confirmPassword" type="password" class="form-control" formControlName="confirmPassword" />
+            </div>
+
+            <div class="col-12 d-flex justify-content-end">
+              <button type="submit" class="btn btn-dark px-4">
+                <i class="fa-solid fa-key me-2"></i>Update password
+              </button>
+            </div>
+          </form>
+
+          <div *ngIf="passwordMsg()" class="alert alert-warning d-flex align-items-center gap-2 mt-4 mb-0" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{{ passwordMsg() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card account-session border-0 shadow-3 rounded-5">
+        <div class="card-body p-4">
+          <h3 class="h5 mb-2">Session</h3>
+          <p class="text-muted mb-3">On shared or public computers, always sign out to protect your account.</p>
+          <button type="button" class="btn btn-outline-danger" (click)="logout()">
+            <i class="fa-solid fa-right-from-bracket me-2"></i>Logout
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

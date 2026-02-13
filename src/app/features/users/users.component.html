@@ -1,19 +1,89 @@
-<div class="page"><mat-card>
-  <h2>Users (Admin)</h2>
-  <form [formGroup]="form" class="form-grid">
-    <mat-form-field><mat-label>Name</mat-label><input matInput formControlName="name"></mat-form-field>
-    <mat-form-field><mat-label>Email</mat-label><input matInput formControlName="email"></mat-form-field>
-    <mat-form-field><mat-label>Role</mat-label><mat-select formControlName="role"><mat-option [value]="ROLE_USER">{{ ROLE_USER }}</mat-option><mat-option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</mat-option></mat-select></mat-form-field>
-    <div class="d-flex gap-2">
-      <button mat-raised-button color="primary" type="button" (click)="save()">{{ form.controls.id.value ? 'Update User' : 'Create User' }}</button>
-      <button mat-stroked-button type="button" (click)="resetForm()">Clear</button>
+<div class="page">
+  <div class="card border-0 shadow-3 rounded-5 users-card">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h2 class="h4 mb-0">Users (Admin)</h2>
+        <span class="badge rounded-pill badge-primary">{{ allUsers.length }} total users</span>
+      </div>
+
+      <form [formGroup]="form" class="row g-3 mb-4" novalidate>
+        <div class="col-12 col-md-4">
+          <label class="form-label">Name</label>
+          <input class="form-control" formControlName="name" />
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label">Email</label>
+          <input class="form-control" formControlName="email" />
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label">Role</label>
+          <select class="form-select" formControlName="role">
+            <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
+            <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
+          </select>
+        </div>
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-primary" type="button" (click)="save()">{{ form.controls.id.value ? 'Update User' : 'Create User' }}</button>
+          <button class="btn btn-outline-secondary" type="button" (click)="resetForm()">Clear</button>
+        </div>
+      </form>
+
+      <div class="row g-3 align-items-end mb-3">
+        <div class="col-12 col-md-6">
+          <label class="form-label">Filter users</label>
+          <input class="form-control" type="text" placeholder="Search by name or email" (input)="onSearch($any($event.target).value)" />
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label">Role</label>
+          <select class="form-select" (change)="onRoleFilter($any($event.target).value)">
+            <option value="ALL">All roles</option>
+            <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
+            <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label">Rows per page</label>
+          <select class="form-select" (change)="onPageSizeChange($any($event.target).value)">
+            <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of viewUsers">
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td><span class="badge rounded-pill" [class.badge-info]="user.role === ROLE_USER" [class.badge-danger]="user.role === ROLE_ADMIN">{{ user.role }}</span></td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-link" type="button" (click)="edit(user)">Edit</button>
+                <button class="btn btn-sm btn-link text-danger" type="button" (click)="deactivate(user.id)">Deactivate</button>
+              </td>
+            </tr>
+            <tr *ngIf="viewUsers.length === 0">
+              <td colspan="4" class="text-center text-muted py-4">No users found for current filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <small class="text-muted">Showing {{ startRow }}-{{ endRow }} of {{ filteredUsersCount() }} users</small>
+        <div class="btn-group pagination-controls">
+          <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="page === 1">Previous</button>
+          <button class="btn btn-sm btn-primary" type="button" disabled>Page {{ page }} / {{ totalPages }}</button>
+          <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="page === totalPages">Next</button>
+        </div>
+      </div>
     </div>
-  </form>
-  <table mat-table [dataSource]="(users$ | async) ?? []">
-    <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let e">{{ e.name }}</td></ng-container>
-    <ng-container matColumnDef="email"><th mat-header-cell *matHeaderCellDef>Email</th><td mat-cell *matCellDef="let e">{{ e.email }}</td></ng-container>
-    <ng-container matColumnDef="role"><th mat-header-cell *matHeaderCellDef>Role</th><td mat-cell *matCellDef="let e">{{ e.role }}</td></ng-container>
-    <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef>Actions</th><td mat-cell *matCellDef="let e"><button mat-button (click)="edit(e)">Edit</button><button mat-button (click)="deactivate(e.id)">Deactivate</button></td></ng-container>
-    <tr mat-header-row *matHeaderRowDef="cols"></tr>
-    <tr mat-row *matRowDef="let row; columns: cols;"></tr>
-  </table></mat-card></div>
+  </div>
+</div>
