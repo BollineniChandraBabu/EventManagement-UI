@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   standalone: true,
@@ -12,8 +13,18 @@ import { ApiService } from '../../core/services/api.service';
   styleUrl: './email-status.component.css'
 })
 export class EmailStatusComponent {
-  private api = inject(ApiService);
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+
+  readonly isAdmin = this.auth.role() === 'ADMIN';
   cols = ['to', 'subject', 'status', 'actions'];
   items$ = this.api.emailStatuses();
-  retry(id: number) { this.api.retryEmail(id).subscribe(() => this.items$ = this.api.emailStatuses()); }
+
+  retry(id: number) {
+    if (!this.isAdmin) {
+      return;
+    }
+
+    this.api.retryEmail(id).subscribe(() => this.items$ = this.api.emailStatuses());
+  }
 }

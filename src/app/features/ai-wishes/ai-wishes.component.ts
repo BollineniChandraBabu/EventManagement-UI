@@ -1,19 +1,45 @@
 import { Component, inject } from '@angular/core';
-import { FormsModule, FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormsModule, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './ai-wishes.component.html',
   styleUrl: './ai-wishes.component.css'
 })
 export class AiWishesComponent {
-  private fb = inject(FormBuilder);
-  private api = inject(ApiService);
-  form = this.fb.nonNullable.group({ name: [''], relation: [''], event: [''], tone: ['Warm'], language: ['English'] });
+  private readonly fb = inject(FormBuilder);
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+
+  readonly isAdmin = this.auth.role() === 'ADMIN';
+
+  form = this.fb.nonNullable.group({
+    name: ['', [Validators.required]],
+    relation: [''],
+    event: ['', [Validators.required]],
+    tone: ['Warm', [Validators.required]],
+    language: ['English', [Validators.required]]
+  });
   result = '';
 
-  generate() { this.api.aiWish(this.form.getRawValue()).subscribe((res) => this.result = res.message); }
-  useAsTemplate() { this.api.saveTemplate({ html: `<p>${this.result}</p>` }).subscribe(); }
+  generate() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.api.aiWish(this.form.getRawValue()).subscribe((res) => this.result = res.message);
+  }
+
+  useAsTemplate() {
+    if (!this.isAdmin || !this.result.trim()) {
+      return;
+    }
+
+    this.api.saveTemplate({ html: `<p>${this.result.trim()}</p>` }).subscribe();
+  }
 }

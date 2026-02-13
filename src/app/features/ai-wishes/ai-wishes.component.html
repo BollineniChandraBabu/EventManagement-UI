@@ -26,8 +26,10 @@
 
     <div class="d-flex gap-2 my-3">
       <button class="btn btn-primary" type="button" (click)="generate()">Generate</button>
-      <button class="btn btn-outline-secondary" type="button" (click)="useAsTemplate()">Use as template</button>
+      <button class="btn btn-outline-secondary" type="button" (click)="useAsTemplate()" [disabled]="!isAdmin || !result.trim()">Use as template</button>
     </div>
+
+    <div class="alert alert-info" *ngIf="!isAdmin">Read-only access: only admins can save generated wishes as templates.</div>
 
     <div>
       <label class="form-label">Editable result</label>

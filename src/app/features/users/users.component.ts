@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { AsyncPipe } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { AsyncPipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
+import { AppUser, UserRole } from '../../core/models/api.models';
 
 @Component({
   standalone: true,
@@ -16,17 +17,47 @@ import { ApiService } from '../../core/services/api.service';
   styleUrl: './users.component.css'
 })
 export class UsersComponent {
-  private fb = inject(FormBuilder);
-  private api = inject(ApiService);
+  private readonly fb = inject(FormBuilder);
+  private readonly api = inject(ApiService);
+
   cols = ['name', 'email', 'role', 'actions'];
   users$ = this.api.users();
-  form = this.fb.nonNullable.group({ id: [0], name: [''], email: [''], role: ['USER'] });
+
+  form = this.fb.nonNullable.group({
+    id: [0],
+    name: ['', [Validators.required]],
+    email: ['', [Validators.required, Validators.email]],
+    role: ['USER' as UserRole, [Validators.required]]
+  });
 
   save() {
-    const value = this.form.getRawValue();
-    const req = value.id ? this.api.updateUser(value.id, value) : this.api.saveUser(value);
-    req.subscribe(() => this.users$ = this.api.users());
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const { id, ...payload } = this.form.getRawValue();
+    const req = id ? this.api.updateUser(id, payload) : this.api.saveUser(payload);
+    req.subscribe(() => {
+      this.users$ = this.api.users();
+      this.resetForm();
+    });
   }
 
-  deactivate(id: number) { this.api.deactivateUser(id).subscribe(() => this.users$ = this.api.users()); }
+  edit(user: AppUser) {
+    this.form.patchValue({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+  }
+
+  resetForm() {
+    this.form.reset({ id: 0, name: '', email: '', role: 'USER' });
+  }
+
+  deactivate(id: number) {
+    this.api.deactivateUser(id).subscribe(() => this.users$ = this.api.users());
+  }
 }
