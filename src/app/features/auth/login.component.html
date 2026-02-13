@@ -18,7 +18,16 @@
             (click)="togglePasswordVisibility()"
             [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
           >
-            {{ showPassword ? 'Hide' : 'Show' }}
+            <i
+              class="password-toggle-icon fa-regular fa-eye"
+              [style.display]="showPassword ? 'none' : 'block'"
+              aria-hidden="true"
+            ></i>
+            <i
+              class="password-toggle-icon fa-regular fa-eye-slash"
+              [style.display]="showPassword ? 'block' : 'none'"
+              aria-hidden="true"
+            ></i>
           </button>
         </div>
       </div>
