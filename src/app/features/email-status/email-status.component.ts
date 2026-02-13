@@ -94,7 +94,7 @@ export class EmailStatusComponent {
   private filteredItems(): EmailStatus[] {
     return this.allItems.filter((item) => {
       const matchesText = !this.filterText
-        || item.to.toLowerCase().includes(this.filterText)
+        || item.toEmail.toLowerCase().includes(this.filterText)
         || item.subject.toLowerCase().includes(this.filterText);
 
       const matchesStatus = this.filterStatus === 'ALL' || item.status === this.filterStatus;

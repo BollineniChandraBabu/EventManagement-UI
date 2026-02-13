@@ -67,7 +67,8 @@ export interface SaveTemplatePayload {
 
 export interface EmailStatus {
   id: number;
-  to: string;
+  toEmail: string;
   subject: string;
   status: string;
+  sentAt: string;
 }

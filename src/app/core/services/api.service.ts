@@ -55,7 +55,7 @@ export class ApiService {
   }
 
   aiWish(payload: AiWishRequest): Observable<AiWishResponse> {
-    return this.http.post<AiWishResponse>(`${environment.apiUrl}/wishes/generate`, payload);
+    return this.http.post<AiWishResponse>(`${environment.apiUrl}/ai/generate-wish`, payload);
   }
 
   saveTemplate(payload: SaveTemplatePayload) {

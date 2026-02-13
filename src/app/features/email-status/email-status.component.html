@@ -35,12 +35,13 @@
               <th>To</th>
               <th>Subject</th>
               <th>Status</th>
+              <th>Sent At</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let item of viewItems">
-              <td>{{ item.to }}</td>
+              <td>{{ item.toEmail }}</td>
               <td>{{ item.subject }}</td>
               <td>
                 <span class="badge rounded-pill"
@@ -50,6 +51,7 @@
                   {{ item.status }}
                 </span>
               </td>
+                <td>{{ item.sentAt | date:'short' }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-danger" *ngIf="isAdmin() && item.status==='FAILED'" (click)="retry(item.id)">Retry</button>
                 <span *ngIf="!isAdmin()" class="text-muted small">Read only</span>
