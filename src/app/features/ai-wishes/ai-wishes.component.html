@@ -1,15 +1,37 @@
 <div class="page">
-  <mat-card>
-    <h2>AI Wish Generator</h2>
+  <section class="panel">
+    <h2 class="page-title">AI Wish Generator</h2>
     <form [formGroup]="form" class="form-grid">
-      <mat-form-field><mat-label>Name</mat-label><input matInput formControlName="name"></mat-form-field>
-      <mat-form-field><mat-label>Relation</mat-label><input matInput formControlName="relation"></mat-form-field>
-      <mat-form-field><mat-label>Event</mat-label><input matInput formControlName="event"></mat-form-field>
-      <mat-form-field><mat-label>Tone</mat-label><input matInput formControlName="tone"></mat-form-field>
-      <mat-form-field><mat-label>Language</mat-label><input matInput formControlName="language"></mat-form-field>
-      <button mat-raised-button color="primary" type="button" (click)="generate()">Generate</button>
+      <div>
+        <label class="form-label">Name</label>
+        <input class="form-control" formControlName="name" />
+      </div>
+      <div>
+        <label class="form-label">Relation</label>
+        <input class="form-control" formControlName="relation" />
+      </div>
+      <div>
+        <label class="form-label">Event</label>
+        <input class="form-control" formControlName="event" />
+      </div>
+      <div>
+        <label class="form-label">Tone</label>
+        <input class="form-control" formControlName="tone" />
+      </div>
+      <div>
+        <label class="form-label">Language</label>
+        <input class="form-control" formControlName="language" />
+      </div>
     </form>
-    <mat-form-field class="result-field"><mat-label>Editable result</mat-label><textarea matInput rows="4" [(ngModel)]="result"></textarea></mat-form-field>
-    <button mat-button (click)="useAsTemplate()">Use as template</button>
-  </mat-card>
+
+    <div class="d-flex gap-2 my-3">
+      <button class="btn btn-primary" type="button" (click)="generate()">Generate</button>
+      <button class="btn btn-outline-secondary" type="button" (click)="useAsTemplate()">Use as template</button>
+    </div>
+
+    <div>
+      <label class="form-label">Editable result</label>
+      <textarea class="form-control" rows="5" [(ngModel)]="result"></textarea>
+    </div>
+  </section>
 </div>
