@@ -32,8 +32,27 @@
     <div class="alert alert-info" *ngIf="!isAdmin()">Read-only access: only admins can save generated wishes as templates.</div>
 
     <div>
+      <label class="form-label">Subject</label>
+      <input class="form-control" [(ngModel)]="subject" />
+    </div>
+
+    <div>
       <label class="form-label">Editable result</label>
       <textarea class="form-control" rows="5" [(ngModel)]="result"></textarea>
     </div>
+
+    <section class="preview-section" *ngIf="result.trim()">
+      <h3 class="preview-title">Email Preview</h3>
+      <div class="preview-grid">
+        <div class="preview-card">
+          <h4>Desktop</h4>
+          <iframe class="preview-frame" [srcdoc]="desktopPreviewSrcDoc" title="Desktop email preview"></iframe>
+        </div>
+        <div class="preview-card">
+          <h4>Mobile</h4>
+          <iframe class="preview-frame mobile" [srcdoc]="mobilePreviewSrcDoc" title="Mobile email preview"></iframe>
+        </div>
+      </div>
+    </section>
   </section>
 </div>

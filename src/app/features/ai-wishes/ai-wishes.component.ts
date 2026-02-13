@@ -25,6 +25,15 @@ export class AiWishesComponent {
     language: ['English', [Validators.required]]
   });
   result = '';
+  subject = '';
+
+  get desktopPreviewSrcDoc(): string {
+    return this.wrapPreviewHtml(this.result);
+  }
+
+  get mobilePreviewSrcDoc(): string {
+    return this.wrapPreviewHtml(this.result);
+  }
 
   generate() {
     if (this.form.invalid) {
@@ -32,7 +41,11 @@ export class AiWishesComponent {
       return;
     }
 
-    this.api.aiWish(this.form.getRawValue()).subscribe((res) => this.result = res.htmlMessage);
+    this.api.aiWish(this.form.getRawValue()).subscribe((res) => {
+      const parsedPayload = this.parseRawWishPayload(res);
+      this.subject = parsedPayload.subject;
+      this.result = parsedPayload.htmlMessage;
+    });
   }
 
   useAsTemplate() {
@@ -41,5 +54,51 @@ export class AiWishesComponent {
     }
 
     this.api.saveTemplate({ html: `<p>${this.result.trim()}</p>` }).subscribe();
+  }
+
+  private parseRawWishPayload(payload: { subject?: string; htmlMessage?: string }): { subject: string; htmlMessage: string } {
+    const subject = payload.subject ?? '';
+    const htmlMessage = payload.htmlMessage ?? '';
+
+    const nestedJsonSource = this.extractJsonString(subject) || this.extractJsonString(htmlMessage);
+    if (!nestedJsonSource) {
+      return { subject, htmlMessage };
+    }
+
+    try {
+      const parsed = JSON.parse(nestedJsonSource) as { subject?: string; htmlMessage?: string };
+      return {
+        subject: parsed.subject ?? subject,
+        htmlMessage: parsed.htmlMessage ?? htmlMessage
+      };
+    } catch {
+      return { subject, htmlMessage };
+    }
+  }
+
+  private extractJsonString(raw: string): string {
+    if (!raw?.trim()) {
+      return '';
+    }
+
+    const normalized = raw
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+      .trim();
+
+    const fencedMatch = normalized.match(/```json\s*([\s\S]*?)\s*```/i);
+    if (fencedMatch?.[1]) {
+      return fencedMatch[1].trim();
+    }
+
+    if (normalized.startsWith('{') && normalized.endsWith('}')) {
+      return normalized;
+    }
+
+    return '';
+  }
+
+  private wrapPreviewHtml(content: string): string {
+    return `<html><body style="margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#212529;">${content}</body></html>`;
   }
 }
