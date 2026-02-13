@@ -10,7 +10,7 @@ import { ApiService } from '../../core/services/api.service';
   imports: [CommonModule, AsyncPipe, MatCardModule, MatButtonModule, MatTableModule],
   template: `<div class="page"><mat-card>
     <h2>Email Status</h2>
-    <table mat-table [dataSource]="items$ | async ?? []">
+    <table mat-table [dataSource]="items$ | async || []">
       <ng-container matColumnDef="to"><th mat-header-cell *matHeaderCellDef>To</th><td mat-cell *matCellDef="let e">{{e.to}}</td></ng-container>
       <ng-container matColumnDef="subject"><th mat-header-cell *matHeaderCellDef>Subject</th><td mat-cell *matCellDef="let e">{{e.subject}}</td></ng-container>
       <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let e">{{e.status}}</td></ng-container>
