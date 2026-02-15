@@ -1,5 +1,5 @@
-<div class="page" *ngIf="data$ | async as data">
-  <h2 class="page-title">Dashboard</h2>
+<div class="page" *ngIf="maildata$ | async as data">
+  <h2 class="page-title">Mail Dashboard</h2>
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-label">Total users</div>
@@ -18,4 +18,26 @@
       <div class="kpi-value">{{ data.failedEmails }}</div>
     </div>
   </div>
+</div>
+
+<div class="page" *ngIf="igdata$ | async as data">
+    <h2 class="page-title">Insta Dashboard</h2>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Total users</div>
+            <div class="kpi-value">{{ data.totalUsers }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Upcoming events</div>
+            <div class="kpi-value">{{ data.upcomingEvents }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Emails sent today</div>
+            <div class="kpi-value">{{ data.emailsSentToday }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Failed emails</div>
+            <div class="kpi-value">{{ data.failedEmails }}</div>
+        </div>
+    </div>
 </div>

@@ -9,5 +9,6 @@ import { ApiService } from '../../core/services/api.service';
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent {
-  data$ = inject(ApiService).getDashboard();
+  maildata$ = inject(ApiService).getDashboard();
+  igdata$ = inject(ApiService).getIGDashboard();
 }

@@ -21,8 +21,14 @@ export class ApiService {
   private readonly http = inject(HttpClient);
 
   getDashboard(): Observable<DashboardStats> {
-    return this.http.get<ApiResponse<DashboardStats>>(`${environment.apiUrl}/dashboard`).pipe(
+    return this.http.get<ApiResponse<DashboardStats>>(`${environment.apiUrl}/dashboard/mail`).pipe(
       map((response) => this.unwrap(response))
+    );
+  }
+
+  getIGDashboard(): Observable<DashboardStats> {
+    return this.http.get<ApiResponse<DashboardStats>>(`${environment.apiUrl}/dashboard/insta`).pipe(
+        map((response) => this.unwrap(response))
     );
   }
 
@@ -50,7 +56,15 @@ export class ApiService {
     );
   }
 
-  saveEvent(payload: SaveEventPayload) {
+  saveEvent(payload: {
+    name: string;
+    eventType: string;
+    eventDate: string;
+    recurring: boolean;
+    wish: string;
+    festival: string | undefined;
+    relation: string
+  }) {
     return this.http.post(`${environment.apiUrl}/events`, payload);
   }
 
