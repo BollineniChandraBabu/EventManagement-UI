@@ -1,12 +1,14 @@
-import { Component, inject } from '@angular/core';
+import {Component, DestroyRef, inject} from '@angular/core';
 import { CommonModule, AsyncPipe } from '@angular/common';
 import {FormBuilder, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import {AppUser} from "../../core/models/api.models";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AsyncPipe, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './events.component.html',
   styleUrl: './events.component.css'
 })
@@ -14,13 +16,19 @@ export class EventsComponent {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly isAdmin = this.auth.isAdmin;
-  types = ['Birthday', 'Anniversary', 'Engagement', 'Festival'];
+  types = ['Birthday', 'Anniversary', 'Engagement', 'Festival', 'Good Morning', 'Good Night'];
   events$ = this.api.events();
-
+  allUsers: AppUser[] = [];
   result = '';
   subject = '';
+
+
+  constructor() {
+    this.loadUsers();
+  }
 
   get desktopPreviewSrcDoc(): string {
     return this.wrapPreviewHtml(this.result);
@@ -34,7 +42,7 @@ export class EventsComponent {
     name: ['', [Validators.required]],
     type: ['Birthday', [Validators.required]],
     festival: [''],
-    eventDate: ['', [Validators.required]],
+    eventDate: [''],
     recurring: [false],
     wish: [''],
     relation: ['']
@@ -45,60 +53,17 @@ export class EventsComponent {
       this.form.controls.name.markAsTouched();
       return;
     }
-
+    const nameObj = this.form.controls.name.value as any;
     this.api.aiWish({
-      name: this.form.controls.name.value,
+      name: nameObj.name,
       event: this.form.controls.type.value,
       tone: 'Warm',
       language: 'English',
       relation: this.form.controls.relation.value
     }).subscribe((res) => {
-      const parsedPayload = this.parseRawWishPayload(res);
-      this.subject = parsedPayload.subject;
-      this.result = parsedPayload.htmlMessage;
+      this.subject = res.subject;
+      this.result = res.htmlMessage;
     });
-  }
-
-  private extractJsonString(raw: string): string {
-    if (!raw?.trim()) {
-      return '';
-    }
-
-    const normalized = raw
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<[^>]*>/g, '')
-        .trim();
-
-    const fencedMatch = normalized.match(/```json\s*([\s\S]*?)\s*```/i);
-    if (fencedMatch?.[1]) {
-      return fencedMatch[1].trim();
-    }
-
-    if (normalized.startsWith('{') && normalized.endsWith('}')) {
-      return normalized;
-    }
-
-    return '';
-  }
-
-  private parseRawWishPayload(payload: { subject?: string; htmlMessage?: string }): { subject: string; htmlMessage: string } {
-    const subject = payload.subject ?? '';
-    const htmlMessage = payload.htmlMessage ?? '';
-
-    const nestedJsonSource = this.extractJsonString(subject) || this.extractJsonString(htmlMessage);
-    if (!nestedJsonSource) {
-      return { subject, htmlMessage };
-    }
-
-    try {
-      const parsed = JSON.parse(nestedJsonSource) as { subject?: string; htmlMessage?: string };
-      return {
-        subject: parsed.subject ?? subject,
-        htmlMessage: parsed.htmlMessage ?? htmlMessage
-      };
-    } catch {
-      return { subject, htmlMessage };
-    }
   }
 
   save() {
@@ -108,15 +73,15 @@ export class EventsComponent {
     }
 
     const value = this.form.getRawValue();
-
+    const nameObj = this.form.controls.name.value as any;
     this.api.saveEvent({
-      name: value.name,
-      eventType: value.type,
+      subject: this.subject,
+      body: this.result,
+      eventType: value.type === 'Good Morning' ? "GOODMORNING" : 'Good Night' ? "GOODNIGHT" : value.type,
       eventDate: value.eventDate,
       recurring: value.recurring,
-      wish: value.wish,
-      festival: value.type === 'Festival' ? value.festival : undefined,
-      relation: value.relation
+      festivalName: value.type === 'Festival' ? value.festival : undefined,
+      userId: nameObj.id
     }).subscribe(() => {
       this.events$ = this.api.events();
       this.form.patchValue({ wish: '', festival: '' });
@@ -125,5 +90,11 @@ export class EventsComponent {
 
   private wrapPreviewHtml(content: string): string {
     return `<html><body style="margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#212529;">${content}</body></html>`;
+  }
+
+  private loadUsers(): void {
+    this.api.users().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
+      this.allUsers = users;
+    });
   }
 }

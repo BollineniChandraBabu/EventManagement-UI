@@ -4,7 +4,9 @@
     <form [formGroup]="form" class="form-grid">
       <div>
         <label class="form-label">Name</label>
-        <input class="form-control" formControlName="name" [readonly]="!isAdmin()" />
+          <select class="form-select" formControlName="name" [disabled]="!isAdmin()">
+              <option *ngFor="let t of allUsers" [ngValue]="t">{{ t.name }}</option>
+          </select>
       </div>
       <div>
         <label class="form-label">Type</label>
@@ -16,7 +18,7 @@
         <label class="form-label">Festival</label>
         <input class="form-control" formControlName="festival" [readonly]="!isAdmin()" />
       </div>
-      <div>
+      <div *ngIf="form.controls.type.value != 'Good Morning' && form.controls.type.value != 'Good Night'">
         <label class="form-label">Date</label>
         <input class="form-control" type="date" formControlName="eventDate" [readonly]="!isAdmin()" />
       </div>

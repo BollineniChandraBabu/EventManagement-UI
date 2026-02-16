@@ -35,10 +35,13 @@
               <input id="email" type="email" class="form-control" formControlName="email" placeholder="name@example.com" />
             </div>
 
-            <div class="col-12 col-md-6">
-              <label for="phoneNumber" class="form-label">Phone number</label>
-              <input id="phoneNumber" type="text" class="form-control" formControlName="phoneNumber" placeholder="Optional" />
-            </div>
+              <div class="col-12 col-md-6">
+                  <label class="form-label">Role</label>
+                  <select class="form-select" formControlName="role">
+                      <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
+                      <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
+                  </select>
+              </div>
 
             <div class="col-12 d-flex justify-content-end">
               <button type="submit" class="btn btn-primary px-4">

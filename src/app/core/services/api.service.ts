@@ -57,13 +57,13 @@ export class ApiService {
   }
 
   saveEvent(payload: {
-    name: string;
+    subject: string;
+    body: string;
     eventType: string;
     eventDate: string;
     recurring: boolean;
-    wish: string;
-    festival: string | undefined;
-    relation: string
+    festivalName: string | undefined;
+    userId: string
   }) {
     return this.http.post(`${environment.apiUrl}/events`, payload);
   }

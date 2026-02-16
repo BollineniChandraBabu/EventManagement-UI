@@ -5,6 +5,7 @@ import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse, UpdateUserProfileRequest, UserProfile } from '../models/auth.models';
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
+import {AppUser} from "../models/api.models";
 
 const ACCESS_TOKEN = 'fw_access_token';
 const REFRESH_TOKEN = 'fw_refresh_token';
@@ -52,8 +53,8 @@ export class AuthService {
     return this.http.post<void>(`${environment.apiUrl}/auth/change-password`, { currentPassword, newPassword });
   }
 
-  getProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${environment.apiUrl}/users/me`);
+  getProfile(): Observable<AppUser> {
+    return this.http.get<AppUser>(`${environment.apiUrl}/users/me`);
   }
 
   updateProfile(payload: UpdateUserProfileRequest): Observable<void> {

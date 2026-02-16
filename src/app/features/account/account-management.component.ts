@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
 
 @Component({
   standalone: true,
@@ -18,11 +19,13 @@ export class AccountManagementComponent {
 
   readonly accountMsg = signal('');
   readonly passwordMsg = signal('');
+  readonly ROLE_ADMIN = ROLE_ADMIN;
+  readonly ROLE_USER = ROLE_USER;
 
   readonly profileForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
-    phoneNumber: ['']
+    role: [ROLE_USER as UserRole, [Validators.required]]
   });
 
   readonly passwordForm = this.fb.nonNullable.group({
@@ -35,9 +38,9 @@ export class AccountManagementComponent {
     this.auth.getProfile().subscribe({
       next: (profile) => {
         this.profileForm.patchValue({
-          fullName: profile.fullName ?? '',
+          fullName: profile.name ?? '',
           email: profile.email ?? '',
-          phoneNumber: profile.phoneNumber ?? ''
+          role: profile.role
         });
       },
       error: () => {
