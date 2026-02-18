@@ -6,4 +6,3 @@ coverage/
 .idea/EventManagement-UI.iml
 .idea/modules.xml
 .idea/vcs.xml
-package-lock.json
