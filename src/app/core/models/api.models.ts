@@ -78,3 +78,27 @@ export interface EmailStatus {
   status: string;
   sentAt: string;
 }
+
+// Matches scheduler API response payload shape from backend.
+export interface SchedulerItem {
+  name: string;
+  type: string;
+  running: boolean;
+  totalRuns: number;
+  successRuns: number;
+  failedRuns: number;
+  lastStartedAt?: string;
+  lastCompletedAt?: string;
+  lastDurationMs?: number;
+  lastStatus?: string;
+  lastError?: string;
+  nextFireTime?: string;
+  previousFireTime?: string;
+}
+
+
+export interface SchedulerTriggerResponse {
+  name: string;
+  message: string;
+  triggeredAt: string;
+}

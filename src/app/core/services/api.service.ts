@@ -13,6 +13,8 @@ import {
   SaveEventPayload,
   SaveTemplatePayload,
   SaveUserPayload,
+  SchedulerItem,
+  SchedulerTriggerResponse,
   TemplateVersion
 } from '../models/api.models';
 
@@ -98,6 +100,18 @@ export class ApiService {
 
   sendTestEmail(html: string) {
     return this.http.post(`${environment.apiUrl}/emails/test`, { html });
+  }
+
+  schedulers(): Observable<SchedulerItem[]> {
+    return this.http.get<ApiResponse<SchedulerItem[]>>(`${environment.apiUrl}/schedulers`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  triggerScheduler(jobName: string): Observable<SchedulerTriggerResponse> {
+    return this.http.post<ApiResponse<SchedulerTriggerResponse>>(`${environment.apiUrl}/schedulers/${encodeURIComponent(jobName)}/trigger`, {}).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   private unwrap<T>(response: ApiResponse<T>): T {
