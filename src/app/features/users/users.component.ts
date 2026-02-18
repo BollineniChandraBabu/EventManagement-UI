@@ -34,7 +34,10 @@ export class UsersComponent {
     id: [0],
     name: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
-    role: [ROLE_USER as UserRole, [Validators.required]]
+    role: [ROLE_USER as UserRole, [Validators.required]],
+    isBirthdayEnabled: [false],
+    isGoodMorningEnabled: [false],
+    isGoodNightEnabled: [false],
   });
 
   constructor() {
@@ -73,7 +76,10 @@ export class UsersComponent {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      isGoodMorningEnabled: user.isGoodMorningEnabled,
+      isBirthdayEnabled: user.isBirthdayEnabled,
+      isGoodNightEnabled: user.isGoodNightEnabled
     });
   }
 

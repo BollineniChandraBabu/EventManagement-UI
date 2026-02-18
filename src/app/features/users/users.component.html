@@ -22,6 +22,29 @@
             <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
           </select>
         </div>
+
+          <div class="col-12 col-md-4">
+              <div class="form-check form-switch mt-3">
+                  <label class="form-check-label" for="birthDaySwitch">Send Birthday Wishes</label>
+                  <input class="form-check-input" type="checkbox" id="birthDaySwitch" formControlName="isBirthdayEnabled" />
+              </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+              <div class="form-check form-switch mt-3">
+                  <label class="form-check-label" for="goodMorningSwitch">Send Good Morning Wishes</label>
+                  <input class="form-check-input" type="checkbox" id="goodMorningSwitch" formControlName="isGoodMorningEnabled"/>
+              </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+              <div class="form-check form-switch mt-3">
+                  <label class="form-check-label" for="goodNightSwitch">Send Good Night Wishes</label>
+                  <input class="form-check-input" type="checkbox" id="goodNightSwitch" formControlName="isGoodNightEnabled" />
+              </div>
+          </div>
+
+
         <div class="col-12 d-flex gap-2">
           <button class="btn btn-primary" type="button" (click)="save()">{{ form.controls.id.value ? 'Update User' : 'Create User' }}</button>
           <button class="btn btn-outline-secondary" type="button" (click)="resetForm()">Clear</button>

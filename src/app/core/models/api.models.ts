@@ -15,6 +15,10 @@ export interface AppUser {
   email: string;
   role: UserRole;
   active?: boolean;
+  relationShip: string;
+  isGoodMorningEnabled?: boolean;
+  isGoodNightEnabled?: boolean;
+  isBirthdayEnabled?: boolean;
 }
 
 export interface SaveUserPayload {
