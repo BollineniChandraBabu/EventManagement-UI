@@ -15,6 +15,7 @@ import { TemplateEditorComponent } from './features/templates/template-editor.co
 import { AiWishesComponent } from './features/ai-wishes/ai-wishes.component';
 import { EmailPreviewComponent } from './features/email-preview/email-preview.component';
 import { EmailStatusComponent } from './features/email-status/email-status.component';
+import { SchedulersComponent } from './features/schedulers/schedulers.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
@@ -31,6 +32,7 @@ export const routes: Routes = [
     { path: 'ai-wishes', component: AiWishesComponent },
     { path: 'email-preview', component: EmailPreviewComponent },
     { path: 'email-status', component: EmailStatusComponent },
+    { path: 'schedulers', component: SchedulersComponent, canActivate: [adminGuard] },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]},
   { path: '**', redirectTo: 'dashboard' }

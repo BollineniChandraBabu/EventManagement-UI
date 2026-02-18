@@ -1,0 +1,14 @@
+.table td,
+.table th {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.table td:nth-child(1),
+.table td:nth-child(6) {
+  white-space: normal;
+}
+
+.badge {
+  font-weight: 500;
+}

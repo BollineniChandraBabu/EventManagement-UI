@@ -9,6 +9,7 @@
         <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes">AI Wishes</a>
         <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-preview">Email Preview</a>
         <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status">Email Status</a>
+        <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers">Schedulers</a>
         <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users">Users</a>
         <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/templates">Templates</a>
       </div>
