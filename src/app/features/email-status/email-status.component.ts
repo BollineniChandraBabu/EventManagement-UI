@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EmailStatus } from '../../core/models/api.models';
@@ -8,7 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './email-status.component.html',
   styleUrl: './email-status.component.css'
 })
@@ -31,8 +32,6 @@ export class EmailStatusComponent {
   totalPages = 0;
   totalElements = 0;
   loading = false;
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly searchDebounceMs = 350;
   retryingIds = new Set<number>();
   selectedItem: EmailStatus | null = null;
   previewMode: 'desktop' | 'mobile' = 'desktop';
@@ -40,12 +39,6 @@ export class EmailStatusComponent {
   readonly previewFrom = 'Event Management <no-reply@eventmanagement.app>';
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.searchTimer) {
-        clearTimeout(this.searchTimer);
-      }
-    });
-
     this.loadItems();
   }
 
@@ -115,17 +108,28 @@ export class EmailStatusComponent {
     this.isImageExpanded = false;
   }
 
-  onSearch(value: string): void {
-    this.filterText = value.trim();
-    this.page = 0;
+  onSearchInput(value: string): void {
+    const previousFilter = this.filterText;
+    this.filterText = value;
 
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
+    if (previousFilter.trim() && !this.filterText.trim()) {
+      this.applySearch();
+    }
+  }
+
+  clearSearch(): void {
+    if (!this.filterText) {
+      return;
     }
 
-    this.searchTimer = setTimeout(() => {
-      this.loadItems();
-    }, this.searchDebounceMs);
+    this.filterText = '';
+    this.applySearch();
+  }
+
+  applySearch(): void {
+    this.filterText = this.filterText.trim();
+    this.page = 0;
+    this.loadItems();
   }
 
   onStatusFilter(value: string): void {

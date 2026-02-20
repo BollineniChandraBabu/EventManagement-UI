@@ -56,7 +56,15 @@
       <div class="row g-3 align-items-end mb-3">
         <div class="col-12 col-md-6">
           <label class="form-label">Filter users</label>
-          <input class="form-control" type="text" placeholder="Search by name or email" (input)="onSearch($any($event.target).value)" [disabled]="loading" />
+          <div class="input-group">
+            <input class="form-control" type="text" placeholder="Search by name or email" [ngModel]="filterText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loading" />
+            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loading" aria-label="Clear user search" *ngIf="filterText">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading" aria-label="Search users">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
         </div>
         <div class="col-6 col-md-3">
           <label class="form-label">Role</label>

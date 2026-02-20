@@ -1,7 +1,7 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AppUser } from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
@@ -9,7 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AsyncPipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, AsyncPipe],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css'
 })
@@ -35,8 +35,6 @@ export class UsersComponent {
   loading = false;
   saving = false;
   deactivatingIds = new Set<number>();
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly searchDebounceMs = 350;
 
   form = this.fb.nonNullable.group({
     id: [0],
@@ -49,12 +47,6 @@ export class UsersComponent {
   });
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.searchTimer) {
-        clearTimeout(this.searchTimer);
-      }
-    });
-
     this.loadUsers();
   }
 
@@ -133,17 +125,28 @@ export class UsersComponent {
     return this.deactivatingIds.has(id);
   }
 
-  onSearch(value: string): void {
-    this.filterText = value.trim();
-    this.page = 0;
+  onSearchInput(value: string): void {
+    const previousFilter = this.filterText;
+    this.filterText = value;
 
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
+    if (previousFilter.trim() && !this.filterText.trim()) {
+      this.applySearch();
+    }
+  }
+
+  clearSearch(): void {
+    if (!this.filterText) {
+      return;
     }
 
-    this.searchTimer = setTimeout(() => {
-      this.loadUsers();
-    }, this.searchDebounceMs);
+    this.filterText = '';
+    this.applySearch();
+  }
+
+  applySearch(): void {
+    this.filterText = this.filterText.trim();
+    this.page = 0;
+    this.loadUsers();
   }
 
   onRoleFilter(value: string): void {
