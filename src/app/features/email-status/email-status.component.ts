@@ -23,10 +23,11 @@ export class EmailStatusComponent {
 
   filterText = '';
   filterStatus = 'ALL';
-  page = 1;
+  page = 0;
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
-  totalPages = 1;
+  totalPages = 0;
+  totalElements = 0;
   selectedItem: EmailStatus | null = null;
   previewMode: 'desktop' | 'mobile' = 'desktop';
   isImageExpanded = false;
@@ -36,16 +37,20 @@ export class EmailStatusComponent {
     this.loadItems();
   }
 
+  get displayPage(): number {
+    return this.page + 1;
+  }
+
   get startRow(): number {
-    return this.allItems.length === 0 ? 0 : (this.page - 1) * this.pageSize + 1;
+    if (this.totalElements === 0 || this.viewItems.length === 0) {
+      return 0;
+    }
+
+    return this.page * this.pageSize + 1;
   }
 
   get endRow(): number {
-    return Math.min(this.page * this.pageSize, this.filteredItemsCount());
-  }
-
-  filteredItemsCount(): number {
-    return this.filteredItems().length;
+    return this.viewItems.length === 0 ? 0 : this.startRow + this.viewItems.length - 1;
   }
 
   retry(id: number): void {
@@ -84,66 +89,58 @@ export class EmailStatusComponent {
   }
 
   onSearch(value: string): void {
-    this.filterText = value.trim().toLowerCase();
-    this.page = 1;
-    this.applyFilters();
+    this.filterText = value.trim();
+    this.page = 0;
+    this.loadItems();
   }
 
   onStatusFilter(value: string): void {
     this.filterStatus = value;
-    this.page = 1;
-    this.applyFilters();
+    this.applyStatusFilter();
   }
 
   onPageSizeChange(value: string): void {
     this.pageSize = Number(value);
-    this.page = 1;
-    this.applyFilters();
+    this.page = 0;
+    this.loadItems();
   }
 
   nextPage(): void {
-    if (this.page < this.totalPages) {
+    if (this.page < this.totalPages - 1) {
       this.page++;
-      this.applyFilters();
+      this.loadItems();
     }
   }
 
   prevPage(): void {
-    if (this.page > 1) {
+    if (this.page > 0) {
       this.page--;
-      this.applyFilters();
+      this.loadItems();
     }
   }
 
   private loadItems(): void {
-    this.api.emailStatuses().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((items) => {
-      this.allItems = items;
+    this.api.emailStatuses(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
+      this.allItems = response.content ?? [];
+      this.totalElements = response.totalElements ?? this.allItems.length;
+      this.totalPages = response.totalPages ?? 0;
+
       this.allItems.forEach((item: EmailStatus) => {
         if (item.imgData?.trim() && !item.imgData.startsWith('data:image')) {
           item.imgData = `data:image/png;base64,${item.imgData}`;
         }
       });
-      this.applyFilters();
+
+      this.applyStatusFilter();
     });
   }
 
-  private filteredItems(): EmailStatus[] {
-    return this.allItems.filter((item) => {
-      const matchesText = !this.filterText
-        || item.toEmail.toLowerCase().includes(this.filterText)
-        || item.subject.toLowerCase().includes(this.filterText);
+  private applyStatusFilter(): void {
+    if (this.filterStatus === 'ALL') {
+      this.viewItems = [...this.allItems];
+      return;
+    }
 
-      const matchesStatus = this.filterStatus === 'ALL' || item.status === this.filterStatus;
-      return matchesText && matchesStatus;
-    });
-  }
-
-  private applyFilters(): void {
-    const filtered = this.filteredItems();
-    this.totalPages = Math.max(1, Math.ceil(filtered.length / this.pageSize));
-    this.page = Math.min(this.page, this.totalPages);
-
-    const start = (this.page - 1) * this.pageSize;
-    this.viewItems = filtered.slice(start, start + this.pageSize);
+    this.viewItems = this.allItems.filter((item) => item.status === this.filterStatus);
   }
 }

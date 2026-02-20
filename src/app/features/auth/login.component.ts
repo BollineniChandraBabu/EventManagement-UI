@@ -1,3 +1,5 @@
+import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -5,7 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -13,6 +15,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
@@ -20,13 +23,40 @@ export class LoginComponent {
   });
 
   showPassword = false;
+  isSubmitting = false;
+  errorMessage = '';
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }
 
   submit() {
-    if (this.form.invalid) return;
-    this.auth.login(this.form.getRawValue()).subscribe(() => this.router.navigate(['/dashboard']));
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.errorMessage = '';
+    this.isSubmitting = true;
+
+    this.auth.login(this.form.getRawValue()).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.getLoginErrorMessage(error);
+        this.isSubmitting = false;
+      }
+    });
+  }
+
+  private getLoginErrorMessage(error: HttpErrorResponse): string {
+    const backendMessage = error?.error?.message;
+    if (typeof backendMessage === 'string' && backendMessage.trim()) {
+      return backendMessage;
+    }
+
+    return 'Unable to login right now. Please try again.';
   }
 }

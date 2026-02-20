@@ -2,6 +2,14 @@ import { UserRole } from '../constants/roles.constants';
 
 export type ApiResponse<T> = T | { data: T } | { content: T };
 
+export interface PagedResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface DashboardStats {
   totalUsers: number;
   upcomingEvents: number;
