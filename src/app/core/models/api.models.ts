@@ -76,7 +76,7 @@ export interface EmailStatus {
   toEmail: string;
   subject: string;
   body: string;
-  image: string;
+  imgData: string;
   status: string;
   sentAt: string;
 }

@@ -112,9 +112,10 @@
           <div class="preview-body" [innerHTML]="selectedItem.body"></div>
         </div>
 
-        <div *ngIf="selectedItem.image">
+        <div *ngIf="selectedItem.imgData">
           <div class="text-muted small mb-1">Image</div>
-          <img class="preview-image" [src]="selectedItem.image" alt="Email image" />
+          <img class="preview-image" [src]="selectedItem.imgData" alt="Email image"  width="200"
+               height="150"/>
         </div>
       </div>
     </div>

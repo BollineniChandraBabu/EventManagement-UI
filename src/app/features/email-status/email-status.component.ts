@@ -55,7 +55,7 @@ export class EmailStatusComponent {
   }
 
   canPreview(item: EmailStatus): boolean {
-    return Boolean(item.body?.trim() || item.image?.trim());
+    return Boolean(item.body?.trim() || item.imgData?.trim());
   }
 
   openPreview(item: EmailStatus): void {
@@ -106,6 +106,7 @@ export class EmailStatusComponent {
   private loadItems(): void {
     this.api.emailStatuses().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((items) => {
       this.allItems = items;
+      this.allItems.forEach((item: EmailStatus) => {item.imgData = 'data:image/png;base64,' + item.imgData;})
       this.applyFilters();
     });
   }
