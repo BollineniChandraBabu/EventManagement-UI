@@ -29,6 +29,8 @@ export class EmailStatusComponent {
   totalPages = 1;
   selectedItem: EmailStatus | null = null;
   previewMode: 'desktop' | 'mobile' = 'desktop';
+  isImageExpanded = false;
+  readonly previewFrom = 'Event Management <no-reply@eventmanagement.app>';
 
   constructor() {
     this.loadItems();
@@ -61,6 +63,7 @@ export class EmailStatusComponent {
   openPreview(item: EmailStatus): void {
     this.selectedItem = item;
     this.previewMode = 'desktop';
+    this.isImageExpanded = false;
   }
 
   setPreviewMode(mode: 'desktop' | 'mobile'): void {
@@ -69,6 +72,15 @@ export class EmailStatusComponent {
 
   closePreview(): void {
     this.selectedItem = null;
+    this.isImageExpanded = false;
+  }
+
+  openImagePreview(): void {
+    this.isImageExpanded = true;
+  }
+
+  closeImagePreview(): void {
+    this.isImageExpanded = false;
   }
 
   onSearch(value: string): void {
@@ -106,7 +118,11 @@ export class EmailStatusComponent {
   private loadItems(): void {
     this.api.emailStatuses().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((items) => {
       this.allItems = items;
-      this.allItems.forEach((item: EmailStatus) => {item.imgData = 'data:image/png;base64,' + item.imgData;})
+      this.allItems.forEach((item: EmailStatus) => {
+        if (item.imgData?.trim() && !item.imgData.startsWith('data:image')) {
+          item.imgData = `data:image/png;base64,${item.imgData}`;
+        }
+      });
       this.applyFilters();
     });
   }
