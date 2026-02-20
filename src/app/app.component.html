@@ -1,20 +1,47 @@
-<nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+<nav class="navbar navbar-dark app-navbar">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" routerLink="/dashboard"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Family Wishes</a>
+    <a class="navbar-brand fw-bold" routerLink="/dashboard" (click)="closeMobileMenu()">
+      <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Family Wishes
+    </a>
+
+    <button
+      *ngIf="auth.authenticated()"
+      class="navbar-toggler mobile-menu-toggle"
+      type="button"
+      aria-label="Toggle navigation"
+      [attr.aria-expanded]="isMobileMenuOpen"
+      (click)="toggleMobileMenu()"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
     <ng-container *ngIf="auth.authenticated()">
-      <div class="d-flex flex-wrap align-items-center gap-2 flex-grow-1">
-        <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/dashboard">Dashboard</a>
-        <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events">Events</a>
-        <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes">AI Wishes</a>
-        <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-preview">Email Preview</a>
-        <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status">Email Status</a>
-        <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers">Schedulers</a>
-        <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users">Users</a>
-        <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/templates">Templates</a>
-      </div>
-      <div class="d-flex align-items-center gap-2">
+      <div class="desktop-menu d-none d-lg-flex align-items-center justify-content-between flex-grow-1 gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/dashboard">Dashboard</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events">Events</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes">AI Wishes</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-preview">Email Preview</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status">Email Status</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers">Schedulers</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users">Users</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/templates">Templates</a>
+        </div>
         <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
+      </div>
+
+      <div class="mobile-menu w-100" *ngIf="isMobileMenuOpen">
+        <div class="mobile-menu-panel">
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/dashboard" (click)="closeMobileMenu()">Dashboard</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events" (click)="closeMobileMenu()">Events</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes" (click)="closeMobileMenu()">AI Wishes</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-preview" (click)="closeMobileMenu()">Email Preview</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status" (click)="closeMobileMenu()">Email Status</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers" (click)="closeMobileMenu()">Schedulers</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users" (click)="closeMobileMenu()">Users</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/templates" (click)="closeMobileMenu()">Templates</a>
+          <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account" (click)="closeMobileMenu()"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
+        </div>
       </div>
     </ng-container>
   </div>
@@ -25,3 +52,5 @@
 </main>
 
 <app-toast-container></app-toast-container>
+
+<app-loading-overlay></app-loading-overlay>
