@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { resetLinkGuard } from './core/guards/reset-link.guard';
 import { LoginComponent } from './features/auth/login.component';
 import { OtpLoginComponent } from './features/auth/otp-login.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
@@ -18,10 +19,12 @@ import { EmailStatusComponent } from './features/email-status/email-status.compo
 import { SchedulersComponent } from './features/schedulers/schedulers.component';
 
 export const routes: Routes = [
+  { path: '', canActivate: [resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'otp-login', component: OtpLoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'password-reset', canActivate: [resetLinkGuard], component: ResetPasswordComponent },
   { path: '', canActivate: [authGuard], children: [
     { path: 'dashboard', component: DashboardComponent },
     { path: 'account', component: AccountManagementComponent },
