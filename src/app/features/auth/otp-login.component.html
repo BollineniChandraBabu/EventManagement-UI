@@ -28,15 +28,6 @@
           {{ isVerifying ? 'Verifying...' : 'Verify & Login' }}
         </button>
       </div>
-
-      <div *ngIf="otpSent" class="alert alert-success py-2 mt-2 mb-0">
-        OTP sent. Please check your inbox.
-      </div>
-
-      <div *ngIf="errorMessage" class="alert alert-danger py-2 mt-2 mb-0">
-        {{ errorMessage }}
-      </div>
-
       <div class="auth-links mt-2">
         <a routerLink="/login">Back to password login</a>
         <a routerLink="/forgot-password">Forgot password?</a>

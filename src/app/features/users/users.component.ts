@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AppUser } from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -16,6 +17,7 @@ export class UsersComponent {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
@@ -30,6 +32,9 @@ export class UsersComponent {
   pageSize = 10;
   totalPages = 0;
   totalElements = 0;
+  loading = false;
+  saving = false;
+  deactivatingIds = new Set<number>();
 
   form = this.fb.nonNullable.group({
     id: [0],
@@ -69,10 +74,19 @@ export class UsersComponent {
 
     const { id, ...payload } = this.form.getRawValue();
     const req = id ? this.api.updateUser(id, payload) : this.api.saveUser(payload);
+    this.saving = true;
 
-    req.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.loadUsers();
-      this.resetForm();
+    req.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.toast.success(id ? 'User updated successfully.' : 'User created successfully.');
+        this.loadUsers();
+        this.resetForm();
+        this.saving = false;
+      },
+      error: () => {
+        this.toast.error('Unable to save user. Please try again.');
+        this.saving = false;
+      }
     });
   }
 
@@ -93,7 +107,22 @@ export class UsersComponent {
   }
 
   deactivate(id: number): void {
-    this.api.deactivateUser(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadUsers());
+    this.deactivatingIds.add(id);
+    this.api.deactivateUser(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.toast.success('User deactivated successfully.');
+        this.deactivatingIds.delete(id);
+        this.loadUsers();
+      },
+      error: () => {
+        this.toast.error('Unable to deactivate user. Please try again.');
+        this.deactivatingIds.delete(id);
+      }
+    });
+  }
+
+  isDeactivating(id: number): boolean {
+    return this.deactivatingIds.has(id);
   }
 
   onSearch(value: string): void {
@@ -128,11 +157,24 @@ export class UsersComponent {
   }
 
   private loadUsers(): void {
-    this.api.users(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
-      this.allUsers = response.content ?? [];
-      this.totalElements = response.totalElements ?? this.allUsers.length;
-      this.totalPages = response.totalPages ?? 0;
-      this.applyRoleFilter();
+    this.loading = true;
+    this.allUsers = [];
+    this.viewUsers = [];
+    this.totalElements = 0;
+    this.totalPages = 0;
+
+    this.api.users(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.allUsers = response.content ?? [];
+        this.totalElements = response.totalElements ?? this.allUsers.length;
+        this.totalPages = response.totalPages ?? 0;
+        this.applyRoleFilter();
+        this.loading = false;
+      },
+      error: () => {
+        this.toast.error('Unable to fetch users right now.');
+        this.loading = false;
+      }
     });
   }
 

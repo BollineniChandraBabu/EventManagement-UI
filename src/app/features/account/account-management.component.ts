@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -16,9 +17,7 @@ import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.cons
 export class AccountManagementComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
-
-  readonly accountMsg = signal('');
-  readonly passwordMsg = signal('');
+  private readonly toast = inject(ToastService);
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
 
@@ -44,7 +43,7 @@ export class AccountManagementComponent {
         });
       },
       error: () => {
-        this.accountMsg.set('Unable to fetch profile right now. You can still update details manually.');
+        this.toast.warning('Unable to fetch profile right now. You can still update details manually.');
       }
     });
   }
@@ -56,8 +55,8 @@ export class AccountManagementComponent {
     }
 
     this.auth.updateProfile(this.profileForm.getRawValue()).subscribe({
-      next: () => this.accountMsg.set('Profile updated successfully.'),
-      error: () => this.accountMsg.set('Unable to update profile. Please try again.')
+      next: () => this.toast.success('Profile updated successfully.'),
+      error: () => this.toast.error('Unable to update profile. Please try again.')
     });
   }
 
@@ -70,16 +69,16 @@ export class AccountManagementComponent {
     const { currentPassword, newPassword, confirmPassword } = this.passwordForm.getRawValue();
 
     if (newPassword !== confirmPassword) {
-      this.passwordMsg.set('New password and confirmation do not match.');
+      this.toast.error('New password and confirmation do not match.');
       return;
     }
 
     this.auth.changePassword(currentPassword, newPassword).subscribe({
       next: () => {
-        this.passwordMsg.set('Password changed successfully.');
+        this.toast.success('Password changed successfully.');
         this.passwordForm.reset();
       },
-      error: () => this.passwordMsg.set('Could not change password. Please verify your current password.')
+      error: () => this.toast.error('Could not change password. Please verify your current password.')
     });
   }
 

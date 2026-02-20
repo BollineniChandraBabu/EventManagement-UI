@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -15,6 +16,7 @@ export class ResetPasswordComponent {
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   readonly token = this.route.snapshot.queryParamMap.get('token') ?? '';
   readonly emailFromQuery = this.route.snapshot.queryParamMap.get('email') ?? '';
@@ -26,12 +28,16 @@ export class ResetPasswordComponent {
   });
 
   isSubmitting = false;
-  submitted = false;
-  errorMessage = '';
+
+  constructor() {
+    if (!this.token) {
+      this.toast.warning('Reset token not found. Open the reset link from your email again.');
+    }
+  }
 
   submit() {
     if (!this.token) {
-      this.errorMessage = 'This reset link is missing a token. Please request a new reset email.';
+      this.toast.error('This reset link is missing a token. Please request a new reset email.');
       return;
     }
 
@@ -42,24 +48,22 @@ export class ResetPasswordComponent {
 
     const { email, newPassword, confirmPassword } = this.form.getRawValue();
     if (newPassword !== confirmPassword) {
-      this.errorMessage = 'Password and confirm password must match.';
+      this.toast.error('Password and confirm password must match.');
       return;
     }
 
-    this.errorMessage = '';
-    this.submitted = false;
     this.isSubmitting = true;
 
     this.auth.resetPassword(email, this.token, newPassword).subscribe({
       next: () => {
-        this.submitted = true;
+        this.toast.success('Password reset successfully. Redirecting to login...');
         this.isSubmitting = false;
         this.form.reset();
 
         setTimeout(() => this.router.navigate(['/login']), 1500);
       },
       error: () => {
-        this.errorMessage = 'Reset link is invalid or expired. Please request a new reset email.';
+        this.toast.error('Reset link is invalid or expired. Please request a new reset email.');
         this.isSubmitting = false;
       }
     });
