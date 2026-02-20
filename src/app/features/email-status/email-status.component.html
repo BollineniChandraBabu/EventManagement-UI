@@ -53,6 +53,7 @@
               </td>
                 <td>{{ item.sentAt | date:'short' }}</td>
               <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary me-2" *ngIf="canPreview(item)" (click)="openPreview(item)">View</button>
                 <button class="btn btn-sm btn-outline-danger" *ngIf="isAdmin() && item.status==='FAILED'" (click)="retry(item.id)">Retry</button>
                 <span *ngIf="!isAdmin()" class="text-muted small">Read only</span>
               </td>
@@ -74,6 +75,48 @@
       </div>
 
       <div class="alert alert-info mt-3 mb-0" *ngIf="!isAdmin()">Read-only access: only admins can retry failed emails.</div>
+    </div>
+  </div>
+</div>
+
+<div class="preview-backdrop" *ngIf="selectedItem" (click)="closePreview()">
+  <div class="preview-modal card shadow-3" (click)="$event.stopPropagation()">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <h3 class="h6 mb-0">Email Preview</h3>
+      <div class="d-flex align-items-center gap-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Preview mode">
+          <button
+            type="button"
+            class="btn"
+            [class.btn-primary]="previewMode === 'desktop'"
+            [class.btn-outline-primary]="previewMode !== 'desktop'"
+            (click)="setPreviewMode('desktop')">
+            Desktop
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.btn-primary]="previewMode === 'mobile'"
+            [class.btn-outline-primary]="previewMode !== 'mobile'"
+            (click)="setPreviewMode('mobile')">
+            Mobile
+          </button>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="closePreview()">Close</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="preview-content-shell" [class.preview-content-mobile]="previewMode === 'mobile'">
+        <div class="mb-3" *ngIf="selectedItem.body">
+          <div class="text-muted small mb-1">Body</div>
+          <div class="preview-body" [innerHTML]="selectedItem.body"></div>
+        </div>
+
+        <div *ngIf="selectedItem.image">
+          <div class="text-muted small mb-1">Image</div>
+          <img class="preview-image" [src]="selectedItem.image" alt="Email image" />
+        </div>
+      </div>
     </div>
   </div>
 </div>

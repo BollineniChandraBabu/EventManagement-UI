@@ -27,6 +27,8 @@ export class EmailStatusComponent {
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
   totalPages = 1;
+  selectedItem: EmailStatus | null = null;
+  previewMode: 'desktop' | 'mobile' = 'desktop';
 
   constructor() {
     this.loadItems();
@@ -50,6 +52,23 @@ export class EmailStatusComponent {
     }
 
     this.api.retryEmail(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadItems());
+  }
+
+  canPreview(item: EmailStatus): boolean {
+    return Boolean(item.body?.trim() || item.image?.trim());
+  }
+
+  openPreview(item: EmailStatus): void {
+    this.selectedItem = item;
+    this.previewMode = 'desktop';
+  }
+
+  setPreviewMode(mode: 'desktop' | 'mobile'): void {
+    this.previewMode = mode;
+  }
+
+  closePreview(): void {
+    this.selectedItem = null;
   }
 
   onSearch(value: string): void {
