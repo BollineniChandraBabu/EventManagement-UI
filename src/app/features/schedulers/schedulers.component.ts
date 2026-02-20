@@ -19,6 +19,8 @@ export class SchedulersComponent {
 
   viewSchedulers: SchedulerItem[] = [];
   loading = false;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly searchDebounceMs = 350;
   filterText = '';
   page = 0;
   readonly pageSizes = [5, 10, 20];
@@ -28,6 +30,12 @@ export class SchedulersComponent {
   triggeringJobs = new Set<string>();
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.searchTimer) {
+        clearTimeout(this.searchTimer);
+      }
+    });
+
     this.loadSchedulers();
   }
 
@@ -54,7 +62,14 @@ export class SchedulersComponent {
   onSearch(value: string): void {
     this.filterText = value.trim();
     this.page = 0;
-    this.loadSchedulers();
+
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+
+    this.searchTimer = setTimeout(() => {
+      this.loadSchedulers();
+    }, this.searchDebounceMs);
   }
 
   onPageSizeChange(value: string): void {
