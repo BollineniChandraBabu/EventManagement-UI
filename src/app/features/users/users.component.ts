@@ -35,6 +35,8 @@ export class UsersComponent {
   loading = false;
   saving = false;
   deactivatingIds = new Set<number>();
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly searchDebounceMs = 350;
 
   form = this.fb.nonNullable.group({
     id: [0],
@@ -47,6 +49,12 @@ export class UsersComponent {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.searchTimer) {
+        clearTimeout(this.searchTimer);
+      }
+    });
+
     this.loadUsers();
   }
 
@@ -128,7 +136,14 @@ export class UsersComponent {
   onSearch(value: string): void {
     this.filterText = value.trim();
     this.page = 0;
-    this.loadUsers();
+
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+
+    this.searchTimer = setTimeout(() => {
+      this.loadUsers();
+    }, this.searchDebounceMs);
   }
 
   onRoleFilter(value: string): void {

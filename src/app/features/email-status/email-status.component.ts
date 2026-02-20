@@ -31,6 +31,8 @@ export class EmailStatusComponent {
   totalPages = 0;
   totalElements = 0;
   loading = false;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly searchDebounceMs = 350;
   retryingIds = new Set<number>();
   selectedItem: EmailStatus | null = null;
   previewMode: 'desktop' | 'mobile' = 'desktop';
@@ -38,6 +40,12 @@ export class EmailStatusComponent {
   readonly previewFrom = 'Event Management <no-reply@eventmanagement.app>';
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.searchTimer) {
+        clearTimeout(this.searchTimer);
+      }
+    });
+
     this.loadItems();
   }
 
@@ -110,7 +118,14 @@ export class EmailStatusComponent {
   onSearch(value: string): void {
     this.filterText = value.trim();
     this.page = 0;
-    this.loadItems();
+
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+
+    this.searchTimer = setTimeout(() => {
+      this.loadItems();
+    }, this.searchDebounceMs);
   }
 
   onStatusFilter(value: string): void {
