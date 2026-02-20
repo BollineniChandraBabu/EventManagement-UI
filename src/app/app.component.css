@@ -7,6 +7,17 @@
   min-height: calc(100vh - 72px);
 }
 
+.nav-shell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 0.75rem;
+}
+
+.mobile-menu {
+  flex-basis: 100%;
+}
+
 .account-btn {
   display: inline-flex;
   align-items: center;
@@ -17,7 +28,7 @@
 }
 
 .mobile-menu-panel {
-  margin-top: 0.8rem;
+  margin-top: 0.35rem;
   padding: 0.75rem;
   border-radius: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
