@@ -25,10 +25,11 @@ export class UsersComponent {
 
   filterText = '';
   filterRole = 'ALL';
-  page = 1;
+  page = 0;
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
-  totalPages = 1;
+  totalPages = 0;
+  totalElements = 0;
 
   form = this.fb.nonNullable.group({
     id: [0],
@@ -44,16 +45,20 @@ export class UsersComponent {
     this.loadUsers();
   }
 
+  get displayPage(): number {
+    return this.page + 1;
+  }
+
   get startRow(): number {
-    return this.allUsers.length === 0 ? 0 : (this.page - 1) * this.pageSize + 1;
+    if (this.totalElements === 0 || this.viewUsers.length === 0) {
+      return 0;
+    }
+
+    return this.page * this.pageSize + 1;
   }
 
   get endRow(): number {
-    return Math.min(this.page * this.pageSize, this.filteredUsersCount());
-  }
-
-  filteredUsersCount(): number {
-    return this.filteredUsers().length;
+    return this.viewUsers.length === 0 ? 0 : this.startRow + this.viewUsers.length - 1;
   }
 
   save(): void {
@@ -92,62 +97,51 @@ export class UsersComponent {
   }
 
   onSearch(value: string): void {
-    this.filterText = value.trim().toLowerCase();
-    this.page = 1;
-    this.applyFilters();
+    this.filterText = value.trim();
+    this.page = 0;
+    this.loadUsers();
   }
 
   onRoleFilter(value: string): void {
     this.filterRole = value;
-    this.page = 1;
-    this.applyFilters();
+    this.applyRoleFilter();
   }
 
   onPageSizeChange(value: string): void {
     this.pageSize = Number(value);
-    this.page = 1;
-    this.applyFilters();
+    this.page = 0;
+    this.loadUsers();
   }
 
   nextPage(): void {
-    if (this.page < this.totalPages) {
+    if (this.page < this.totalPages - 1) {
       this.page++;
-      this.applyFilters();
+      this.loadUsers();
     }
   }
 
   prevPage(): void {
-    if (this.page > 1) {
+    if (this.page > 0) {
       this.page--;
-      this.applyFilters();
+      this.loadUsers();
     }
   }
 
   private loadUsers(): void {
-    this.api.users().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
-      this.allUsers = users;
-      this.applyFilters();
+    this.api.users(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
+      this.allUsers = response.content ?? [];
+      this.totalElements = response.totalElements ?? this.allUsers.length;
+      this.totalPages = response.totalPages ?? 0;
+      this.applyRoleFilter();
     });
   }
 
-  private filteredUsers(): AppUser[] {
-    return this.allUsers.filter((user) => {
-      const matchesText =
-        !this.filterText ||
-        user.name.toLowerCase().includes(this.filterText) ||
-        user.email.toLowerCase().includes(this.filterText);
+  private applyRoleFilter(): void {
+    if (this.filterRole === 'ALL') {
+      this.viewUsers = [...this.allUsers];
+      return;
+    }
 
-      const matchesRole = this.filterRole === 'ALL' || user.role === this.filterRole;
-      return matchesText && matchesRole;
-    });
-  }
-
-  private applyFilters(): void {
-    const filtered = this.filteredUsers();
-    this.totalPages = Math.max(1, Math.ceil(filtered.length / this.pageSize));
-    this.page = Math.min(this.page, this.totalPages);
-
-    const start = (this.page - 1) * this.pageSize;
-    this.viewUsers = filtered.slice(start, start + this.pageSize);
+    this.viewUsers = this.allUsers.filter((user) => user.role === this.filterRole);
   }
 }

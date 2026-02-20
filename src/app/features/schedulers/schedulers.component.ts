@@ -15,15 +15,35 @@ export class SchedulersComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
 
-  schedulers: SchedulerItem[] = [];
   viewSchedulers: SchedulerItem[] = [];
   loading = false;
   message = '';
   filterText = '';
+  page = 0;
+  readonly pageSizes = [5, 10, 20];
+  pageSize = 10;
+  totalPages = 0;
+  totalElements = 0;
   triggeringJobs = new Set<string>();
 
   constructor() {
     this.loadSchedulers();
+  }
+
+  get displayPage(): number {
+    return this.page + 1;
+  }
+
+  get startRow(): number {
+    if (this.totalElements === 0 || this.viewSchedulers.length === 0) {
+      return 0;
+    }
+
+    return this.page * this.pageSize + 1;
+  }
+
+  get endRow(): number {
+    return this.viewSchedulers.length === 0 ? 0 : this.startRow + this.viewSchedulers.length - 1;
   }
 
   refresh(): void {
@@ -31,8 +51,29 @@ export class SchedulersComponent {
   }
 
   onSearch(value: string): void {
-    this.filterText = value.trim().toLowerCase();
-    this.applyFilter();
+    this.filterText = value.trim();
+    this.page = 0;
+    this.loadSchedulers();
+  }
+
+  onPageSizeChange(value: string): void {
+    this.pageSize = Number(value);
+    this.page = 0;
+    this.loadSchedulers();
+  }
+
+  nextPage(): void {
+    if (this.page < this.totalPages - 1) {
+      this.page++;
+      this.loadSchedulers();
+    }
+  }
+
+  prevPage(): void {
+    if (this.page > 0) {
+      this.page--;
+      this.loadSchedulers();
+    }
   }
 
   trigger(scheduler: SchedulerItem): void {
@@ -75,30 +116,20 @@ export class SchedulersComponent {
     this.loading = true;
     this.message = '';
 
-    this.api.schedulers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (items) => {
-        this.schedulers = (items ?? []).slice().sort((a, b) => `${a.type}-${a.name}`.localeCompare(`${b.type}-${b.name}`));
-        this.applyFilter();
+    this.api.schedulers(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.viewSchedulers = (response.content ?? []).slice().sort((a, b) => `${a.type}-${a.name}`.localeCompare(`${b.type}-${b.name}`));
+        this.totalElements = response.totalElements ?? this.viewSchedulers.length;
+        this.totalPages = response.totalPages ?? 0;
         this.loading = false;
       },
       error: () => {
-        this.schedulers = [];
         this.viewSchedulers = [];
+        this.totalElements = 0;
+        this.totalPages = 0;
         this.loading = false;
         this.message = 'Unable to fetch schedulers from /api/schedulers.';
       }
-    });
-  }
-
-  private applyFilter(): void {
-    if (!this.filterText) {
-      this.viewSchedulers = [...this.schedulers];
-      return;
-    }
-
-    this.viewSchedulers = this.schedulers.filter((scheduler) => {
-      const target = `${scheduler.name} ${scheduler.type} ${scheduler.lastStatus ?? ''} ${scheduler.lastError ?? ''}`.toLowerCase();
-      return target.includes(this.filterText);
     });
   }
 }

@@ -93,8 +93,8 @@ export class EventsComponent {
   }
 
   private loadUsers(): void {
-    this.api.users().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
-      this.allUsers = users;
+    this.api.users(0, 500, "").pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
+      this.allUsers = response.content ?? [];
     });
   }
 }
