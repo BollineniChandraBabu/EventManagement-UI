@@ -8,18 +8,15 @@
           <button class="btn btn-sm btn-outline-primary" type="button" (click)="refresh()" [disabled]="loading">Refresh</button>
         </div>
       </div>
-
-      <div *ngIf="message" class="alert alert-info py-2">{{ message }}</div>
-
       <div class="row g-3 align-items-end mb-3">
         <div class="col-12 col-md-6">
           <label class="form-label">Filter schedulers</label>
           <input class="form-control" type="text" placeholder="Search by name/type/status"
-                 [ngModel]="filterText" (ngModelChange)="onSearch($event)" />
+                 [ngModel]="filterText" (ngModelChange)="onSearch($event)" [disabled]="loading" />
         </div>
         <div class="col-12 col-md-3">
           <label class="form-label">Rows per page</label>
-          <select class="form-select" (change)="onPageSizeChange($any($event.target).value)">
+          <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
           </select>
         </div>
@@ -82,9 +79,9 @@
       <div class="d-flex justify-content-between align-items-center mt-3">
         <small class="text-muted">Showing {{ startRow }}-{{ endRow }} of {{ totalElements }} jobs</small>
         <div class="btn-group pagination-controls">
-          <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="page === 0">Previous</button>
-          <button class="btn btn-sm btn-primary" type="button" disabled>Page {{ displayPage }} / {{ totalPages || 1 }}</button>
-          <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="page >= totalPages - 1">Next</button>
+              <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loading || page === 0">Previous</button>
+              <button class="btn btn-sm btn-primary" type="button" disabled>Page {{ displayPage }} / {{ totalPages || 1 }}</button>
+              <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="loading || page >= totalPages - 1">Next</button>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { SchedulerItem } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -14,10 +15,10 @@ import { ApiService } from '../../core/services/api.service';
 export class SchedulersComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   viewSchedulers: SchedulerItem[] = [];
   loading = false;
-  message = '';
   filterText = '';
   page = 0;
   readonly pageSizes = [5, 10, 20];
@@ -85,12 +86,12 @@ export class SchedulersComponent {
     this.triggeringJobs.add(jobName);
     this.api.triggerScheduler(jobName).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
-        this.message = res.message || `Triggered ${res.name} successfully.`;
+        this.toast.success(res.message || `Triggered ${res.name} successfully.`);
         this.triggeringJobs.delete(jobName);
         this.loadSchedulers();
       },
       error: () => {
-        this.message = `Unable to trigger scheduler ${jobName}.`;
+        this.toast.error(`Unable to trigger scheduler ${jobName}.`);
         this.triggeringJobs.delete(jobName);
       }
     });
@@ -114,7 +115,9 @@ export class SchedulersComponent {
 
   private loadSchedulers(): void {
     this.loading = true;
-    this.message = '';
+    this.viewSchedulers = [];
+    this.totalElements = 0;
+    this.totalPages = 0;
 
     this.api.schedulers(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
@@ -128,7 +131,7 @@ export class SchedulersComponent {
         this.totalElements = 0;
         this.totalPages = 0;
         this.loading = false;
-        this.message = 'Unable to fetch schedulers from /api/schedulers.';
+        this.toast.error('Unable to fetch schedulers from /api/schedulers.');
       }
     });
   }

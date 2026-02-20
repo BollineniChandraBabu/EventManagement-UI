@@ -4,6 +4,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -15,6 +16,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -24,7 +26,6 @@ export class LoginComponent {
 
   showPassword = false;
   isSubmitting = false;
-  errorMessage = '';
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
@@ -36,7 +37,6 @@ export class LoginComponent {
       return;
     }
 
-    this.errorMessage = '';
     this.isSubmitting = true;
 
     this.auth.login(this.form.getRawValue()).subscribe({
@@ -45,7 +45,7 @@ export class LoginComponent {
         this.router.navigate(['/dashboard']);
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.getLoginErrorMessage(error);
+        this.toast.error(this.getLoginErrorMessage(error));
         this.isSubmitting = false;
       }
     });

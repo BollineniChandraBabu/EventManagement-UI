@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EmailStatus } from '../../core/models/api.models';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -15,6 +16,7 @@ export class EmailStatusComponent {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   readonly isAdmin = this.auth.isAdmin;
 
@@ -28,6 +30,8 @@ export class EmailStatusComponent {
   pageSize = 10;
   totalPages = 0;
   totalElements = 0;
+  loading = false;
+  retryingIds = new Set<number>();
   selectedItem: EmailStatus | null = null;
   previewMode: 'desktop' | 'mobile' = 'desktop';
   isImageExpanded = false;
@@ -58,7 +62,22 @@ export class EmailStatusComponent {
       return;
     }
 
-    this.api.retryEmail(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadItems());
+    this.retryingIds.add(id);
+    this.api.retryEmail(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.toast.success('Email retry requested successfully.');
+        this.retryingIds.delete(id);
+        this.loadItems();
+      },
+      error: () => {
+        this.toast.error('Unable to retry email right now.');
+        this.retryingIds.delete(id);
+      }
+    });
+  }
+
+  isRetrying(id: number): boolean {
+    return this.retryingIds.has(id);
   }
 
   canPreview(item: EmailStatus): boolean {
@@ -120,18 +139,31 @@ export class EmailStatusComponent {
   }
 
   private loadItems(): void {
-    this.api.emailStatuses(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
-      this.allItems = response.content ?? [];
-      this.totalElements = response.totalElements ?? this.allItems.length;
-      this.totalPages = response.totalPages ?? 0;
+    this.loading = true;
+    this.allItems = [];
+    this.viewItems = [];
+    this.totalElements = 0;
+    this.totalPages = 0;
 
-      this.allItems.forEach((item: EmailStatus) => {
-        if (item.imgData?.trim() && !item.imgData.startsWith('data:image')) {
-          item.imgData = `data:image/png;base64,${item.imgData}`;
-        }
-      });
+    this.api.emailStatuses(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.allItems = response.content ?? [];
+        this.totalElements = response.totalElements ?? this.allItems.length;
+        this.totalPages = response.totalPages ?? 0;
 
-      this.applyStatusFilter();
+        this.allItems.forEach((item: EmailStatus) => {
+          if (item.imgData?.trim() && !item.imgData.startsWith('data:image')) {
+            item.imgData = `data:image/png;base64,${item.imgData}`;
+          }
+        });
+
+        this.applyStatusFilter();
+        this.loading = false;
+      },
+      error: () => {
+        this.toast.error('Unable to fetch email status records.');
+        this.loading = false;
+      }
     });
   }
 

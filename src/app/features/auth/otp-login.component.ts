@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -14,6 +15,7 @@ export class OtpLoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -23,7 +25,6 @@ export class OtpLoginComponent {
   isSendingOtp = false;
   isVerifying = false;
   otpSent = false;
-  errorMessage = '';
 
   sendOtp() {
     if (this.form.controls.email.invalid) {
@@ -31,16 +32,16 @@ export class OtpLoginComponent {
       return;
     }
 
-    this.errorMessage = '';
     this.isSendingOtp = true;
 
     this.auth.sendOtp({ email: this.form.controls.email.value }).subscribe({
       next: () => {
         this.otpSent = true;
+        this.toast.success('OTP sent. Please check your inbox.');
         this.isSendingOtp = false;
       },
       error: () => {
-        this.errorMessage = 'Unable to send OTP right now. Please try again in a moment.';
+        this.toast.error('Unable to send OTP right now. Please try again in a moment.');
         this.isSendingOtp = false;
       }
     });
@@ -52,13 +53,12 @@ export class OtpLoginComponent {
       return;
     }
 
-    this.errorMessage = '';
     this.isVerifying = true;
 
     this.auth.verifyOtp(this.form.getRawValue()).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: () => {
-        this.errorMessage = 'Invalid OTP. Please check the code and try again.';
+        this.toast.error('Invalid OTP. Please check the code and try again.');
         this.isVerifying = false;
       }
     });
