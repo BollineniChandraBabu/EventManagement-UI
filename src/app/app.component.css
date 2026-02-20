@@ -25,6 +25,16 @@
 
 .mobile-menu-toggle {
   border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+}
+
+.mobile-menu-toggle i {
+  font-size: 1rem;
 }
 
 .mobile-menu-panel {
