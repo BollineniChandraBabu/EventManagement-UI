@@ -80,7 +80,7 @@
 </div>
 
 <div class="preview-backdrop" *ngIf="selectedItem" (click)="closePreview()">
-  <div class="preview-modal card shadow-3" (click)="$event.stopPropagation()">
+  <div class="preview-modal card shadow-3" [class.preview-modal-mobile]="previewMode === 'mobile'" [class.preview-modal-desktop]="previewMode === 'desktop'" (click)="$event.stopPropagation()">
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
       <h3 class="h6 mb-0">Email Preview</h3>
       <div class="d-flex align-items-center gap-2">
@@ -107,16 +107,39 @@
     </div>
     <div class="card-body">
       <div class="preview-content-shell" [class.preview-content-mobile]="previewMode === 'mobile'">
-        <div class="mb-3" *ngIf="selectedItem.body">
-          <div class="text-muted small mb-1">Body</div>
-          <div class="preview-body" [innerHTML]="selectedItem.body"></div>
-        </div>
+        <div class="email-client-shell">
+          <div class="email-meta-row">
+            <span class="email-meta-label">From</span>
+            <span class="email-meta-value">{{ previewFrom }}</span>
+          </div>
+          <div class="email-meta-row">
+            <span class="email-meta-label">To</span>
+            <span class="email-meta-value">{{ selectedItem.toEmail }}</span>
+          </div>
+          <div class="email-meta-row">
+            <span class="email-meta-label">Sent</span>
+            <span class="email-meta-value">{{ selectedItem.sentAt | date:'full' }}</span>
+          </div>
+          <div class="email-meta-row email-meta-row-subject">
+            <span class="email-meta-label">Subject</span>
+            <span class="email-meta-value">{{ selectedItem.subject || '(no subject)' }}</span>
+          </div>
 
-        <div *ngIf="selectedItem.imgData">
-          <div class="text-muted small mb-1">Image</div>
-          <img class="preview-image" [src]="selectedItem.imgData" alt="Email image"  width="200"
-               height="150"/>
+          <div class="preview-body" *ngIf="selectedItem.body" [innerHTML]="selectedItem.body"></div>
+
+          <div *ngIf="selectedItem.imgData" class="preview-image-wrap">
+            <button class="btn btn-sm btn-outline-primary mb-2" type="button" (click)="openImagePreview()">View image full screen</button>
+            <img class="preview-image" [src]="selectedItem.imgData" alt="Email image" (click)="openImagePreview()" />
+          </div>
         </div>
+      </div>
+    </div>
+    <div class="image-viewer-backdrop" *ngIf="isImageExpanded" (click)="closeImagePreview()">
+      <div class="image-viewer-dialog" (click)="$event.stopPropagation()">
+        <div class="d-flex justify-content-end mb-2">
+          <button class="btn btn-sm btn-outline-secondary" type="button" (click)="closeImagePreview()">Back to email preview</button>
+        </div>
+        <img class="image-viewer-full" [src]="selectedItem.imgData" alt="Email full view image" />
       </div>
     </div>
   </div>
