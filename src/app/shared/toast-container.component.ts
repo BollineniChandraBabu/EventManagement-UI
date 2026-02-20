@@ -16,26 +16,102 @@ declare global {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div class="toast-stack position-fixed top-0 end-0 p-3">
       <div
         #toastElement
         *ngFor="let toast of toastService.toasts()"
-        class="toast"
+        class="toast toast-card"
+        [ngClass]="toastClass(toast.level)"
         [attr.data-toast-id]="toast.id"
         role="alert"
         aria-live="assertive"
         aria-atomic="true"
       >
-        <div class="toast-header" [ngClass]="headerClass(toast.level)">
-          <i class="me-2" [ngClass]="iconClass(toast.level)"></i>
-          <strong class="me-auto">{{ levelLabel(toast.level) }}</strong>
-          <small>now</small>
-          <button type="button" class="btn-close ms-2" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
+        <div class="toast-header border-0 bg-transparent pb-0">
+          <div class="toast-level-pill" [ngClass]="pillClass(toast.level)">
+            <i class="me-2" [ngClass]="iconClass(toast.level)"></i>
+            <span>{{ levelLabel(toast.level) }}</span>
+          </div>
+          <button type="button" class="btn-close ms-3" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
         </div>
-        <div class="toast-body">{{ toast.text }}</div>
+        <div class="toast-body pt-2">{{ toast.text }}</div>
       </div>
     </div>
-  `
+  `,
+  styles: [
+    `
+      .toast-stack {
+        z-index: 1100;
+      }
+
+      .toast-card {
+        width: min(360px, calc(100vw - 1.5rem));
+        border: 0;
+        border-radius: 0.9rem;
+        box-shadow: 0 14px 36px rgba(12, 26, 75, 0.22);
+        backdrop-filter: blur(2px);
+        margin-bottom: 0.75rem;
+        overflow: hidden;
+      }
+
+      .toast-card.toast-success {
+        background: linear-gradient(135deg, #ecfdf3 0%, #d1fae5 100%);
+        color: #065f46;
+      }
+
+      .toast-card.toast-error {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        color: #991b1b;
+      }
+
+      .toast-card.toast-warning {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        color: #92400e;
+      }
+
+      .toast-card.toast-info {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        color: #1e40af;
+      }
+
+      .toast-level-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 0.35rem 0.7rem;
+      }
+
+      .pill-success {
+        background-color: rgba(16, 185, 129, 0.16);
+      }
+
+      .pill-error {
+        background-color: rgba(239, 68, 68, 0.16);
+      }
+
+      .pill-warning {
+        background-color: rgba(245, 158, 11, 0.2);
+      }
+
+      .pill-info {
+        background-color: rgba(59, 130, 246, 0.18);
+      }
+
+      .toast-body {
+        font-size: 0.92rem;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+
+      .btn-close {
+        filter: saturate(0.2);
+        opacity: 0.75;
+      }
+    `
+  ]
 })
 export class ToastContainerComponent implements AfterViewInit, OnDestroy {
   readonly toastService = inject(ToastService);
@@ -55,11 +131,18 @@ export class ToastContainerComponent implements AfterViewInit, OnDestroy {
     this.querySub?.unsubscribe();
   }
 
-  headerClass(level: ToastLevel): string {
-    if (level === 'success') return 'bg-success text-white';
-    if (level === 'error') return 'bg-danger text-white';
-    if (level === 'warning') return 'bg-warning';
-    return 'bg-info text-white';
+  toastClass(level: ToastLevel): string {
+    if (level === 'success') return 'toast-success';
+    if (level === 'error') return 'toast-error';
+    if (level === 'warning') return 'toast-warning';
+    return 'toast-info';
+  }
+
+  pillClass(level: ToastLevel): string {
+    if (level === 'success') return 'pill-success';
+    if (level === 'error') return 'pill-error';
+    if (level === 'warning') return 'pill-warning';
+    return 'pill-info';
   }
 
   iconClass(level: ToastLevel): string {
