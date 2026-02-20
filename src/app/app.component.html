@@ -6,13 +6,13 @@
 
     <button
       *ngIf="auth.authenticated()"
-      class="navbar-toggler mobile-menu-toggle"
+      class="navbar-toggler mobile-menu-toggle d-lg-none"
       type="button"
       aria-label="Toggle navigation"
       [attr.aria-expanded]="isMobileMenuOpen"
       (click)="toggleMobileMenu()"
     >
-      <span class="navbar-toggler-icon"></span>
+      <i class="fa-solid fa-bars"></i>
     </button>
 
     <ng-container *ngIf="auth.authenticated()">
