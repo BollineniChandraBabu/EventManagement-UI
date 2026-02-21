@@ -14,7 +14,7 @@ export class ToastService {
   readonly toasts = signal<ToastMessage[]>([]);
   private nextId = 1;
 
-  show(text: string, level: ToastLevel = 'info', durationMs = 15000): void {
+  show(text: string, level: ToastLevel = 'info', durationMs = 5000): void {
     const toast: ToastMessage = { id: this.nextId++, text, level, durationMs };
     this.toasts.update((items) => [...items, toast]);
   }
