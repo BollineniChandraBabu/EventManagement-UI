@@ -27,12 +27,22 @@ export class ResetPasswordComponent {
     confirmPassword: ['', [Validators.required, Validators.minLength(8)]]
   });
 
+  showNewPassword = false;
+  showConfirmPassword = false;
   isSubmitting = false;
 
   constructor() {
     if (!this.token) {
       this.toast.warning('Reset token not found. Open the reset link from your email again.');
     }
+  }
+
+  toggleNewPasswordVisibility() {
+    this.showNewPassword = !this.showNewPassword;
+  }
+
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   submit() {
