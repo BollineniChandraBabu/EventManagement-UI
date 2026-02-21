@@ -50,11 +50,6 @@
       <div class="alert alert-info" *ngIf="!isAdmin()">Read-only access: only admins can create or update events.</div>
 
       <div>
-        <label class="form-label">Subject</label>
-        <input class="form-control" [(ngModel)]="subject" [readonly]="!isAdmin()" />
-      </div>
-
-      <div>
         <label class="form-label">Editable result</label>
         <textarea class="form-control" rows="5" [(ngModel)]="result" [readonly]="!isAdmin()"></textarea>
       </div>

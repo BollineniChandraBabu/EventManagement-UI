@@ -14,11 +14,10 @@ import {
   EventItem,
   PagedResponse,
   SaveEventPayload,
-  SaveTemplatePayload,
   SaveUserPayload,
   SchedulerItem,
   SchedulerTriggerResponse,
-  TemplateVersion
+  WishSettingsPayload
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -90,7 +89,7 @@ export class ApiService {
   }
 
   updateUser(id: number, payload: SaveUserPayload) {
-    return this.http.put(`${environment.apiUrl}/users/${id}`, payload);
+    return this.http.put(`${environment.apiUrl}/users`, { ...payload, id });
   }
 
   userById(id: number): Observable<AppUser> {
@@ -100,7 +99,7 @@ export class ApiService {
   }
 
   deactivateUser(id: number) {
-    return this.http.patch(`${environment.apiUrl}/users/${id}/deactivate`, {});
+    return this.http.post(`${environment.apiUrl}/users/${id}/deactivate`, {});
   }
 
   events(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<EventItem>> {
@@ -109,46 +108,12 @@ export class ApiService {
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
-  saveEvent(payload: {
-    subject: string;
-    body: string;
-    eventType: string;
-    eventDate: string;
-    recurring: boolean;
-    festivalName: string | undefined;
-    userId: string
-  }) {
+  saveEvent(payload: SaveEventPayload) {
     return this.http.post(`${environment.apiUrl}/events`, payload);
-  }
-
-  updateEvent(id: number, payload: {
-    subject: string;
-    body: string;
-    eventType: string;
-    eventDate: string;
-    recurring: boolean;
-    festivalName: string | undefined;
-    userId: string
-  }) {
-    return this.http.put(`${environment.apiUrl}/events/${id}`, payload);
   }
 
   aiWish(payload: AiWishRequest): Observable<AiWishResponse> {
     return this.http.post<AiWishResponse>(`${environment.apiUrl}/ai/generate-wish`, payload);
-  }
-
-  saveTemplate(payload: SaveTemplatePayload) {
-    return this.http.post(`${environment.apiUrl}/templates`, payload);
-  }
-
-  templateVersions(): Observable<TemplateVersion[]> {
-    return this.http.get<ApiResponse<TemplateVersion[]>>(`${environment.apiUrl}/templates/versions`).pipe(
-      map((response) => this.unwrap(response))
-    );
-  }
-
-  restoreTemplate(id: number) {
-    return this.http.post(`${environment.apiUrl}/templates/restore/${id}`, {});
   }
 
   emailStatuses(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<EmailStatus>> {
@@ -157,12 +122,12 @@ export class ApiService {
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
-  retryEmail(id: number) {
-    return this.http.post(`${environment.apiUrl}/emails/${id}/retry`, {});
-  }
-
   sendTestEmail(html: string) {
     return this.http.post(`${environment.apiUrl}/emails/test`, { html });
+  }
+
+  updateWishSettings(payload: WishSettingsPayload) {
+    return this.http.patch(`${environment.apiUrl}/users/me/wish-settings`, payload);
   }
 
   schedulers(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<SchedulerItem>> {

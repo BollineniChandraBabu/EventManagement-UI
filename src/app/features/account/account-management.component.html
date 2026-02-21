@@ -3,8 +3,8 @@
     <div class="card-body p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between gap-4 align-items-md-center">
       <div>
         <p class="text-uppercase fw-semibold text-primary mb-2 small letter-spacing">Account center</p>
-        <h2 class="page-title mb-2">Manage your profile & security</h2>
-        <p class="text-muted mb-0">Update your contact information, secure your account, and control your active session.</p>
+        <h2 class="page-title mb-2">Manage your account</h2>
+        <p class="text-muted mb-0">View your profile information and control automated wish preferences.</p>
       </div>
       <div class="account-avatar">
         <i class="fa-regular fa-circle-user"></i>
@@ -20,33 +20,27 @@
             <span class="section-icon bg-primary-subtle text-primary"><i class="fa-solid fa-id-badge"></i></span>
             <div>
               <h3 class="h5 mb-1">Profile details</h3>
-              <p class="text-muted mb-0">Keep your personal details current for notifications and account recovery.</p>
+              <p class="text-muted mb-0">Profile editing is not available from the current backend APIs.</p>
             </div>
           </div>
 
-          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="row g-3" novalidate>
+          <form [formGroup]="profileForm" class="row g-3" novalidate>
             <div class="col-12">
               <label for="fullName" class="form-label">Full name</label>
-              <input id="fullName" type="text" class="form-control" formControlName="fullName" placeholder="e.g., Alex Morgan" />
+              <input id="fullName" type="text" class="form-control" formControlName="fullName" readonly />
             </div>
 
             <div class="col-12 col-md-6">
               <label for="email" class="form-label">Email address</label>
-              <input id="email" type="email" class="form-control" formControlName="email" placeholder="name@example.com" />
+              <input id="email" type="email" class="form-control" formControlName="email" readonly />
             </div>
 
-              <div class="col-12 col-md-6">
-                  <label class="form-label">Role</label>
-                  <select class="form-select" formControlName="role" [disabled]="true">
-                      <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
-                      <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
-                  </select>
-              </div>
-
-            <div class="col-12 d-flex justify-content-end">
-              <button type="submit" class="btn btn-primary px-4">
-                <i class="fa-solid fa-floppy-disk me-2"></i>Save profile
-              </button>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Role</label>
+              <select class="form-select" formControlName="role" [disabled]="true">
+                <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
+                <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
+              </select>
             </div>
           </form>
         </div>
@@ -57,32 +51,36 @@
       <div class="card border-0 shadow-3 rounded-5 h-100 mb-4">
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="section-icon bg-warning-subtle text-warning-emphasis"><i class="fa-solid fa-shield-halved"></i></span>
+            <span class="section-icon bg-warning-subtle text-warning-emphasis"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
             <div>
-              <h3 class="h5 mb-1">Change password</h3>
-              <p class="text-muted mb-0">Use at least 8 characters and avoid reused passwords.</p>
+              <h3 class="h5 mb-1">Wish settings</h3>
+              <p class="text-muted mb-0">Enable or disable automated wishes for your account.</p>
             </div>
           </div>
 
-          <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()" class="row g-3" novalidate>
+          <form [formGroup]="wishSettingsForm" class="row g-3" novalidate>
             <div class="col-12">
-              <label for="currentPassword" class="form-label">Current password</label>
-              <input id="currentPassword" type="password" class="form-control" formControlName="currentPassword" />
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="isBirthdayEnabled" formControlName="isBirthdayEnabled" />
+                <label class="form-check-label" for="isBirthdayEnabled">Birthday wishes</label>
+              </div>
             </div>
-
             <div class="col-12">
-              <label for="newPassword" class="form-label">New password</label>
-              <input id="newPassword" type="password" class="form-control" formControlName="newPassword" />
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="isGoodMorningEnabled" formControlName="isGoodMorningEnabled" />
+                <label class="form-check-label" for="isGoodMorningEnabled">Good morning wishes</label>
+              </div>
             </div>
-
             <div class="col-12">
-              <label for="confirmPassword" class="form-label">Confirm new password</label>
-              <input id="confirmPassword" type="password" class="form-control" formControlName="confirmPassword" />
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="isGoodNightEnabled" formControlName="isGoodNightEnabled" />
+                <label class="form-check-label" for="isGoodNightEnabled">Good night wishes</label>
+              </div>
             </div>
 
             <div class="col-12 d-flex justify-content-end">
-              <button type="submit" class="btn btn-dark px-4">
-                <i class="fa-solid fa-key me-2"></i>Update password
+              <button type="button" class="btn btn-primary px-4" (click)="saveWishSettings()">
+                <i class="fa-solid fa-floppy-disk me-2"></i>Save settings
               </button>
             </div>
           </form>

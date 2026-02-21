@@ -62,9 +62,6 @@
                 <td>{{ item.sentAt | date:'short' }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-primary me-2" *ngIf="canPreview(item)" (click)="openPreview(item)" [disabled]="loading">View</button>
-                <button class="btn btn-sm btn-outline-danger" *ngIf="isAdmin() && item.status==='FAILED'" (click)="retry(item.id)" [disabled]="loading || isRetrying(item.id)">
-                  {{ isRetrying(item.id) ? 'Retrying...' : 'Retry' }}
-                </button>
                 <span *ngIf="!isAdmin()" class="text-muted small">Read only</span>
               </td>
             </tr>
@@ -87,7 +84,6 @@
         </div>
       </div>
 
-      <div class="alert alert-info mt-3 mb-0" *ngIf="!isAdmin()">Read-only access: only admins can retry failed emails.</div>
     </div>
   </div>
 </div>

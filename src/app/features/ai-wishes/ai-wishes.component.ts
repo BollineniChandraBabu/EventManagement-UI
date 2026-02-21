@@ -1,10 +1,8 @@
-import {Component, DestroyRef, inject} from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {AppUser} from "../../core/models/api.models";
 
 @Component({
   standalone: true,
@@ -47,14 +45,6 @@ export class AiWishesComponent {
       this.subject = res.subject;
       this.result = res.htmlMessage;
     });
-  }
-
-  useAsTemplate() {
-    if (!this.isAdmin() || !this.result.trim()) {
-      return;
-    }
-
-    this.api.saveTemplate({ html: `<p>${this.result.trim()}</p>` }).subscribe();
   }
 
 

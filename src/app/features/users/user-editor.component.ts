@@ -34,6 +34,7 @@ export class UserEditorComponent {
     name: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     role: [ROLE_USER as UserRole, [Validators.required]],
+    relationShip: ['', [Validators.required]],
     isBirthdayEnabled: [false],
     isGoodMorningEnabled: [false],
     isGoodNightEnabled: [false]
@@ -102,6 +103,7 @@ export class UserEditorComponent {
       name: user.name,
       email: user.email,
       role: user.role,
+      relationShip: user.relationShip || '',
       isBirthdayEnabled: !!user.isBirthdayEnabled,
       isGoodMorningEnabled: !!user.isGoodMorningEnabled,
       isGoodNightEnabled: !!user.isGoodNightEnabled
@@ -114,6 +116,7 @@ export class UserEditorComponent {
       name: '',
       email: '',
       role: ROLE_USER,
+      relationShip: '',
       isBirthdayEnabled: false,
       isGoodMorningEnabled: false,
       isGoodNightEnabled: false

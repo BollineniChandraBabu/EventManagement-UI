@@ -1,15 +1,6 @@
 <div class="page">
-  <mat-card>
-    <h2>Template Editor (GrapesJS)</h2>
-    <div class="variables-help">Variables: {{'{{name}}'}}, {{'{{relation}}'}}, {{'{{eventDate}}'}}, {{'{{festival}}'}}</div>
-    <div #editor class="editor-container"></div>
-    <button mat-raised-button color="primary" (click)="saveTemplate()">Save template</button>
-    <h3>Version history</h3>
-    <mat-list>
-      <mat-list-item *ngFor="let v of (versions$ | async) ?? []">
-        #{{v.id}} - {{v.updatedAt}}
-        <button mat-button (click)="restore(v.id)">Restore</button>
-      </mat-list-item>
-    </mat-list>
-  </mat-card>
+  <section class="panel">
+    <h2 class="page-title">Template management unavailable</h2>
+    <p class="text-muted mb-0">Template APIs are not provided by the current backend.</p>
+  </section>
 </div>

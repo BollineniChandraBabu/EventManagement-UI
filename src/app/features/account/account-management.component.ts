@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
+import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
@@ -17,20 +18,21 @@ import { ToastService } from '../../core/services/toast.service';
 export class AccountManagementComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
 
   readonly profileForm = this.fb.nonNullable.group({
-    fullName: ['', [Validators.required, Validators.minLength(2)]],
-    email: ['', [Validators.required, Validators.email]],
-    role: [ROLE_USER as UserRole, [Validators.required]]
+    fullName: [''],
+    email: [''],
+    role: [ROLE_USER]
   });
 
-  readonly passwordForm = this.fb.nonNullable.group({
-    currentPassword: ['', Validators.required],
-    newPassword: ['', [Validators.required, Validators.minLength(8)]],
-    confirmPassword: ['', [Validators.required, Validators.minLength(8)]]
+  readonly wishSettingsForm = this.fb.nonNullable.group({
+    isBirthdayEnabled: [false],
+    isGoodMorningEnabled: [false],
+    isGoodNightEnabled: [false]
   });
 
   constructor() {
@@ -39,47 +41,26 @@ export class AccountManagementComponent {
         this.profileForm.patchValue({
           fullName: profile.name ?? '',
           email: profile.email ?? '',
-          role: profile.role
+          role: profile.role,
+        });
+
+        this.wishSettingsForm.patchValue({
+          isBirthdayEnabled: !!profile.isBirthdayEnabled,
+          isGoodMorningEnabled: !!profile.isGoodMorningEnabled,
+          isGoodNightEnabled: !!profile.isGoodNightEnabled,
         });
       },
       error: () => {
-        this.toast.warning('Unable to fetch profile right now. You can still update details manually.');
+        this.toast.warning('Unable to fetch profile right now.');
       }
     });
   }
 
-  saveProfile(): void {
-    if (this.profileForm.invalid) {
-      this.profileForm.markAllAsTouched();
-      return;
-    }
-
-    const { fullName, email } = this.profileForm.getRawValue();
-    this.auth.updateProfile({ fullName, email }).subscribe({
-      next: () => this.toast.success('Profile updated successfully.'),
-      error: () => this.toast.error('Unable to update profile. Please try again.')
-    });
-  }
-
-  updatePassword(): void {
-    if (this.passwordForm.invalid) {
-      this.passwordForm.markAllAsTouched();
-      return;
-    }
-
-    const { currentPassword, newPassword, confirmPassword } = this.passwordForm.getRawValue();
-
-    if (newPassword !== confirmPassword) {
-      this.toast.error('New password and confirmation do not match.');
-      return;
-    }
-
-    this.auth.changePassword(currentPassword, newPassword).subscribe({
-      next: () => {
-        this.toast.success('Password changed successfully.');
-        this.passwordForm.reset();
-      },
-      error: () => this.toast.error('Could not change password. Please verify your current password.')
+  saveWishSettings(): void {
+    const payload = this.wishSettingsForm.getRawValue();
+    this.api.updateWishSettings(payload).subscribe({
+      next: () => this.toast.success('Wish settings updated successfully.'),
+      error: () => this.toast.error('Unable to update wish settings. Please try again.')
     });
   }
 
