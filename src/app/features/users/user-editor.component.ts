@@ -83,20 +83,15 @@ export class UserEditorComponent {
 
   private loadUser(id: number): void {
     this.loading = true;
-    this.api.users(0, 500, '').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (response) => {
-        const user = response.content.find((item) => item.id === id);
-        if (!user) {
-          this.toast.error('User not found.');
-          this.router.navigateByUrl('/users');
-          return;
-        }
+    this.api.userById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (user) => {
         this.patchForm(user);
         this.loading = false;
       },
       error: () => {
         this.toast.error('Unable to load user details right now.');
         this.loading = false;
+        this.router.navigateByUrl('/users');
       }
     });
   }

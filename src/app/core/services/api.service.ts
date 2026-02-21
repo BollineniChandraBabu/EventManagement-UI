@@ -7,6 +7,7 @@ import {
   AiWishResponse,
   ApiResponse,
   AppUser,
+  DashboardChartResponse,
   DashboardStats,
   EmailStatus,
   EventItem,
@@ -35,9 +36,27 @@ export class ApiService {
     );
   }
 
-  users(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<AppUser>> {
+  getMailChart(days = 0): Observable<DashboardChartResponse> {
+    return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/mail`, {
+      params: new HttpParams().set('days', days)
+    }).pipe(map((response) => this.unwrap(response)));
+  }
+
+  getInstaChart(days = 0): Observable<DashboardChartResponse> {
+    return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/insta`, {
+      params: new HttpParams().set('days', days)
+    }).pipe(map((response) => this.unwrap(response)));
+  }
+
+  users(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'createdAt',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<PagedResponse<AppUser>> {
     return this.http.get<ApiResponse<PagedResponse<AppUser> | AppUser[]>>(`${environment.apiUrl}/users`, {
-      params: this.pagedParams(page, size, searchKey)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
@@ -47,6 +66,12 @@ export class ApiService {
 
   updateUser(id: number, payload: SaveUserPayload) {
     return this.http.put(`${environment.apiUrl}/users/${id}`, payload);
+  }
+
+  userById(id: number): Observable<AppUser> {
+    return this.http.get<ApiResponse<AppUser>>(`${environment.apiUrl}/users/${id}`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   deactivateUser(id: number) {
@@ -127,11 +152,27 @@ export class ApiService {
     );
   }
 
-  private pagedParams(page: number, size: number, searchKey: string): HttpParams {
-    return new HttpParams()
+  private pagedParams(
+    page: number,
+    size: number,
+    searchKey: string,
+    sortBy?: string,
+    sortDir?: 'asc' | 'desc'
+  ): HttpParams {
+    let params = new HttpParams()
       .set('page', page)
       .set('size', size)
       .set('searchKey', searchKey ?? '');
+
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+
+    if (sortDir) {
+      params = params.set('sortDir', sortDir);
+    }
+
+    return params;
   }
 
   private normalizePaged<T>(payload: PagedResponse<T> | T[], page: number, size: number): PagedResponse<T> {
