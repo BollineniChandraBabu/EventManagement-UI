@@ -56,6 +56,14 @@ export class DashboardComponent {
     domain: ['#14b8a6', '#ef4444']
   };
 
+  readonly yAxisTickFormatter = (value: number): string => {
+    if (!Number.isFinite(value)) {
+      return '0';
+    }
+
+    return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+  };
+
   onChartDateChange(dateValue: string): void {
     const selectedDate = this.parseInputDate(dateValue);
     const now = new Date();
@@ -134,6 +142,18 @@ export class DashboardComponent {
         }))
       }
     ];
+  }
+
+  chartYAxisMax(chartData: LineChartData | null | undefined): number {
+    const maxDataPoint = (chartData ?? [])
+      .flatMap((series) => series.series)
+      .reduce((max, point) => Math.max(max, point.value ?? 0), 0);
+
+    if (maxDataPoint <= 5) {
+      return 5;
+    }
+
+    return Math.ceil(maxDataPoint * 1.1);
   }
 
   private toDateLabel(dateValue: string): string {
