@@ -58,7 +58,10 @@ export class AuthService {
   }
 
   updateProfile(payload: UpdateUserProfileRequest): Observable<void> {
-    return this.http.put<void>(`${environment.apiUrl}/users/me`, payload);
+    return this.http.put<void>(`${environment.apiUrl}/users/me`, {
+      ...payload,
+      name: payload.fullName
+    });
   }
 
   refreshToken(): Observable<TokenResponse> {

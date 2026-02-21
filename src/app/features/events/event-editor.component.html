@@ -1,0 +1,77 @@
+<div class="page">
+  <section class="panel">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="page-title mb-0">{{ pageTitle }}</h2>
+      <a class="btn btn-outline-secondary" routerLink="/events">Back to Events</a>
+    </div>
+
+    <div *ngIf="loading" class="text-muted py-3">Loading event data...</div>
+
+    <ng-container *ngIf="!loading">
+      <form [formGroup]="form" class="form-grid">
+        <div>
+          <label class="form-label">Name</label>
+          <select class="form-select" formControlName="name" [disabled]="!isAdmin()">
+            <option [ngValue]="''" disabled>Select a user</option>
+            <option *ngFor="let user of allUsers" [ngValue]="user">{{ user.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Type</label>
+          <select class="form-select" formControlName="type" [disabled]="!isAdmin()">
+            <option *ngFor="let type of types" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div *ngIf="form.controls.type.value === 'Festival'">
+          <label class="form-label">Festival</label>
+          <input class="form-control" formControlName="festival" [readonly]="!isAdmin()" />
+        </div>
+        <div *ngIf="form.controls.type.value !== 'Good Morning' && form.controls.type.value !== 'Good Night'">
+          <label class="form-label">Date</label>
+          <input class="form-control" type="date" formControlName="eventDate" [readonly]="!isAdmin()" />
+        </div>
+        <div class="d-flex align-items-center">
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="recurringSwitch" formControlName="recurring" [disabled]="!isAdmin()" />
+            <label class="form-check-label" for="recurringSwitch">Recurring Event</label>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Relation</label>
+          <input class="form-control" formControlName="relation" [readonly]="!isAdmin()" />
+        </div>
+      </form>
+
+      <div class="d-flex flex-wrap gap-2 my-3" *ngIf="isAdmin()">
+        <button class="btn btn-outline-primary" type="button" (click)="generateWish()" [disabled]="saving">AI generate wish</button>
+        <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving">{{ saving ? 'Saving...' : submitLabel }}</button>
+      </div>
+
+      <div class="alert alert-info" *ngIf="!isAdmin()">Read-only access: only admins can create or update events.</div>
+
+      <div>
+        <label class="form-label">Subject</label>
+        <input class="form-control" [(ngModel)]="subject" [readonly]="!isAdmin()" />
+      </div>
+
+      <div>
+        <label class="form-label">Editable result</label>
+        <textarea class="form-control" rows="5" [(ngModel)]="result" [readonly]="!isAdmin()"></textarea>
+      </div>
+
+      <section class="preview-section" *ngIf="result.trim()">
+        <h3 class="preview-title">Email Preview</h3>
+        <div class="preview-grid">
+          <div class="preview-card">
+            <h4>Desktop</h4>
+            <iframe class="preview-frame" [srcdoc]="desktopPreviewSrcDoc" title="Desktop email preview"></iframe>
+          </div>
+          <div class="preview-card">
+            <h4>Mobile</h4>
+            <iframe class="preview-frame mobile" [srcdoc]="mobilePreviewSrcDoc" title="Mobile email preview"></iframe>
+          </div>
+        </div>
+      </section>
+    </ng-container>
+  </section>
+</div>

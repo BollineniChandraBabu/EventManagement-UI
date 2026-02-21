@@ -71,6 +71,18 @@ export class ApiService {
     return this.http.post(`${environment.apiUrl}/events`, payload);
   }
 
+  updateEvent(id: number, payload: {
+    subject: string;
+    body: string;
+    eventType: string;
+    eventDate: string;
+    recurring: boolean;
+    festivalName: string | undefined;
+    userId: string
+  }) {
+    return this.http.put(`${environment.apiUrl}/events/${id}`, payload);
+  }
+
   aiWish(payload: AiWishRequest): Observable<AiWishResponse> {
     return this.http.post<AiWishResponse>(`${environment.apiUrl}/ai/generate-wish`, payload);
   }

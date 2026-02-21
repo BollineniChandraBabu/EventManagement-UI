@@ -37,7 +37,7 @@
 
               <div class="col-12 col-md-6">
                   <label class="form-label">Role</label>
-                  <select class="form-select" formControlName="role">
+                  <select class="form-select" formControlName="role" [disabled]="true">
                       <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
                       <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
                   </select>
