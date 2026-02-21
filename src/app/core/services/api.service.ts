@@ -9,6 +9,7 @@ import {
   AppUser,
   DashboardChartResponse,
   DashboardStats,
+  MailFlowStats,
   EmailStatus,
   EventItem,
   PagedResponse,
@@ -46,6 +47,18 @@ export class ApiService {
     return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/insta`, {
       params: new HttpParams().set('days', days)
     }).pipe(map((response) => this.unwrap(response)));
+  }
+
+  getOtpMailDashboard(): Observable<MailFlowStats> {
+    return this.http.get<ApiResponse<MailFlowStats>>(`${environment.apiUrl}/dashboard/mail/otp`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  getForgotPasswordMailDashboard(): Observable<MailFlowStats> {
+    return this.http.get<ApiResponse<MailFlowStats>>(`${environment.apiUrl}/dashboard/mail/forgot-password`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   users(

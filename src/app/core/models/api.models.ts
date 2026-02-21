@@ -17,6 +17,11 @@ export interface DashboardStats {
   failedEmails: number;
 }
 
+export interface MailFlowStats {
+  emailsSentToday: number;
+  failedEmails: number;
+}
+
 export interface DashboardChartPoint {
   date: string;
   sent: number;
