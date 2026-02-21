@@ -47,9 +47,11 @@ export interface AppUser {
 }
 
 export interface SaveUserPayload {
+  id?: number;
   name: string;
   email: string;
   role: UserRole;
+  relationShip: string;
   isGoodMorningEnabled?: boolean;
   isGoodNightEnabled?: boolean;
   isBirthdayEnabled?: boolean;
@@ -57,22 +59,20 @@ export interface SaveUserPayload {
 
 export interface EventItem {
   id: number;
-  name: string;
-  type?: string;
   eventType?: string;
-  festival?: string;
+  festivalName?: string;
   eventDate: string;
   recurring: boolean;
-  wish?: string;
+  userId: number;
+  active?: boolean;
 }
 
 export interface SaveEventPayload {
-  name: string;
   eventType: string;
-  festival?: string;
+  festivalName?: string;
   eventDate: string;
   recurring: boolean;
-  wish?: string;
+  userId: number;
 }
 
 export interface AiWishRequest {
@@ -106,7 +106,14 @@ export interface EmailStatus {
   body: string;
   imgData: string;
   status: string;
+  emailType?: string;
   sentAt: string;
+}
+
+export interface WishSettingsPayload {
+  isGoodMorningEnabled: boolean;
+  isGoodNightEnabled: boolean;
+  isBirthdayEnabled: boolean;
 }
 
 // Matches scheduler API response payload shape from backend.

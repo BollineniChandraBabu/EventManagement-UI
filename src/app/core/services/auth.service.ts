@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse, UpdateUserProfileRequest, UserProfile } from '../models/auth.models';
+import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
 import {AppUser} from "../models/api.models";
 
@@ -49,20 +49,11 @@ export class AuthService {
     return this.http.post<void>(`${environment.apiUrl}/auth/password-reset/confirm`, { email, token, newPassword });
   }
 
-  changePassword(currentPassword: string, newPassword: string): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/auth/change-password`, { currentPassword, newPassword });
-  }
 
   getProfile(): Observable<AppUser> {
     return this.http.get<AppUser>(`${environment.apiUrl}/users/me`);
   }
 
-  updateProfile(payload: UpdateUserProfileRequest): Observable<void> {
-    return this.http.put<void>(`${environment.apiUrl}/users/me`, {
-      ...payload,
-      name: payload.fullName
-    });
-  }
 
   refreshToken(): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/refresh`, {

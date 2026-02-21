@@ -12,22 +12,20 @@
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Name</th>
-              <th>Type</th>
+              <th>Event Type</th>
+              <th>Festival</th>
               <th>Date</th>
+              <th>User ID</th>
               <th>Recurring</th>
-              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let event of events">
-              <td>{{ event.name || '-' }}</td>
-              <td>{{ event.eventType || event.type || '-' }}</td>
+              <td>{{ event.eventType || '-' }}</td>
+              <td>{{ event.festivalName || '-' }}</td>
               <td>{{ event.eventDate || '-' }}</td>
+              <td>{{ event.userId || '-' }}</td>
               <td>{{ event.recurring ? 'Yes' : 'No' }}</td>
-              <td class="text-end">
-                <a class="btn btn-sm btn-link" [routerLink]="['/events', event.id, 'edit']">Edit</a>
-              </td>
             </tr>
             <tr *ngIf="loading">
               <td colspan="5" class="text-center text-muted py-4">Loading events...</td>

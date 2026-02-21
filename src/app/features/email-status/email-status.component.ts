@@ -32,7 +32,6 @@ export class EmailStatusComponent {
   totalPages = 0;
   totalElements = 0;
   loading = false;
-  retryingIds = new Set<number>();
   selectedItem: EmailStatus | null = null;
   previewMode: 'desktop' | 'mobile' = 'desktop';
   isImageExpanded = false;
@@ -58,28 +57,6 @@ export class EmailStatusComponent {
     return this.viewItems.length === 0 ? 0 : this.startRow + this.viewItems.length - 1;
   }
 
-  retry(id: number): void {
-    if (!this.isAdmin()) {
-      return;
-    }
-
-    this.retryingIds.add(id);
-    this.api.retryEmail(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.toast.success('Email retry requested successfully.');
-        this.retryingIds.delete(id);
-        this.loadItems();
-      },
-      error: () => {
-        this.toast.error('Unable to retry email right now.');
-        this.retryingIds.delete(id);
-      }
-    });
-  }
-
-  isRetrying(id: number): boolean {
-    return this.retryingIds.has(id);
-  }
 
   canPreview(item: EmailStatus): boolean {
     return Boolean(item.body?.trim() || item.imgData?.trim());
