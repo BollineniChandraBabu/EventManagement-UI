@@ -1,21 +1,16 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
 
-declare global {
-  interface Window {
-    Highcharts?: {
-      chart: (renderTo: string, options: Record<string, unknown>) => unknown;
-    };
-  }
-}
+type LineChartData = Array<{ name: string; series: Array<{ name: string; value: number }> }>;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AsyncPipe],
+  imports: [CommonModule, AsyncPipe, NgxChartsModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -36,23 +31,27 @@ export class DashboardComponent {
 
   readonly otpMailChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getOtpMailChart(days)),
-    map((response) => this.toChartOptions(response.points, 'otp-mail-chart-container'))
+    map((response) => this.toLineChartData(response.points))
   );
 
   readonly forgotPasswordMailChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getForgotPasswordMailChart(days)),
-    map((response) => this.toChartOptions(response.points, 'forgot-password-chart-container'))
+    map((response) => this.toLineChartData(response.points))
   );
 
   readonly mailChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getMailChart(days)),
-    map((response) => this.toChartOptions(response.points, 'mail-chart-container'))
+    map((response) => this.toLineChartData(response.points))
   );
 
   readonly instaChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getInstaChart(days)),
-    map((response) => this.toChartOptions(response.points, 'insta-chart-container'))
+    map((response) => this.toLineChartData(response.points))
   );
+
+  readonly chartColorScheme = {
+    domain: ['#14b8a6', '#ef4444']
+  };
 
   onChartDateChange(dateValue: string): void {
     const selectedDate = this.parseInputDate(dateValue);
@@ -66,14 +65,6 @@ export class DashboardComponent {
 
     this.selectedDate = this.toDateInputValue(selectedDate);
     this.selectedDaysSubject.next(this.calculateDaysFromDate(selectedDate));
-  }
-
-  renderHighchart(chartConfig: { containerId: string; options: Record<string, unknown> }): void {
-    if (!window.Highcharts) {
-      return;
-    }
-
-    window.Highcharts.chart(chartConfig.containerId, chartConfig.options);
   }
 
   mailFlowCards(stats: MailFlowStats | null | undefined): Array<{ label: string; value: number }> {
@@ -120,58 +111,26 @@ export class DashboardComponent {
     return `${year}-${month}-${day}`;
   }
 
-  private toChartOptions(points: DashboardChartPoint[], containerId: string): { containerId: string; options: Record<string, unknown> } {
+  private toLineChartData(points: DashboardChartPoint[]): LineChartData {
     const safePoints = points ?? [];
-    const categories = safePoints.map((item) => this.toDateLabel(item.date));
+    const seriesLabels = safePoints.map((item) => this.toDateLabel(item.date));
 
-    return {
-      containerId,
-      options: {
-        chart: {
-          type: 'line',
-          backgroundColor: 'transparent',
-          height: 280
-        },
-        title: { text: undefined },
-        credits: { enabled: false },
-        xAxis: {
-          categories,
-          crosshair: true,
-          labels: { style: { color: '#6b7280' } }
-        },
-        yAxis: {
-          title: { text: 'Emails' },
-          allowDecimals: false
-        },
-        legend: {
-          itemStyle: { color: '#374151', fontWeight: '500' }
-        },
-        tooltip: { shared: true },
-        plotOptions: {
-          line: {
-            marker: {
-              enabled: true,
-              radius: 4
-            },
-            lineWidth: 3
-          }
-        },
-        series: [
-          {
-            name: 'Sent',
-            type: 'line',
-            color: '#14b8a6',
-            data: safePoints.map((item) => item.sent ?? 0)
-          },
-          {
-            name: 'Failed',
-            type: 'line',
-            color: '#ef4444',
-            data: safePoints.map((item) => item.failed ?? 0)
-          }
-        ]
+    return [
+      {
+        name: 'Sent',
+        series: safePoints.map((item, index) => ({
+          name: seriesLabels[index],
+          value: item.sent ?? 0
+        }))
+      },
+      {
+        name: 'Failed',
+        series: safePoints.map((item, index) => ({
+          name: seriesLabels[index],
+          value: item.failed ?? 0
+        }))
       }
-    };
+    ];
   }
 
   private toDateLabel(dateValue: string): string {

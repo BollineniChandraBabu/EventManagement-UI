@@ -1,3 +1,15 @@
+<div class="chart-filter">
+  <label for="chartStartDate" class="chart-filter-label">Select date for charts</label>
+  <input
+    id="chartStartDate"
+    type="date"
+    class="form-control chart-filter-input"
+    [value]="selectedDate"
+    [max]="maxDate"
+    (change)="onChartDateChange($any($event.target).value)"
+  />
+</div>
+
 <div class="page" *ngIf="maildata$ | async as data">
   <h2 class="page-title">Mail Dashboard</h2>
   <div class="kpi-grid">
@@ -19,18 +31,6 @@
     </div>
   </div>
 
-  <div class="chart-filter">
-    <label for="chartStartDateMail" class="chart-filter-label">Select date for charts</label>
-    <input
-      id="chartStartDateMail"
-      type="date"
-      class="form-control chart-filter-input"
-      [value]="selectedDate"
-      [max]="maxDate"
-      (change)="onChartDateChange($any($event.target).value)"
-    />
-  </div>
-
   <div class="mail-flow-grid" *ngIf="auth.isAdmin()">
     <div class="chart-card" *ngIf="otpMailStats$ | async as otpStats">
       <h3 class="chart-title">OTP Mail Dashboard</h3>
@@ -41,10 +41,20 @@
         </div>
       </div>
 
-      <ng-container *ngIf="otpMailChart$ | async as otpChartConfig">
-        <div id="otp-mail-chart-container" class="highchart-host"></div>
-        <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(otpChartConfig) }}</span>
-      </ng-container>
+      <ngx-charts-line-chart
+        *ngIf="otpMailChart$ | async as otpChartData"
+        class="chart-host"
+        [results]="otpChartData"
+        [scheme]="chartColorScheme"
+        [legend]="true"
+        [xAxis]="true"
+        [yAxis]="true"
+        [showXAxisLabel]="false"
+        [showYAxisLabel]="true"
+        [yAxisLabel]="'Emails'"
+        [autoScale]="true"
+        [roundDomains]="true"
+      ></ngx-charts-line-chart>
     </div>
 
     <div class="chart-card" *ngIf="forgotPasswordMailStats$ | async as forgotPasswordStats">
@@ -56,17 +66,39 @@
         </div>
       </div>
 
-      <ng-container *ngIf="forgotPasswordMailChart$ | async as forgotPasswordChartConfig">
-        <div id="forgot-password-chart-container" class="highchart-host"></div>
-        <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(forgotPasswordChartConfig) }}</span>
-      </ng-container>
+      <ngx-charts-line-chart
+        *ngIf="forgotPasswordMailChart$ | async as forgotPasswordChartData"
+        class="chart-host"
+        [results]="forgotPasswordChartData"
+        [scheme]="chartColorScheme"
+        [legend]="true"
+        [xAxis]="true"
+        [yAxis]="true"
+        [showXAxisLabel]="false"
+        [showYAxisLabel]="true"
+        [yAxisLabel]="'Emails'"
+        [autoScale]="true"
+        [roundDomains]="true"
+      ></ngx-charts-line-chart>
     </div>
   </div>
 
-  <div class="chart-card" *ngIf="mailChart$ | async as mailChartConfig">
+  <div class="chart-card">
     <h3 class="chart-title">Mail Delivery Trend</h3>
-    <div id="mail-chart-container" class="highchart-host"></div>
-    <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(mailChartConfig) }}</span>
+    <ngx-charts-line-chart
+      *ngIf="mailChart$ | async as mailChartData"
+      class="chart-host"
+      [results]="mailChartData"
+      [scheme]="chartColorScheme"
+      [legend]="true"
+      [xAxis]="true"
+      [yAxis]="true"
+      [showXAxisLabel]="false"
+      [showYAxisLabel]="true"
+      [yAxisLabel]="'Emails'"
+      [autoScale]="true"
+      [roundDomains]="true"
+    ></ngx-charts-line-chart>
   </div>
 </div>
 
@@ -91,21 +123,21 @@
     </div>
   </div>
 
-  <div class="chart-filter">
-    <label for="chartStartDateInsta" class="chart-filter-label">Select date for charts</label>
-    <input
-      id="chartStartDateInsta"
-      type="date"
-      class="form-control chart-filter-input"
-      [value]="selectedDate"
-      [max]="maxDate"
-      (change)="onChartDateChange($any($event.target).value)"
-    />
-  </div>
-
-  <div class="chart-card" *ngIf="instaChart$ | async as instaChartConfig">
+  <div class="chart-card">
     <h3 class="chart-title">Insta Delivery Trend</h3>
-    <div id="insta-chart-container" class="highchart-host"></div>
-    <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(instaChartConfig) }}</span>
+    <ngx-charts-line-chart
+      *ngIf="instaChart$ | async as instaChartData"
+      class="chart-host"
+      [results]="instaChartData"
+      [scheme]="chartColorScheme"
+      [legend]="true"
+      [xAxis]="true"
+      [yAxis]="true"
+      [showXAxisLabel]="false"
+      [showYAxisLabel]="true"
+      [yAxisLabel]="'Emails'"
+      [autoScale]="true"
+      [roundDomains]="true"
+    ></ngx-charts-line-chart>
   </div>
 </div>
