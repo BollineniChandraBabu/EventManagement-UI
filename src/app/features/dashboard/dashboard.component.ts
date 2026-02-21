@@ -50,6 +50,9 @@ export class DashboardComponent {
   );
 
   readonly chartColorScheme = {
+    name: 'mailChartScheme',
+    selectable: true,
+    group: 'ordinal' as const,
     domain: ['#14b8a6', '#ef4444']
   };
 
