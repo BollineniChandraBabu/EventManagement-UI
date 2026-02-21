@@ -2,6 +2,7 @@ import { AsyncPipe, CommonModule, DatePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { map } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
 
 interface ChartBarViewModel {
@@ -21,11 +22,20 @@ interface ChartBarViewModel {
 })
 export class DashboardComponent {
   private readonly api = inject(ApiService);
+  readonly auth = inject(AuthService);
 
   readonly maildata$ = this.api.getDashboard();
   readonly igdata$ = this.api.getIGDashboard();
   readonly otpMailStats$ = this.api.getOtpMailDashboard();
   readonly forgotPasswordMailStats$ = this.api.getForgotPasswordMailDashboard();
+
+  readonly otpMailChart$ = this.api.getOtpMailChart(7).pipe(
+    map((response) => this.toBars(response.points))
+  );
+
+  readonly forgotPasswordMailChart$ = this.api.getForgotPasswordMailChart(7).pipe(
+    map((response) => this.toBars(response.points))
+  );
 
   readonly mailChart$ = this.api.getMailChart(0).pipe(
     map((response) => this.toBars(response.points))

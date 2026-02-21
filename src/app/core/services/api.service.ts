@@ -61,6 +61,18 @@ export class ApiService {
     );
   }
 
+  getOtpMailChart(days = 7): Observable<DashboardChartResponse> {
+    return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/mail/otp`, {
+      params: new HttpParams().set('days', days)
+    }).pipe(map((response) => this.unwrap(response)));
+  }
+
+  getForgotPasswordMailChart(days = 7): Observable<DashboardChartResponse> {
+    return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/mail/forgot-password`, {
+      params: new HttpParams().set('days', days)
+    }).pipe(map((response) => this.unwrap(response)));
+  }
+
   users(
     page = 0,
     size = 10,

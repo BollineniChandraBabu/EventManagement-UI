@@ -136,3 +136,12 @@
   box-shadow: none;
   border: 1px solid #e5e7eb;
 }
+
+.compact-chart {
+  min-height: 180px;
+  grid-template-columns: repeat(7, minmax(52px, 1fr));
+}
+
+.compact-chart .bars {
+  height: 120px;
+}

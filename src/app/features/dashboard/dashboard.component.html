@@ -20,13 +20,29 @@
   </div>
 
 
-  <div class="mail-flow-grid">
+  <div class="mail-flow-grid" *ngIf="auth.isAdmin()">
     <div class="chart-card" *ngIf="otpMailStats$ | async as otpStats">
       <h3 class="chart-title">OTP Mail Dashboard</h3>
       <div class="kpi-grid compact">
         <div class="kpi-card" *ngFor="let metric of mailFlowCards(otpStats)">
           <div class="kpi-label">{{ metric.label }}</div>
           <div class="kpi-value">{{ metric.value }}</div>
+        </div>
+      </div>
+
+      <div class="chart-legend">
+        <span><i class="legend-dot sent"></i>Sent</span>
+        <span><i class="legend-dot failed"></i>Failed</span>
+      </div>
+
+      <div class="bar-chart compact-chart" *ngIf="otpMailChart$ | async as otpChart">
+        <div class="bar-group" *ngFor="let point of otpChart">
+          <div class="bars">
+            <div class="bar sent" [style.height.%]="point.sentHeightPct"></div>
+            <div class="bar failed" [style.height.%]="point.failedHeightPct"></div>
+          </div>
+          <div class="bar-total">{{ point.total }}</div>
+          <div class="bar-label">{{ point.dateLabel | date : 'MMM d' }}</div>
         </div>
       </div>
     </div>
@@ -37,6 +53,22 @@
         <div class="kpi-card" *ngFor="let metric of mailFlowCards(forgotPasswordStats)">
           <div class="kpi-label">{{ metric.label }}</div>
           <div class="kpi-value">{{ metric.value }}</div>
+        </div>
+      </div>
+
+      <div class="chart-legend">
+        <span><i class="legend-dot sent"></i>Sent</span>
+        <span><i class="legend-dot failed"></i>Failed</span>
+      </div>
+
+      <div class="bar-chart compact-chart" *ngIf="forgotPasswordMailChart$ | async as forgotPasswordChart">
+        <div class="bar-group" *ngFor="let point of forgotPasswordChart">
+          <div class="bars">
+            <div class="bar sent" [style.height.%]="point.sentHeightPct"></div>
+            <div class="bar failed" [style.height.%]="point.failedHeightPct"></div>
+          </div>
+          <div class="bar-total">{{ point.total }}</div>
+          <div class="bar-label">{{ point.dateLabel | date : 'MMM d' }}</div>
         </div>
       </div>
     </div>
