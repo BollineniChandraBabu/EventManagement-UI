@@ -42,83 +42,14 @@
   color: #111827;
 }
 
-.chart-legend {
-  display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
-  color: #4b5563;
-  font-size: 0.88rem;
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 9999px;
-  margin-right: 0.4rem;
-}
-
-.legend-dot.sent {
-  background: #14b8a6;
-}
-
-.legend-dot.failed {
-  background: #ef4444;
-}
-
-.bar-chart {
+.highchart-host {
   margin-top: 1rem;
-  min-height: 230px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-  align-items: end;
-  gap: 0.75rem;
+  min-height: 280px;
 }
 
-.bar-group {
-  text-align: center;
+.chart-render-trigger {
+  display: none;
 }
-
-.bars {
-  height: 170px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 6px;
-}
-
-.bar {
-  width: 18px;
-  border-radius: 8px 8px 4px 4px;
-  min-height: 2px;
-}
-
-.bar.sent {
-  background: linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%);
-}
-
-.bar.failed {
-  background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
-}
-
-.bar-total {
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.bar-label {
-  margin-top: 0.2rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.empty-chart {
-  margin-top: 0.75rem;
-  color: #6b7280;
-}
-
 
 .mail-flow-grid {
   display: grid;
@@ -135,15 +66,6 @@
 .kpi-grid.compact .kpi-card {
   box-shadow: none;
   border: 1px solid #e5e7eb;
-}
-
-.compact-chart {
-  min-height: 180px;
-  grid-template-columns: repeat(7, minmax(52px, 1fr));
-}
-
-.compact-chart .bars {
-  height: 120px;
 }
 
 .chart-filter {
