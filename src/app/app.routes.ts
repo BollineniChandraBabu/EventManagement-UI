@@ -11,6 +11,7 @@ import { ChangePasswordComponent } from './features/auth/change-password.compone
 import { AccountManagementComponent } from './features/account/account-management.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { UsersComponent } from './features/users/users.component';
+import { UserEditorComponent } from './features/users/user-editor.component';
 import { EventsComponent } from './features/events/events.component';
 import { EventEditorComponent } from './features/events/event-editor.component';
 import { TemplateEditorComponent } from './features/templates/template-editor.component';
@@ -31,6 +32,8 @@ export const routes: Routes = [
     { path: 'account', component: AccountManagementComponent },
     { path: 'change-password', component: ChangePasswordComponent },
     { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
+    { path: 'users/new', component: UserEditorComponent, canActivate: [adminGuard] },
+    { path: 'users/:id/edit', component: UserEditorComponent, canActivate: [adminGuard] },
     { path: 'events', component: EventsComponent },
     { path: 'events/new', component: EventEditorComponent, canActivate: [adminGuard] },
     { path: 'events/:id/edit', component: EventEditorComponent, canActivate: [adminGuard] },

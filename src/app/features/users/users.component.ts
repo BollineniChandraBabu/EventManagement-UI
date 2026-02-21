@@ -1,20 +1,20 @@
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AppUser } from '../../core/models/api.models';
-import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
+import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, AsyncPipe],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css'
 })
 export class UsersComponent {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
@@ -33,18 +33,7 @@ export class UsersComponent {
   totalPages = 0;
   totalElements = 0;
   loading = false;
-  saving = false;
   deactivatingIds = new Set<number>();
-
-  form = this.fb.nonNullable.group({
-    id: [0],
-    name: ['', [Validators.required]],
-    email: ['', [Validators.required, Validators.email]],
-    role: [ROLE_USER as UserRole, [Validators.required]],
-    isBirthdayEnabled: [false],
-    isGoodMorningEnabled: [false],
-    isGoodNightEnabled: [false],
-  });
 
   constructor() {
     this.loadUsers();
@@ -64,54 +53,6 @@ export class UsersComponent {
 
   get endRow(): number {
     return this.viewUsers.length === 0 ? 0 : this.startRow + this.viewUsers.length - 1;
-  }
-
-  save(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    const { id, ...payload } = this.form.getRawValue();
-    const req = id ? this.api.updateUser(id, payload) : this.api.saveUser(payload);
-    this.saving = true;
-
-    req.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.toast.success(id ? 'User updated successfully.' : 'User created successfully.');
-        this.loadUsers();
-        this.resetForm();
-        this.saving = false;
-      },
-      error: () => {
-        this.toast.error('Unable to save user. Please try again.');
-        this.saving = false;
-      }
-    });
-  }
-
-  edit(user: AppUser): void {
-    this.form.patchValue({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isGoodMorningEnabled: user.isGoodMorningEnabled,
-      isBirthdayEnabled: user.isBirthdayEnabled,
-      isGoodNightEnabled: user.isGoodNightEnabled
-    });
-  }
-
-  resetForm(): void {
-    this.form.reset({
-      id: 0,
-      name: '',
-      email: '',
-      role: ROLE_USER,
-      isBirthdayEnabled: false,
-      isGoodMorningEnabled: false,
-      isGoodNightEnabled: false
-    });
   }
 
   deactivate(id: number): void {
