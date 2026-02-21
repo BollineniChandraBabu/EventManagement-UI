@@ -1,6 +1,6 @@
 import { AsyncPipe, CommonModule, DatePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { map } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
@@ -29,22 +29,45 @@ export class DashboardComponent {
   readonly otpMailStats$ = this.api.getOtpMailDashboard();
   readonly forgotPasswordMailStats$ = this.api.getForgotPasswordMailDashboard();
 
-  readonly otpMailChart$ = this.api.getOtpMailChart(7).pipe(
+  selectedDate = this.toDateInputValue(new Date());
+  readonly maxDate = this.toDateInputValue(new Date());
+
+  private readonly selectedDaysSubject = new BehaviorSubject<number>(1);
+  private readonly selectedDays$ = this.selectedDaysSubject.asObservable().pipe(distinctUntilChanged());
+
+  readonly otpMailChart$ = this.selectedDays$.pipe(
+    switchMap((days) => this.api.getOtpMailChart(days)),
     map((response) => this.toBars(response.points))
   );
 
-  readonly forgotPasswordMailChart$ = this.api.getForgotPasswordMailChart(7).pipe(
+  readonly forgotPasswordMailChart$ = this.selectedDays$.pipe(
+    switchMap((days) => this.api.getForgotPasswordMailChart(days)),
     map((response) => this.toBars(response.points))
   );
 
-  readonly mailChart$ = this.api.getMailChart(0).pipe(
+  readonly mailChart$ = this.selectedDays$.pipe(
+    switchMap((days) => this.api.getMailChart(days)),
     map((response) => this.toBars(response.points))
   );
 
-  readonly instaChart$ = this.api.getInstaChart(0).pipe(
+  readonly instaChart$ = this.selectedDays$.pipe(
+    switchMap((days) => this.api.getInstaChart(days)),
     map((response) => this.toBars(response.points))
   );
 
+  onChartDateChange(dateValue: string): void {
+    const selectedDate = this.parseInputDate(dateValue);
+    const now = new Date();
+
+    if (!selectedDate || selectedDate > now) {
+      this.selectedDate = this.toDateInputValue(now);
+      this.selectedDaysSubject.next(1);
+      return;
+    }
+
+    this.selectedDate = this.toDateInputValue(selectedDate);
+    this.selectedDaysSubject.next(this.calculateDaysFromDate(selectedDate));
+  }
 
   mailFlowCards(stats: MailFlowStats | null | undefined): Array<{ label: string; value: number }> {
     const safeStats = stats ?? { emailsSentToday: 0, failedEmails: 0 };
@@ -53,6 +76,36 @@ export class DashboardComponent {
       { label: 'Emails sent today', value: safeStats.emailsSentToday ?? 0 },
       { label: 'Failed emails', value: safeStats.failedEmails ?? 0 }
     ];
+  }
+
+  private calculateDaysFromDate(date: Date): number {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const startOfSelectedDate = new Date(date);
+    startOfSelectedDate.setHours(0, 0, 0, 0);
+
+    const msInDay = 24 * 60 * 60 * 1000;
+    const dayDifference = Math.floor((startOfToday.getTime() - startOfSelectedDate.getTime()) / msInDay);
+
+    return Math.max(dayDifference + 1, 1);
+  }
+
+  private parseInputDate(dateValue: string): Date | null {
+    if (!dateValue) {
+      return null;
+    }
+
+    const parsedDate = new Date(`${dateValue}T00:00:00`);
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+  }
+
+  private toDateInputValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   private toBars(points: DashboardChartPoint[]): ChartBarViewModel[] {

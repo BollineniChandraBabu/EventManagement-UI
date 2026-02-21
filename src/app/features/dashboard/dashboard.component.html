@@ -19,6 +19,17 @@
     </div>
   </div>
 
+  <div class="chart-filter">
+    <label for="chartStartDateMail" class="chart-filter-label">Select date for charts</label>
+    <input
+      id="chartStartDateMail"
+      type="date"
+      class="form-control chart-filter-input"
+      [value]="selectedDate"
+      [max]="maxDate"
+      (change)="onChartDateChange($any($event.target).value)"
+    />
+  </div>
 
   <div class="mail-flow-grid" *ngIf="auth.isAdmin()">
     <div class="chart-card" *ngIf="otpMailStats$ | async as otpStats">
@@ -117,6 +128,18 @@
       <div class="kpi-label">Failed emails</div>
       <div class="kpi-value">{{ data.failedEmails }}</div>
     </div>
+  </div>
+
+  <div class="chart-filter">
+    <label for="chartStartDateInsta" class="chart-filter-label">Select date for charts</label>
+    <input
+      id="chartStartDateInsta"
+      type="date"
+      class="form-control chart-filter-input"
+      [value]="selectedDate"
+      [max]="maxDate"
+      (change)="onChartDateChange($any($event.target).value)"
+    />
   </div>
 
   <div class="chart-card" *ngIf="instaChart$ | async as chart">
