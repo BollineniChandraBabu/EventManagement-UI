@@ -16,14 +16,15 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly isAuthed = signal(this.hasToken());
+  private readonly currentRole = signal(this.getStoredValue(ROLE) ?? ROLE_USER);
   private tokenExpiryTimeout?: ReturnType<typeof setTimeout>;
   private refreshTimerSub?: Subscription;
 
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
   readonly authenticated = computed(() => this.isAuthed());
-  readonly role = computed(() => (localStorage.getItem(ROLE) ?? sessionStorage.getItem(ROLE) ?? ROLE_USER));
-  readonly isAdmin = computed(() => this.role() === ROLE_ADMIN);
+  readonly role = computed(() => this.currentRole());
+  readonly isAdmin = computed(() => this.currentRole() === ROLE_ADMIN);
 
   login(request: LoginRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/login`, request).pipe(
@@ -71,6 +72,7 @@ export class AuthService {
   logout(): void {
     this.clearStoredSession();
     this.isAuthed.set(false);
+    this.currentRole.set(ROLE_USER);
     this.cancelTimers();
     this.router.navigate(['/login']);
   }
@@ -88,6 +90,7 @@ export class AuthService {
     storage.setItem(ROLE, response.role);
 
     this.isAuthed.set(true);
+    this.currentRole.set(response.role);
     this.scheduleAutoLogout(response.expiresIn);
   }
 
