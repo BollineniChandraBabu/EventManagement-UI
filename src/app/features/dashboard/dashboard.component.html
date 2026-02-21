@@ -41,21 +41,10 @@
         </div>
       </div>
 
-      <div class="chart-legend">
-        <span><i class="legend-dot sent"></i>Sent</span>
-        <span><i class="legend-dot failed"></i>Failed</span>
-      </div>
-
-      <div class="bar-chart compact-chart" *ngIf="otpMailChart$ | async as otpChart">
-        <div class="bar-group" *ngFor="let point of otpChart">
-          <div class="bars">
-            <div class="bar sent" [style.height.%]="point.sentHeightPct"></div>
-            <div class="bar failed" [style.height.%]="point.failedHeightPct"></div>
-          </div>
-          <div class="bar-total">{{ point.total }}</div>
-          <div class="bar-label">{{ point.dateLabel | date : 'MMM d' }}</div>
-        </div>
-      </div>
+      <ng-container *ngIf="otpMailChart$ | async as otpChartConfig">
+        <div id="otp-mail-chart-container" class="highchart-host"></div>
+        <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(otpChartConfig) }}</span>
+      </ng-container>
     </div>
 
     <div class="chart-card" *ngIf="forgotPasswordMailStats$ | async as forgotPasswordStats">
@@ -67,45 +56,17 @@
         </div>
       </div>
 
-      <div class="chart-legend">
-        <span><i class="legend-dot sent"></i>Sent</span>
-        <span><i class="legend-dot failed"></i>Failed</span>
-      </div>
-
-      <div class="bar-chart compact-chart" *ngIf="forgotPasswordMailChart$ | async as forgotPasswordChart">
-        <div class="bar-group" *ngFor="let point of forgotPasswordChart">
-          <div class="bars">
-            <div class="bar sent" [style.height.%]="point.sentHeightPct"></div>
-            <div class="bar failed" [style.height.%]="point.failedHeightPct"></div>
-          </div>
-          <div class="bar-total">{{ point.total }}</div>
-          <div class="bar-label">{{ point.dateLabel | date : 'MMM d' }}</div>
-        </div>
-      </div>
+      <ng-container *ngIf="forgotPasswordMailChart$ | async as forgotPasswordChartConfig">
+        <div id="forgot-password-chart-container" class="highchart-host"></div>
+        <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(forgotPasswordChartConfig) }}</span>
+      </ng-container>
     </div>
   </div>
 
-  <div class="chart-card" *ngIf="mailChart$ | async as chart">
+  <div class="chart-card" *ngIf="mailChart$ | async as mailChartConfig">
     <h3 class="chart-title">Mail Delivery Trend</h3>
-    <div class="chart-legend">
-      <span><i class="legend-dot sent"></i>Sent</span>
-      <span><i class="legend-dot failed"></i>Failed</span>
-    </div>
-
-    <div class="bar-chart" *ngIf="chart.length; else noMailChartData">
-      <div class="bar-group" *ngFor="let point of chart">
-        <div class="bars">
-          <div class="bar sent" [style.height.%]="point.sentHeightPct" [attr.aria-label]="'Sent ' + point.sent"></div>
-          <div class="bar failed" [style.height.%]="point.failedHeightPct" [attr.aria-label]="'Failed ' + point.failed"></div>
-        </div>
-        <div class="bar-total">{{ point.total }}</div>
-        <div class="bar-label">{{ point.dateLabel | date : 'MMM d' }}</div>
-      </div>
-    </div>
-
-    <ng-template #noMailChartData>
-      <div class="empty-chart">No mail chart data available.</div>
-    </ng-template>
+    <div id="mail-chart-container" class="highchart-host"></div>
+    <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(mailChartConfig) }}</span>
   </div>
 </div>
 
@@ -142,26 +103,9 @@
     />
   </div>
 
-  <div class="chart-card" *ngIf="instaChart$ | async as chart">
+  <div class="chart-card" *ngIf="instaChart$ | async as instaChartConfig">
     <h3 class="chart-title">Insta Delivery Trend</h3>
-    <div class="chart-legend">
-      <span><i class="legend-dot sent"></i>Sent</span>
-      <span><i class="legend-dot failed"></i>Failed</span>
-    </div>
-
-    <div class="bar-chart" *ngIf="chart.length; else noInstaChartData">
-      <div class="bar-group" *ngFor="let point of chart">
-        <div class="bars">
-          <div class="bar sent" [style.height.%]="point.sentHeightPct" [attr.aria-label]="'Sent ' + point.sent"></div>
-          <div class="bar failed" [style.height.%]="point.failedHeightPct" [attr.aria-label]="'Failed ' + point.failed"></div>
-        </div>
-        <div class="bar-total">{{ point.total }}</div>
-        <div class="bar-label">{{ point.dateLabel | date : 'MMM d' }}</div>
-      </div>
-    </div>
-
-    <ng-template #noInstaChartData>
-      <div class="empty-chart">No insta chart data available.</div>
-    </ng-template>
+    <div id="insta-chart-container" class="highchart-host"></div>
+    <span class="chart-render-trigger" aria-hidden="true">{{ renderHighchart(instaChartConfig) }}</span>
   </div>
 </div>

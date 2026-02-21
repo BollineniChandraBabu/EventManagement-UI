@@ -1,22 +1,21 @@
-import { AsyncPipe, CommonModule, DatePipe } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
 
-interface ChartBarViewModel {
-  dateLabel: string;
-  sent: number;
-  failed: number;
-  total: number;
-  sentHeightPct: number;
-  failedHeightPct: number;
+declare global {
+  interface Window {
+    Highcharts?: {
+      chart: (renderTo: string, options: Record<string, unknown>) => unknown;
+    };
+  }
 }
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AsyncPipe, DatePipe],
+  imports: [CommonModule, AsyncPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -37,22 +36,22 @@ export class DashboardComponent {
 
   readonly otpMailChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getOtpMailChart(days)),
-    map((response) => this.toBars(response.points))
+    map((response) => this.toChartOptions(response.points, 'otp-mail-chart-container'))
   );
 
   readonly forgotPasswordMailChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getForgotPasswordMailChart(days)),
-    map((response) => this.toBars(response.points))
+    map((response) => this.toChartOptions(response.points, 'forgot-password-chart-container'))
   );
 
   readonly mailChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getMailChart(days)),
-    map((response) => this.toBars(response.points))
+    map((response) => this.toChartOptions(response.points, 'mail-chart-container'))
   );
 
   readonly instaChart$ = this.selectedDays$.pipe(
     switchMap((days) => this.api.getInstaChart(days)),
-    map((response) => this.toBars(response.points))
+    map((response) => this.toChartOptions(response.points, 'insta-chart-container'))
   );
 
   onChartDateChange(dateValue: string): void {
@@ -67,6 +66,14 @@ export class DashboardComponent {
 
     this.selectedDate = this.toDateInputValue(selectedDate);
     this.selectedDaysSubject.next(this.calculateDaysFromDate(selectedDate));
+  }
+
+  renderHighchart(chartConfig: { containerId: string; options: Record<string, unknown> }): void {
+    if (!window.Highcharts) {
+      return;
+    }
+
+    window.Highcharts.chart(chartConfig.containerId, chartConfig.options);
   }
 
   mailFlowCards(stats: MailFlowStats | null | undefined): Array<{ label: string; value: number }> {
@@ -96,7 +103,12 @@ export class DashboardComponent {
       return null;
     }
 
-    const parsedDate = new Date(`${dateValue}T00:00:00`);
+    const [year, month, day] = dateValue.split('-').map((value) => Number(value));
+    if (!year || !month || !day) {
+      return null;
+    }
+
+    const parsedDate = new Date(year, month - 1, day);
     return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
   }
 
@@ -108,25 +120,81 @@ export class DashboardComponent {
     return `${year}-${month}-${day}`;
   }
 
-  private toBars(points: DashboardChartPoint[]): ChartBarViewModel[] {
+  private toChartOptions(points: DashboardChartPoint[], containerId: string): { containerId: string; options: Record<string, unknown> } {
     const safePoints = points ?? [];
-    const maxTotal = Math.max(...safePoints.map((item) => item.total ?? 0), 1);
+    const categories = safePoints.map((item) => this.toDateLabel(item.date));
 
-    return safePoints.map((item) => {
-      const sent = item.sent ?? 0;
-      const failed = item.failed ?? 0;
-      const total = item.total ?? sent + failed;
-      const sentHeightPct = Math.max((sent / maxTotal) * 100, sent > 0 ? 6 : 0);
-      const failedHeightPct = Math.max((failed / maxTotal) * 100, failed > 0 ? 6 : 0);
+    return {
+      containerId,
+      options: {
+        chart: {
+          type: 'line',
+          backgroundColor: 'transparent',
+          height: 280
+        },
+        title: { text: undefined },
+        credits: { enabled: false },
+        xAxis: {
+          categories,
+          crosshair: true,
+          labels: { style: { color: '#6b7280' } }
+        },
+        yAxis: {
+          title: { text: 'Emails' },
+          allowDecimals: false
+        },
+        legend: {
+          itemStyle: { color: '#374151', fontWeight: '500' }
+        },
+        tooltip: { shared: true },
+        plotOptions: {
+          line: {
+            marker: {
+              enabled: true,
+              radius: 4
+            },
+            lineWidth: 3
+          }
+        },
+        series: [
+          {
+            name: 'Sent',
+            type: 'line',
+            color: '#14b8a6',
+            data: safePoints.map((item) => item.sent ?? 0)
+          },
+          {
+            name: 'Failed',
+            type: 'line',
+            color: '#ef4444',
+            data: safePoints.map((item) => item.failed ?? 0)
+          }
+        ]
+      }
+    };
+  }
 
-      return {
-        dateLabel: item.date,
-        sent,
-        failed,
-        total,
-        sentHeightPct,
-        failedHeightPct
-      };
-    });
+  private toDateLabel(dateValue: string): string {
+    const parsedDate = this.parseApiDate(dateValue);
+
+    if (!parsedDate) {
+      return dateValue;
+    }
+
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsedDate);
+  }
+
+  private parseApiDate(dateValue: string): Date | null {
+    if (!dateValue) {
+      return null;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      const [year, month, day] = dateValue.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    const parsed = new Date(dateValue);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 }
