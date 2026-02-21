@@ -12,6 +12,7 @@ import { AccountManagementComponent } from './features/account/account-managemen
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { UsersComponent } from './features/users/users.component';
 import { EventsComponent } from './features/events/events.component';
+import { EventEditorComponent } from './features/events/event-editor.component';
 import { TemplateEditorComponent } from './features/templates/template-editor.component';
 import { AiWishesComponent } from './features/ai-wishes/ai-wishes.component';
 import { EmailPreviewComponent } from './features/email-preview/email-preview.component';
@@ -31,6 +32,8 @@ export const routes: Routes = [
     { path: 'change-password', component: ChangePasswordComponent },
     { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
     { path: 'events', component: EventsComponent },
+    { path: 'events/new', component: EventEditorComponent, canActivate: [adminGuard] },
+    { path: 'events/:id/edit', component: EventEditorComponent, canActivate: [adminGuard] },
     { path: 'templates', component: TemplateEditorComponent, canActivate: [adminGuard] },
     { path: 'ai-wishes', component: AiWishesComponent },
     { path: 'email-preview', component: EmailPreviewComponent },
