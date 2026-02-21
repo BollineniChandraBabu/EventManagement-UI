@@ -54,7 +54,8 @@ export class AccountManagementComponent {
       return;
     }
 
-    this.auth.updateProfile(this.profileForm.getRawValue()).subscribe({
+    const { fullName, email } = this.profileForm.getRawValue();
+    this.auth.updateProfile({ fullName, email }).subscribe({
       next: () => this.toast.success('Profile updated successfully.'),
       error: () => this.toast.error('Unable to update profile. Please try again.')
     });
