@@ -1,7 +1,7 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
@@ -50,6 +50,9 @@ export class DashboardComponent {
   );
 
   readonly chartColorScheme = {
+    name: 'mailChartScheme',
+    selectable: true,
+    group: ScaleType.Ordinal,
     domain: ['#14b8a6', '#ef4444']
   };
 
