@@ -103,7 +103,15 @@ export class UsersComponent {
   }
 
   resetForm(): void {
-    this.form.reset({ id: 0, name: '', email: '', role: ROLE_USER });
+    this.form.reset({
+      id: 0,
+      name: '',
+      email: '',
+      role: ROLE_USER,
+      isBirthdayEnabled: false,
+      isGoodMorningEnabled: false,
+      isGoodNightEnabled: false
+    });
   }
 
   deactivate(id: number): void {

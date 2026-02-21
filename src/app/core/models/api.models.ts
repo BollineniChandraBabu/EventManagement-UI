@@ -33,6 +33,9 @@ export interface SaveUserPayload {
   name: string;
   email: string;
   role: UserRole;
+  isGoodMorningEnabled?: boolean;
+  isGoodNightEnabled?: boolean;
+  isBirthdayEnabled?: boolean;
 }
 
 export interface EventItem {
