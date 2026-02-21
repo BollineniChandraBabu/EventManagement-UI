@@ -99,3 +99,29 @@
   border: 1px solid #cbd5e1;
   padding: 0.35rem 0.5rem;
 }
+
+
+.chart-host {
+  height: 320px;
+}
+
+:host ::ng-deep .chart-host .ngx-charts-outer,
+:host ::ng-deep .chart-host .ngx-charts,
+:host ::ng-deep .chart-host svg {
+  width: 100% !important;
+  height: 320px !important;
+}
+
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+
+  .chart-host,
+  :host ::ng-deep .chart-host .ngx-charts-outer,
+  :host ::ng-deep .chart-host .ngx-charts,
+  :host ::ng-deep .chart-host svg {
+    height: 280px !important;
+  }
+}
