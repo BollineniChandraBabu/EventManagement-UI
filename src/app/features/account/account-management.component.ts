@@ -42,6 +42,9 @@ export class AccountManagementComponent {
   });
 
   isChangingPassword = false;
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   constructor() {
     this.auth.getProfile().subscribe({
@@ -100,5 +103,19 @@ export class AccountManagementComponent {
         this.isChangingPassword = false;
       }
     });
+  }
+
+  togglePasswordVisibility(field: 'current' | 'new' | 'confirm'): void {
+    if (field === 'current') {
+      this.showCurrentPassword = !this.showCurrentPassword;
+      return;
+    }
+
+    if (field === 'new') {
+      this.showNewPassword = !this.showNewPassword;
+      return;
+    }
+
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }

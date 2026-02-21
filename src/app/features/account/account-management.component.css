@@ -54,3 +54,8 @@
 .account-session .border-bottom {
   border-bottom: 1px solid #e9edf8 !important;
 }
+
+.password-toggle-icon {
+  width: 1rem;
+  text-align: center;
+}

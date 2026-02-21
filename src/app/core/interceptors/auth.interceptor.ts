@@ -10,6 +10,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(clone).pipe(
     catchError((error: HttpErrorResponse) => {
+      if (error.status === 403) {
+        auth.logout();
+        return throwError(() => error);
+      }
+
       if (error.status === 401) {
         return auth.refreshToken().pipe(
           switchMap((res) => next(req.clone({ setHeaders: { Authorization: `Bearer ${res.accessToken}` } }))),
