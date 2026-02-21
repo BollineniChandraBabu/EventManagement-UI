@@ -1,7 +1,7 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
-import { NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
+import { LegendPosition, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
@@ -48,6 +48,9 @@ export class DashboardComponent {
     switchMap((days) => this.api.getInstaChart(days)),
     map((response) => this.toLineChartData(response.points))
   );
+
+
+  readonly legendPosition = LegendPosition.Below;
 
   readonly chartColorScheme = {
     name: 'mailChartScheme',

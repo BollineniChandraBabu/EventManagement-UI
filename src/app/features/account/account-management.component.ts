@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
@@ -35,6 +35,14 @@ export class AccountManagementComponent {
     isGoodNightEnabled: [false]
   });
 
+  readonly changePasswordForm = this.fb.nonNullable.group({
+    currentPassword: ['', [Validators.required]],
+    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', [Validators.required, Validators.minLength(8)]]
+  });
+
+  isChangingPassword = false;
+
   constructor() {
     this.auth.getProfile().subscribe({
       next: (profile) => {
@@ -66,5 +74,31 @@ export class AccountManagementComponent {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  submitPasswordChange(): void {
+    if (this.changePasswordForm.invalid) {
+      this.changePasswordForm.markAllAsTouched();
+      return;
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = this.changePasswordForm.getRawValue();
+    if (newPassword !== confirmPassword) {
+      this.toast.error('New password and confirm password must match.');
+      return;
+    }
+
+    this.isChangingPassword = true;
+    this.auth.changePassword(currentPassword, newPassword).subscribe({
+      next: () => {
+        this.toast.success('Password changed successfully.');
+        this.changePasswordForm.reset();
+        this.isChangingPassword = false;
+      },
+      error: () => {
+        this.toast.error('Unable to change password. Please verify your current password and try again.');
+        this.isChangingPassword = false;
+      }
+    });
   }
 }
