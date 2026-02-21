@@ -88,6 +88,48 @@
       </div>
 
       <div class="card account-session border-0 shadow-3 rounded-5">
+        <div class="card-body p-4 border-bottom">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="section-icon bg-info-subtle text-info-emphasis"><i class="fa-solid fa-lock"></i></span>
+            <div>
+              <h3 class="h5 mb-1">Change password</h3>
+              <p class="text-muted mb-0">Update your account password regularly to keep your account secure.</p>
+            </div>
+          </div>
+
+          <form [formGroup]="changePasswordForm" class="row g-3" (ngSubmit)="submitPasswordChange()" novalidate>
+            <div class="col-12">
+              <label for="currentPassword" class="form-label">Current password</label>
+              <input id="currentPassword" class="form-control" type="password" formControlName="currentPassword" />
+              <small class="text-danger" *ngIf="changePasswordForm.controls.currentPassword.touched && changePasswordForm.controls.currentPassword.invalid">
+                Current password is required.
+              </small>
+            </div>
+
+            <div class="col-12">
+              <label for="newPassword" class="form-label">New password</label>
+              <input id="newPassword" class="form-control" type="password" formControlName="newPassword" />
+              <small class="text-danger" *ngIf="changePasswordForm.controls.newPassword.touched && changePasswordForm.controls.newPassword.invalid">
+                New password must be at least 8 characters.
+              </small>
+            </div>
+
+            <div class="col-12">
+              <label for="confirmPassword" class="form-label">Confirm new password</label>
+              <input id="confirmPassword" class="form-control" type="password" formControlName="confirmPassword" />
+              <small class="text-danger" *ngIf="changePasswordForm.controls.confirmPassword.touched && changePasswordForm.controls.confirmPassword.invalid">
+                Please confirm the new password.
+              </small>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end">
+              <button type="submit" class="btn btn-outline-primary px-4" [disabled]="isChangingPassword">
+                <i class="fa-solid fa-key me-2"></i>{{ isChangingPassword ? 'Changing...' : 'Change password' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div class="card-body p-4">
           <h3 class="h5 mb-2">Session</h3>
           <p class="text-muted mb-3">On shared or public computers, always sign out to protect your account.</p>

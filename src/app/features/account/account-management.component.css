@@ -49,3 +49,8 @@
 .account-session {
   background: linear-gradient(180deg, #ffffff, #f9fbff);
 }
+
+
+.account-session .border-bottom {
+  border-bottom: 1px solid #e9edf8 !important;
+}

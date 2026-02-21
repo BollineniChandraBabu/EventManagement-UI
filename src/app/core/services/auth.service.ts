@@ -49,6 +49,13 @@ export class AuthService {
     return this.http.post<void>(`${environment.apiUrl}/auth/password-reset/confirm`, { email, token, newPassword });
   }
 
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/auth/change-password`, {
+      currentPassword,
+      newPassword
+    });
+  }
+
 
   getProfile(): Observable<AppUser> {
     return this.http.get<AppUser>(`${environment.apiUrl}/users/me`);
