@@ -74,6 +74,10 @@ export class UsersComponent {
     return this.deactivatingIds.has(id);
   }
 
+  userDob(user: AppUser): string | null {
+    return user.dob || user.dateOfBirth || null;
+  }
+
   onSearchInput(value: string): void {
     const previousFilter = this.filterText;
     this.filterText = value;

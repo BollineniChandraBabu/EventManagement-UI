@@ -38,6 +38,8 @@ export interface AppUser {
   id: number;
   name: string;
   email: string;
+  dob?: string;
+  dateOfBirth?: string;
   role: UserRole;
   active?: boolean;
   relationShip: string;
@@ -50,6 +52,7 @@ export interface SaveUserPayload {
   id?: number;
   name: string;
   email: string;
+  dob: string;
   role: UserRole;
   relationShip: string;
   isGoodMorningEnabled?: boolean;
