@@ -257,8 +257,11 @@ export class ApiService {
     return response as T;
   }
 
-  private requestWithFallback<T>(requestFactory: (path: string) => Observable<T>): Observable<T> {
-    const [primaryPath, fallbackPath] = this.relationshipSeedPaths;
+  private requestWithFallback<T>(
+    requestFactory: (path: string) => Observable<T>,
+    paths: readonly [string, string] = this.relationshipSeedPaths
+  ): Observable<T> {
+    const [primaryPath, fallbackPath] = paths;
 
     return requestFactory(primaryPath).pipe(
       catchError((primaryError) => requestFactory(fallbackPath).pipe(
@@ -268,4 +271,5 @@ export class ApiService {
   }
 
   private readonly relationshipSeedPaths = ['/relation-seeds', '/relationship-seeds'] as const;
+  private readonly eventTypeSeedPaths = ['/event-type-seeds', '/event-types-seeds'] as const;
 }
