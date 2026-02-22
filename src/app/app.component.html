@@ -14,29 +14,35 @@
       <i class="fa-solid fa-bars"></i>
     </button>
 
-    <nav class="menu" [class.menu-mobile-open]="isMobileMenuOpen">
-      <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">Dashboard</a>
-      <a routerLink="/events" routerLinkActive="active" (click)="closeMobileMenu()">Events</a>
-      <a routerLink="/ai-wishes" routerLinkActive="active" (click)="closeMobileMenu()">AI Wishes</a>
-      <a routerLink="/email-status" routerLinkActive="active" (click)="closeMobileMenu()">Email Status</a>
-      <a *ngIf="auth.isAdmin()" routerLink="/email-status/otp" routerLinkActive="active" (click)="closeMobileMenu()">OTP Emails</a>
-      <a *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password" routerLinkActive="active" (click)="closeMobileMenu()">Forgot Password Emails</a>
-      <a *ngIf="auth.isAdmin()" routerLink="/schedulers" routerLinkActive="active" (click)="closeMobileMenu()">Schedulers</a>
-      <a *ngIf="auth.isAdmin()" routerLink="/users" routerLinkActive="active" (click)="closeMobileMenu()">Users</a>
-      <a *ngIf="auth.isAdmin()" routerLink="/relationship-seeds" routerLinkActive="active" (click)="closeMobileMenu()">Relationship Seeds</a>
-      <a *ngIf="auth.isAdmin()" routerLink="/event-type-seeds" routerLinkActive="active" (click)="closeMobileMenu()">Event Type Seeds</a>
-      <a routerLink="/account" routerLinkActive="active" (click)="closeMobileMenu()">Account</a>
-    </nav>
-  </aside>
+    <ng-container *ngIf="auth.authenticated()">
+      <div class="desktop-menu d-none d-lg-flex align-items-center justify-content-between flex-grow-1 gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/dashboard">Dashboard</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events">Events</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes">AI Wishes</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status">Email Status</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/otp">OTP Emails</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password">Forgot Password Emails</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers">Schedulers</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds">Relationship Seeds</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users">Users</a>
+        </div>
+        <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
+      </div>
 
-  <div class="content-shell">
-    <main class="app-shell container-fluid py-4">
-      <router-outlet></router-outlet>
-    </main>
-
-    <footer class="app-footer py-3">
-      <div class="container-fluid text-center small">
-        © {{ currentYear }} All rights reserved. Developed by Chandu.
+      <div class="mobile-menu w-100" *ngIf="isMobileMenuOpen">
+        <div class="mobile-menu-panel">
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/dashboard" (click)="closeMobileMenu()">Dashboard</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events" (click)="closeMobileMenu()">Events</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes" (click)="closeMobileMenu()">AI Wishes</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status" (click)="closeMobileMenu()">Email Status</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/otp" (click)="closeMobileMenu()">OTP Emails</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password" (click)="closeMobileMenu()">Forgot Password Emails</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers" (click)="closeMobileMenu()">Schedulers</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds" (click)="closeMobileMenu()">Relationship Seeds</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users" (click)="closeMobileMenu()">Users</a>
+          <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account" (click)="closeMobileMenu()"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
+        </div>
       </div>
     </footer>
   </div>

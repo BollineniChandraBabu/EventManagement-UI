@@ -107,13 +107,13 @@ export class ApiService {
   }
 
   relationshipSeeds(searchKey = ''): Observable<RelationshipSeed[]> {
-    return this.requestWithFallback<ApiResponse<RelationshipSeed[]>>((path) => this.http.get<ApiResponse<RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
       params: new HttpParams().set('searchKey', searchKey)
     })).pipe(map((response) => this.unwrap(response)));
   }
 
   relationshipSeedById(id: number): Observable<RelationshipSeed> {
-    return this.requestWithFallback<ApiResponse<RelationshipSeed>>((path) => this.http.get<ApiResponse<RelationshipSeed>>(`${environment.apiUrl}${path}/${id}`)).pipe(
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed>>(`${environment.apiUrl}${path}/${id}`)).pipe(
       map((response) => this.unwrap(response))
     );
   }
@@ -257,8 +257,8 @@ export class ApiService {
     return response as T;
   }
 
-  private requestWithFallback<T>(requestFactory: (path: string) => Observable<T>, paths: readonly [string, string] = this.relationshipSeedPaths): Observable<T> {
-    const [primaryPath, fallbackPath] = paths;
+  private requestWithFallback<T>(requestFactory: (path: string) => Observable<T>): Observable<T> {
+    const [primaryPath, fallbackPath] = this.relationshipSeedPaths;
 
     return requestFactory(primaryPath).pipe(
       catchError((primaryError) => requestFactory(fallbackPath).pipe(
@@ -267,6 +267,5 @@ export class ApiService {
     );
   }
 
-  private readonly relationshipSeedPaths: readonly [string, string] = ['/relation-seeds', '/relationship-seeds'];
-  private readonly eventTypeSeedPaths: readonly [string, string] = ['/event-type-seeds', '/event-seeds'];
+  private readonly relationshipSeedPaths = ['/relation-seeds', '/relationship-seeds'] as const;
 }
