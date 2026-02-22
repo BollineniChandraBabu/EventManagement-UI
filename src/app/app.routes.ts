@@ -38,6 +38,8 @@ export const routes: Routes = [
     { path: 'ai-wishes', component: AiWishesComponent },
     { path: 'email-preview', component: EmailPreviewComponent },
     { path: 'email-status', component: EmailStatusComponent },
+    { path: 'email-status/otp', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'OTP Email Status', emailType: 'OTP' } },
+    { path: 'email-status/forgot-password', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'Forgot Password Email Status', emailType: 'FORGOT_PASSWORD' } },
     { path: 'schedulers', component: SchedulersComponent, canActivate: [adminGuard] },
     { path: 'relationship-seeds', component: RelationshipSeedsComponent, canActivate: [adminGuard] },
     { path: 'relationship-seeds/new', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },

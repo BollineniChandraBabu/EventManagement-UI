@@ -142,9 +142,9 @@ export class ApiService {
     return this.http.post<AiWishResponse>(`${environment.apiUrl}/ai/generate-wish`, payload);
   }
 
-  emailStatuses(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<EmailStatus>> {
+  emailStatuses(page = 0, size = 10, searchKey = '', emailType = ''): Observable<PagedResponse<EmailStatus>> {
     return this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(`${environment.apiUrl}/emails/status`, {
-      params: this.pagedParams(page, size, searchKey)
+      params: this.pagedParams(page, size, searchKey).set('emailType', emailType)
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
