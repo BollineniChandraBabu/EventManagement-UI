@@ -26,6 +26,7 @@ export class EventEditorComponent {
   readonly types = ['Birthday', 'Anniversary', 'Engagement', 'Festival', 'Good Morning', 'Good Night'];
 
   allUsers: AppUser[] = [];
+  relationshipOptions: string[] = [];
   result = '';
   loading = false;
   saving = false;
@@ -41,6 +42,7 @@ export class EventEditorComponent {
 
   constructor() {
     this.loadUsers();
+    this.loadRelationshipSeeds();
   }
 
   get pageTitle(): string {
@@ -120,6 +122,14 @@ export class EventEditorComponent {
       error: () => {
         this.toast.error('Unable to load users right now.');
         this.loading = false;
+      }
+    });
+  }
+
+  private loadRelationshipSeeds(): void {
+    this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (seeds) => {
+        this.relationshipOptions = (seeds ?? []).map((seed) => seed.name);
       }
     });
   }

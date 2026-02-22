@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-import { AppUser } from '../../core/models/api.models';
+import { AppUser, RelationshipSeed } from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -27,6 +27,7 @@ export class UserEditorComponent {
 
   loading = false;
   saving = false;
+  relationshipSeeds: RelationshipSeed[] = [];
   editingUserId: number | null = null;
 
   form = this.fb.nonNullable.group({
@@ -41,6 +42,7 @@ export class UserEditorComponent {
   });
 
   constructor() {
+    this.loadRelationshipSeeds();
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = Number(params.get('id'));
       this.editingUserId = Number.isNaN(id) ? null : id;
@@ -49,6 +51,10 @@ export class UserEditorComponent {
         this.loadUser(this.editingUserId);
       }
     });
+  }
+
+  get relationshipOptions(): string[] {
+    return this.relationshipSeeds.map((seed) => seed.name);
   }
 
   get pageTitle(): string {
@@ -93,6 +99,17 @@ export class UserEditorComponent {
         this.toast.error('Unable to load user details right now.');
         this.loading = false;
         this.router.navigateByUrl('/users');
+      }
+    });
+  }
+
+  private loadRelationshipSeeds(): void {
+    this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (seeds) => {
+        this.relationshipSeeds = seeds ?? [];
+      },
+      error: () => {
+        this.toast.error('Unable to load relationship options right now.');
       }
     });
   }

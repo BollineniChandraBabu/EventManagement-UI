@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AiWishRequest,
@@ -15,8 +15,10 @@ import {
   PagedResponse,
   SaveEventPayload,
   SaveUserPayload,
+  SaveRelationshipSeedPayload,
   SchedulerItem,
   SchedulerTriggerResponse,
+  RelationshipSeed,
   WishSettingsPayload
 } from '../models/api.models';
 
@@ -100,6 +102,30 @@ export class ApiService {
 
   deactivateUser(id: number) {
     return this.http.post(`${environment.apiUrl}/users/${id}/deactivate`, {});
+  }
+
+  relationshipSeeds(searchKey = ''): Observable<RelationshipSeed[]> {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
+      params: new HttpParams().set('searchKey', searchKey)
+    })).pipe(map((response) => this.unwrap(response)));
+  }
+
+  relationshipSeedById(id: number): Observable<RelationshipSeed> {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed>>(`${environment.apiUrl}${path}/${id}`)).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  saveRelationshipSeed(payload: SaveRelationshipSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, payload));
+  }
+
+  updateRelationshipSeed(id: number, payload: SaveRelationshipSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}`, { ...payload, id }));
+  }
+
+  deleteRelationshipSeed(id: number): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`));
   }
 
   events(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<EventItem>> {
@@ -204,4 +230,16 @@ export class ApiService {
 
     return response as T;
   }
+
+  private requestWithFallback<T>(requestFactory: (path: string) => Observable<T>): Observable<T> {
+    const [primaryPath, fallbackPath] = this.relationshipSeedPaths;
+
+    return requestFactory(primaryPath).pipe(
+      catchError((primaryError) => requestFactory(fallbackPath).pipe(
+        catchError(() => throwError(() => primaryError))
+      ))
+    );
+  }
+
+  private readonly relationshipSeedPaths = ['/relation-seeds', '/relationship-seeds'] as const;
 }

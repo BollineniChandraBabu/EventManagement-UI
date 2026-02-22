@@ -17,6 +17,8 @@ import { AiWishesComponent } from './features/ai-wishes/ai-wishes.component';
 import { EmailPreviewComponent } from './features/email-preview/email-preview.component';
 import { EmailStatusComponent } from './features/email-status/email-status.component';
 import { SchedulersComponent } from './features/schedulers/schedulers.component';
+import { RelationshipSeedEditorComponent } from './features/relationship-seeds/relationship-seed-editor.component';
+import { RelationshipSeedsComponent } from './features/relationship-seeds/relationship-seeds.component';
 
 export const routes: Routes = [
   { path: '', canActivate: [resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
@@ -37,6 +39,9 @@ export const routes: Routes = [
     { path: 'email-preview', component: EmailPreviewComponent },
     { path: 'email-status', component: EmailStatusComponent },
     { path: 'schedulers', component: SchedulersComponent, canActivate: [adminGuard] },
+    { path: 'relationship-seeds', component: RelationshipSeedsComponent, canActivate: [adminGuard] },
+    { path: 'relationship-seeds/new', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },
+    { path: 'relationship-seeds/:id/edit', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]},
   { path: '**', redirectTo: 'dashboard' }
