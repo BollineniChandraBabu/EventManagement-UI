@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   standalone: true,
@@ -14,6 +15,7 @@ export class AiWishesComponent {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly isAdmin = this.auth.isAdmin;
 
@@ -26,6 +28,15 @@ export class AiWishesComponent {
   });
   result = '';
   subject = '';
+  relationshipOptions: string[] = [];
+
+  constructor() {
+    this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (seeds) => {
+        this.relationshipOptions = (seeds ?? []).map((seed) => seed.name);
+      }
+    });
+  }
 
   get desktopPreviewSrcDoc(): string {
     return this.wrapPreviewHtml(this.result);

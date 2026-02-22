@@ -22,7 +22,10 @@
           <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events">Events</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes">AI Wishes</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status">Email Status</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/otp">OTP Emails</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password">Forgot Password Emails</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers">Schedulers</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds">Relationship Seeds</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users">Users</a>
         </div>
         <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
@@ -34,7 +37,10 @@
           <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events" (click)="closeMobileMenu()">Events</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes" (click)="closeMobileMenu()">AI Wishes</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status" (click)="closeMobileMenu()">Email Status</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/otp" (click)="closeMobileMenu()">OTP Emails</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password" (click)="closeMobileMenu()">Forgot Password Emails</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers" (click)="closeMobileMenu()">Schedulers</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds" (click)="closeMobileMenu()">Relationship Seeds</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users" (click)="closeMobileMenu()">Users</a>
           <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account" (click)="closeMobileMenu()"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
         </div>

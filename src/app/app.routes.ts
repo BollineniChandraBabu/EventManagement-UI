@@ -17,6 +17,8 @@ import { AiWishesComponent } from './features/ai-wishes/ai-wishes.component';
 import { EmailPreviewComponent } from './features/email-preview/email-preview.component';
 import { EmailStatusComponent } from './features/email-status/email-status.component';
 import { SchedulersComponent } from './features/schedulers/schedulers.component';
+import { RelationshipSeedEditorComponent } from './features/relationship-seeds/relationship-seed-editor.component';
+import { RelationshipSeedsComponent } from './features/relationship-seeds/relationship-seeds.component';
 
 export const routes: Routes = [
   { path: '', canActivate: [resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
@@ -36,7 +38,12 @@ export const routes: Routes = [
     { path: 'ai-wishes', component: AiWishesComponent },
     { path: 'email-preview', component: EmailPreviewComponent },
     { path: 'email-status', component: EmailStatusComponent },
+    { path: 'email-status/otp', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'OTP Email Status', emailType: 'OTP' } },
+    { path: 'email-status/forgot-password', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'Forgot Password Email Status', emailType: 'FORGOT_PASSWORD' } },
     { path: 'schedulers', component: SchedulersComponent, canActivate: [adminGuard] },
+    { path: 'relationship-seeds', component: RelationshipSeedsComponent, canActivate: [adminGuard] },
+    { path: 'relationship-seeds/new', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },
+    { path: 'relationship-seeds/:id/edit', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]},
   { path: '**', redirectTo: 'dashboard' }
