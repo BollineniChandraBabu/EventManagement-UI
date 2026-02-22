@@ -14,6 +14,7 @@ import { LoadingOverlayComponent } from './shared/loading-overlay.component';
 })
 export class AppComponent {
   readonly auth = inject(AuthService);
+  readonly currentYear = new Date().getFullYear();
 
   isMobileMenuOpen = false;
 
