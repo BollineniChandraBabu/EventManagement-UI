@@ -1,16 +1,16 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
-import { LegendPosition, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
+import { CanvasJsLineChartComponent } from './canvasjs-line-chart.component';
 
 type LineChartData = Array<{ name: string; series: Array<{ name: string; value: number }> }>;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AsyncPipe, NgxChartsModule],
+  imports: [CommonModule, AsyncPipe, CanvasJsLineChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -49,23 +49,6 @@ export class DashboardComponent {
     map((response) => this.toLineChartData(response.points))
   );
 
-
-  readonly legendPosition = LegendPosition.Below;
-
-  readonly chartColorScheme = {
-    name: 'mailChartScheme',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: ['#14b8a6', '#ef4444']
-  };
-
-  readonly yAxisTickFormatter = (value: number): string => {
-    if (!Number.isFinite(value)) {
-      return '0';
-    }
-
-    return Number.isInteger(value) ? `${value}` : value.toFixed(1);
-  };
 
   onChartDateChange(dateValue: string): void {
     const selectedDate = this.parseInputDate(dateValue);
@@ -168,17 +151,6 @@ export class DashboardComponent {
     return Math.max(0, safeValue);
   }
 
-  chartYAxisMax(chartData: LineChartData | null | undefined): number {
-    const maxDataPoint = (chartData ?? [])
-      .flatMap((series) => series.series)
-      .reduce((max, point) => Math.max(max, point.value ?? 0), 0);
-
-    if (maxDataPoint <= 5) {
-      return 5;
-    }
-
-    return Math.ceil(maxDataPoint * 1.1);
-  }
 
   private toDateLabel(dateValue: string): string {
     const parsedDate = this.parseApiDate(dateValue);
