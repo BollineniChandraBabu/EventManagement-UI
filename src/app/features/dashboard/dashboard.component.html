@@ -40,25 +40,11 @@
           <div class="kpi-value">{{ metric.value }}</div>
         </div>
       </div>
-
-      <ngx-charts-line-chart
+      <app-canvasjs-line-chart
         *ngIf="otpMailChart$ | async as otpChartData"
         class="chart-host"
-        [results]="otpChartData"
-        [scheme]="chartColorScheme"
-        [legend]="true"
-        [legendPosition]="legendPosition"
-        [xAxis]="true"
-        [yAxis]="true"
-        [showXAxisLabel]="false"
-        [showYAxisLabel]="true"
-        [yAxisLabel]="'Emails'"
-        [autoScale]="false"
-        [yScaleMin]="0"
-        [yScaleMax]="chartYAxisMax(otpChartData)"
-        [yAxisTickFormatting]="yAxisTickFormatter"
-        [roundDomains]="true"
-      ></ngx-charts-line-chart>
+        [chartData]="otpChartData"
+      ></app-canvasjs-line-chart>
     </div>
 
     <div class="chart-card" *ngIf="forgotPasswordMailStats$ | async as forgotPasswordStats">
@@ -69,48 +55,21 @@
           <div class="kpi-value">{{ metric.value }}</div>
         </div>
       </div>
-
-      <ngx-charts-line-chart
+      <app-canvasjs-line-chart
         *ngIf="forgotPasswordMailChart$ | async as forgotPasswordChartData"
         class="chart-host"
-        [results]="forgotPasswordChartData"
-        [scheme]="chartColorScheme"
-        [legend]="true"
-        [legendPosition]="legendPosition"
-        [xAxis]="true"
-        [yAxis]="true"
-        [showXAxisLabel]="false"
-        [showYAxisLabel]="true"
-        [yAxisLabel]="'Emails'"
-        [autoScale]="false"
-        [yScaleMin]="0"
-        [yScaleMax]="chartYAxisMax(forgotPasswordChartData)"
-        [yAxisTickFormatting]="yAxisTickFormatter"
-        [roundDomains]="true"
-      ></ngx-charts-line-chart>
+        [chartData]="forgotPasswordChartData"
+      ></app-canvasjs-line-chart>
     </div>
   </div>
 
   <div class="chart-card">
     <h3 class="chart-title">Mail Delivery Trend</h3>
-    <ngx-charts-line-chart
+    <app-canvasjs-line-chart
       *ngIf="mailChart$ | async as mailChartData"
       class="chart-host"
-      [results]="mailChartData"
-      [scheme]="chartColorScheme"
-      [legend]="true"
-      [legendPosition]="legendPosition"
-      [xAxis]="true"
-      [yAxis]="true"
-      [showXAxisLabel]="false"
-      [showYAxisLabel]="true"
-      [yAxisLabel]="'Emails'"
-      [autoScale]="false"
-      [yScaleMin]="0"
-      [yScaleMax]="chartYAxisMax(mailChartData)"
-      [yAxisTickFormatting]="yAxisTickFormatter"
-      [roundDomains]="true"
-    ></ngx-charts-line-chart>
+      [chartData]="mailChartData"
+    ></app-canvasjs-line-chart>
   </div>
 </div>
 
@@ -137,23 +96,10 @@
 
   <div class="chart-card">
     <h3 class="chart-title">Insta Delivery Trend</h3>
-    <ngx-charts-line-chart
+    <app-canvasjs-line-chart
       *ngIf="instaChart$ | async as instaChartData"
       class="chart-host"
-      [results]="instaChartData"
-      [scheme]="chartColorScheme"
-      [legend]="true"
-      [legendPosition]="legendPosition"
-      [xAxis]="true"
-      [yAxis]="true"
-      [showXAxisLabel]="false"
-      [showYAxisLabel]="true"
-      [yAxisLabel]="'Emails'"
-      [autoScale]="false"
-      [yScaleMin]="0"
-      [yScaleMax]="chartYAxisMax(instaChartData)"
-      [yAxisTickFormatting]="yAxisTickFormatter"
-      [roundDomains]="true"
-    ></ngx-charts-line-chart>
+      [chartData]="instaChartData"
+    ></app-canvasjs-line-chart>
   </div>
 </div>

@@ -105,23 +105,13 @@
   height: 320px;
 }
 
-:host ::ng-deep .chart-host .ngx-charts-outer,
-:host ::ng-deep .chart-host .ngx-charts,
-:host ::ng-deep .chart-host svg {
-  width: 100% !important;
-  height: 320px !important;
-}
-
 
 @media (max-width: 768px) {
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(130px, 1fr));
   }
 
-  .chart-host,
-  :host ::ng-deep .chart-host .ngx-charts-outer,
-  :host ::ng-deep .chart-host .ngx-charts,
-  :host ::ng-deep .chart-host svg {
+  .chart-host {
     height: 280px !important;
   }
 }
