@@ -38,7 +38,10 @@
         </div>
         <div>
           <label class="form-label">Relation</label>
-          <input class="form-control" formControlName="relation" [readonly]="!isAdmin()" />
+          <select class="form-select" formControlName="relation" [disabled]="!isAdmin()">
+            <option value="">Select relationship</option>
+            <option *ngFor="let relation of relationshipOptions" [value]="relation">{{ relation }}</option>
+          </select>
         </div>
       </form>
 

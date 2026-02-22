@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EmailStatus } from '../../core/models/api.models';
@@ -18,8 +19,11 @@ export class EmailStatusComponent {
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly isAdmin = this.auth.isAdmin;
+  readonly pageTitle: string;
+  readonly emailTypeFilter: string;
 
   allItems: EmailStatus[] = [];
   viewItems: EmailStatus[] = [];
@@ -38,6 +42,8 @@ export class EmailStatusComponent {
   readonly previewFrom = 'Event Management <no-reply@eventmanagement.app>';
 
   constructor() {
+    this.pageTitle = this.route.snapshot.data['title'] ?? 'Email Status';
+    this.emailTypeFilter = (this.route.snapshot.data['emailType'] ?? '').toString();
     this.loadItems();
   }
 
@@ -141,7 +147,7 @@ export class EmailStatusComponent {
     this.totalElements = 0;
     this.totalPages = 0;
 
-    this.api.emailStatuses(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.emailStatuses(this.page, this.pageSize, this.filterText, this.emailTypeFilter).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.allItems = response.content ?? [];
         this.totalElements = response.totalElements ?? this.allItems.length;
@@ -164,11 +170,26 @@ export class EmailStatusComponent {
   }
 
   private applyStatusFilter(): void {
+    const typeFiltered = this.emailTypeFilter
+      ? this.allItems.filter((item) => this.isSameEmailType(item.emailType, this.emailTypeFilter))
+      : [...this.allItems];
+
     if (this.filterStatus === 'ALL') {
-      this.viewItems = [...this.allItems];
+      this.viewItems = typeFiltered;
       return;
     }
 
-    this.viewItems = this.allItems.filter((item) => item.status === this.filterStatus);
+    this.viewItems = typeFiltered.filter((item) => item.status === this.filterStatus);
+  }
+
+  private isSameEmailType(actualType: string | undefined, expectedType: string): boolean {
+    if (!actualType) {
+      return false;
+    }
+
+    const normalizedActual = actualType.replace(/[-_\s]/g, '').toUpperCase();
+    const normalizedExpected = expectedType.replace(/[-_\s]/g, '').toUpperCase();
+
+    return normalizedActual === normalizedExpected;
   }
 }
