@@ -11,9 +11,11 @@ import {
   DashboardStats,
   MailFlowStats,
   EmailStatus,
+  EventTypeSeed,
   EventItem,
   PagedResponse,
   SaveEventPayload,
+  SaveEventTypeSeedPayload,
   SaveUserPayload,
   SaveRelationshipSeedPayload,
   SchedulerItem,
@@ -126,6 +128,30 @@ export class ApiService {
 
   deleteRelationshipSeed(id: number): Observable<unknown> {
     return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`));
+  }
+
+  eventTypeSeeds(searchKey = ''): Observable<EventTypeSeed[]> {
+    return this.requestWithFallback<ApiResponse<EventTypeSeed[]>>((path) => this.http.get<ApiResponse<EventTypeSeed[]>>(`${environment.apiUrl}${path}`, {
+      params: new HttpParams().set('searchKey', searchKey)
+    }), this.eventTypeSeedPaths).pipe(map((response) => this.unwrap(response)));
+  }
+
+  eventTypeSeedById(id: number): Observable<EventTypeSeed> {
+    return this.requestWithFallback<ApiResponse<EventTypeSeed>>((path) => this.http.get<ApiResponse<EventTypeSeed>>(`${environment.apiUrl}${path}/${id}`), this.eventTypeSeedPaths).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  saveEventTypeSeed(payload: SaveEventTypeSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, payload), this.eventTypeSeedPaths);
+  }
+
+  updateEventTypeSeed(id: number, payload: SaveEventTypeSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}`, { ...payload, id }), this.eventTypeSeedPaths);
+  }
+
+  deleteEventTypeSeed(id: number): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`), this.eventTypeSeedPaths);
   }
 
   events(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<EventItem>> {

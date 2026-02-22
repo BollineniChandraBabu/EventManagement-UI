@@ -1,11 +1,10 @@
-<nav class="navbar app-navbar" data-bs-theme="dark">
-  <div class="container-fluid nav-shell">
-    <a class="navbar-brand fw-bold" routerLink="/dashboard" (click)="closeMobileMenu()">
+<div class="app-layout" *ngIf="auth.authenticated(); else guestLayout">
+  <aside class="side-nav">
+    <a class="brand" routerLink="/dashboard">
       <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Family Wishes
     </a>
 
     <button
-      *ngIf="auth.authenticated()"
       class="navbar-toggler mobile-menu-toggle d-lg-none"
       type="button"
       aria-label="Toggle navigation"
@@ -45,20 +44,15 @@
           <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account" (click)="closeMobileMenu()"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
         </div>
       </div>
-    </ng-container>
+    </footer>
   </div>
-</nav>
+</div>
 
-<main class="app-shell container py-4">
-  <router-outlet></router-outlet>
-</main>
-
-<footer class="app-footer py-3">
-  <div class="container text-center small">
-    © {{ currentYear }} All rights reserved. Developed by Chandu.
-  </div>
-</footer>
+<ng-template #guestLayout>
+  <main class="app-shell container py-4">
+    <router-outlet></router-outlet>
+  </main>
+</ng-template>
 
 <app-toast-container></app-toast-container>
-
 <app-loading-overlay></app-loading-overlay>

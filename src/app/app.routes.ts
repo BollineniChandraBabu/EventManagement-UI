@@ -19,6 +19,8 @@ import { EmailStatusComponent } from './features/email-status/email-status.compo
 import { SchedulersComponent } from './features/schedulers/schedulers.component';
 import { RelationshipSeedEditorComponent } from './features/relationship-seeds/relationship-seed-editor.component';
 import { RelationshipSeedsComponent } from './features/relationship-seeds/relationship-seeds.component';
+import { EventTypeSeedsComponent } from './features/event-type-seeds/event-type-seeds.component';
+import { EventTypeSeedEditorComponent } from './features/event-type-seeds/event-type-seed-editor.component';
 
 export const routes: Routes = [
   { path: '', canActivate: [resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
@@ -44,6 +46,9 @@ export const routes: Routes = [
     { path: 'relationship-seeds', component: RelationshipSeedsComponent, canActivate: [adminGuard] },
     { path: 'relationship-seeds/new', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },
     { path: 'relationship-seeds/:id/edit', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },
+    { path: 'event-type-seeds', component: EventTypeSeedsComponent, canActivate: [adminGuard] },
+    { path: 'event-type-seeds/new', component: EventTypeSeedEditorComponent, canActivate: [adminGuard] },
+    { path: 'event-type-seeds/:id/edit', component: EventTypeSeedEditorComponent, canActivate: [adminGuard] },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]},
   { path: '**', redirectTo: 'dashboard' }

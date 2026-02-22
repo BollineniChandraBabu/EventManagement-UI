@@ -119,6 +119,21 @@
   max-height: 90vh;
 }
 
+.image-viewer-back-btn {
+  background: #ffffff;
+  color: #1f2a44;
+  border: 1px solid #d9e1f2;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+}
+
+.image-viewer-back-btn:hover,
+.image-viewer-back-btn:focus-visible {
+  background: #eef4ff;
+  color: #1f2a44;
+  border-color: #c8d7fa;
+}
+
 .image-viewer-full {
   display: block;
   max-width: 100%;
@@ -129,4 +144,3 @@
   background: #fff;
   object-fit: contain;
 }
-

@@ -146,7 +146,9 @@
     <div class="image-viewer-backdrop" *ngIf="isImageExpanded" (click)="closeImagePreview()">
       <div class="image-viewer-dialog" (click)="$event.stopPropagation()">
         <div class="d-flex justify-content-end mb-2">
-          <button class="btn btn-sm btn-outline-secondary" type="button" (click)="closeImagePreview()">Back to email preview</button>
+          <button class="btn btn-sm image-viewer-back-btn" type="button" (click)="closeImagePreview()">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to email preview
+          </button>
         </div>
         <img class="image-viewer-full" [src]="selectedItem.imgData" alt="Email full view image" />
       </div>

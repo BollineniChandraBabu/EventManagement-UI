@@ -38,6 +38,8 @@ export interface AppUser {
   id: number;
   name: string;
   email: string;
+  dob?: string;
+  dateOfBirth?: string;
   role: UserRole;
   active?: boolean;
   relationShip: string;
@@ -50,6 +52,7 @@ export interface SaveUserPayload {
   id?: number;
   name: string;
   email: string;
+  dob: string;
   role: UserRole;
   relationShip: string;
   isGoodMorningEnabled?: boolean;
@@ -64,6 +67,17 @@ export interface RelationshipSeed {
 }
 
 export interface SaveRelationshipSeedPayload {
+  id?: number;
+  name: string;
+}
+
+export interface EventTypeSeed {
+  id: number;
+  name: string;
+  active?: boolean;
+}
+
+export interface SaveEventTypeSeedPayload {
   id?: number;
   name: string;
 }
