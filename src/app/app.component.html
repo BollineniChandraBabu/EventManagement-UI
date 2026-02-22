@@ -25,6 +25,7 @@
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password">Forgot Password Emails</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers">Schedulers</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds">Relationship Seeds</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/event-type-seeds">Event Type Seeds</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users">Users</a>
         </div>
         <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
@@ -40,11 +41,19 @@
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password" (click)="closeMobileMenu()">Forgot Password Emails</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers" (click)="closeMobileMenu()">Schedulers</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds" (click)="closeMobileMenu()">Relationship Seeds</a>
+          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/event-type-seeds" (click)="closeMobileMenu()">Event Type Seeds</a>
           <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users" (click)="closeMobileMenu()">Users</a>
           <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account" (click)="closeMobileMenu()"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
         </div>
       </div>
-    </footer>
+    </ng-container>
+  </aside>
+
+  <div class="content-shell">
+    <main class="app-shell container py-4">
+      <router-outlet></router-outlet>
+    </main>
+    <footer class="app-footer py-3 px-4 text-center small">© {{ currentYear }} Family Wishes</footer>
   </div>
 </div>
 

@@ -169,9 +169,25 @@ export class ApiService {
   }
 
   emailStatuses(page = 0, size = 10, searchKey = '', emailType = ''): Observable<PagedResponse<EmailStatus>> {
-    return this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(`${environment.apiUrl}/emails/status`, {
-      params: this.pagedParams(page, size, searchKey).set('emailType', emailType)
-    }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+    const params = this.pagedParams(page, size, searchKey);
+    const requestWithEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(`${environment.apiUrl}/emails/status`, {
+      params: emailType ? params.set('emailType', emailType) : params
+    });
+
+    const requestWithoutEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(`${environment.apiUrl}/emails/status`, {
+      params
+    });
+
+    return requestWithEmailType().pipe(
+      catchError((error) => {
+        if (!emailType) {
+          return throwError(() => error);
+        }
+
+        return requestWithoutEmailType();
+      }),
+      map((response) => this.normalizePaged(this.unwrap(response), page, size))
+    );
   }
 
   sendTestEmail(html: string) {
@@ -257,8 +273,11 @@ export class ApiService {
     return response as T;
   }
 
-  private requestWithFallback<T>(requestFactory: (path: string) => Observable<T>): Observable<T> {
-    const [primaryPath, fallbackPath] = this.relationshipSeedPaths;
+  private requestWithFallback<T>(
+    requestFactory: (path: string) => Observable<T>,
+    paths: readonly [string, string] = this.relationshipSeedPaths
+  ): Observable<T> {
+    const [primaryPath, fallbackPath] = paths;
 
     return requestFactory(primaryPath).pipe(
       catchError((primaryError) => requestFactory(fallbackPath).pipe(
@@ -267,5 +286,6 @@ export class ApiService {
     );
   }
 
-  private readonly relationshipSeedPaths = ['/relation-seeds', '/relationship-seeds'] as const;
+  private readonly relationshipSeedPaths = ['/relationship-seeds', '/relation-seeds'] as const;
+  private readonly eventTypeSeedPaths = ['/event-type-seeds', '/event-types-seeds'] as const;
 }
