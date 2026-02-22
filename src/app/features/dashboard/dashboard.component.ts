@@ -126,7 +126,7 @@ export class DashboardComponent {
   }
 
   private toLineChartData(points: DashboardChartPoint[]): LineChartData {
-    const safePoints = points ?? [];
+    const safePoints = this.normalizeChartPoints(points);
     const seriesLabels = safePoints.map((item) => this.toDateLabel(item.date));
 
     return [
@@ -134,17 +134,38 @@ export class DashboardComponent {
         name: 'Sent',
         series: safePoints.map((item, index) => ({
           name: seriesLabels[index],
-          value: item.sent ?? 0
+          value: this.toSafeMetric(item.sent)
         }))
       },
       {
         name: 'Failed',
         series: safePoints.map((item, index) => ({
           name: seriesLabels[index],
-          value: item.failed ?? 0
+          value: this.toSafeMetric(item.failed)
         }))
       }
     ];
+  }
+
+  private normalizeChartPoints(points: DashboardChartPoint[] | null | undefined): DashboardChartPoint[] {
+    const safePoints = points ?? [];
+
+    return [...safePoints].sort((left, right) => {
+      const leftDate = this.parseApiDate(left.date)?.getTime() ?? Number.NEGATIVE_INFINITY;
+      const rightDate = this.parseApiDate(right.date)?.getTime() ?? Number.NEGATIVE_INFINITY;
+
+      return leftDate - rightDate;
+    });
+  }
+
+  private toSafeMetric(value: number | null | undefined): number {
+    const safeValue = value ?? 0;
+
+    if (!Number.isFinite(safeValue)) {
+      return 0;
+    }
+
+    return Math.max(0, safeValue);
   }
 
   chartYAxisMax(chartData: LineChartData | null | undefined): number {
@@ -166,7 +187,7 @@ export class DashboardComponent {
       return dateValue;
     }
 
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsedDate);
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: '2-digit' }).format(parsedDate);
   }
 
   private parseApiDate(dateValue: string): Date | null {
