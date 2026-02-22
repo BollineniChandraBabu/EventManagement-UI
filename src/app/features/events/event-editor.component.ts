@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-import { AppUser } from '../../core/models/api.models';
+import { AppUser, EventTypeSeed } from '../../core/models/api.models';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -23,9 +23,11 @@ export class EventEditorComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isAdmin = this.auth.isAdmin;
-  readonly types = ['Birthday', 'Anniversary', 'Engagement', 'Festival', 'Good Morning', 'Good Night'];
+  readonly fallbackTypes = ['Birthday', 'Anniversary', 'Engagement', 'Festival', 'Good Morning', 'Good Night'];
 
   allUsers: AppUser[] = [];
+  relationshipOptions: string[] = [];
+  eventTypeSeeds: EventTypeSeed[] = [];
   result = '';
   loading = false;
   saving = false;
@@ -41,6 +43,12 @@ export class EventEditorComponent {
 
   constructor() {
     this.loadUsers();
+    this.loadRelationshipSeeds();
+    this.loadEventTypeSeeds();
+  }
+
+  get types(): string[] {
+    return this.eventTypeSeeds.length ? this.eventTypeSeeds.map((seed) => seed.name) : this.fallbackTypes;
   }
 
   get pageTitle(): string {
@@ -120,6 +128,22 @@ export class EventEditorComponent {
       error: () => {
         this.toast.error('Unable to load users right now.');
         this.loading = false;
+      }
+    });
+  }
+
+  private loadRelationshipSeeds(): void {
+    this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (seeds) => {
+        this.relationshipOptions = (seeds ?? []).map((seed) => seed.name);
+      }
+    });
+  }
+
+  private loadEventTypeSeeds(): void {
+    this.api.eventTypeSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (seeds) => {
+        this.eventTypeSeeds = seeds ?? [];
       }
     });
   }

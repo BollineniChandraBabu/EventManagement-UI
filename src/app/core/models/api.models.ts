@@ -57,6 +57,28 @@ export interface SaveUserPayload {
   isBirthdayEnabled?: boolean;
 }
 
+export interface RelationshipSeed {
+  id: number;
+  name: string;
+  active?: boolean;
+}
+
+export interface SaveRelationshipSeedPayload {
+  id?: number;
+  name: string;
+}
+
+export interface EventTypeSeed {
+  id: number;
+  name: string;
+  active?: boolean;
+}
+
+export interface SaveEventTypeSeedPayload {
+  id?: number;
+  name: string;
+}
+
 export interface EventItem {
   id: number;
   eventType?: string;

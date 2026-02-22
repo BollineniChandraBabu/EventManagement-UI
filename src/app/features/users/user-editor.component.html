@@ -19,7 +19,10 @@
         </div>
         <div class="col-12 col-md-4">
           <label class="form-label">Relationship</label>
-          <input class="form-control" formControlName="relationShip" />
+          <select class="form-select" formControlName="relationShip">
+            <option value="" disabled>Select a relationship</option>
+            <option *ngFor="let relation of relationshipOptions" [value]="relation">{{ relation }}</option>
+          </select>
         </div>
 
         <div class="col-12 col-md-4">
