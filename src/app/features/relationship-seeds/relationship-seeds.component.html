@@ -34,7 +34,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let seed of relationshipSeeds">
-              <td>{{ seed.name }}</td>
+              <td>{{ seed.displayName }}</td>
               <td>
                 <span class="badge rounded-pill" [class.badge-info]="seed.active !== false" [class.badge-danger]="seed.active === false">
                   {{ seed.active === false ? 'Inactive' : 'Active' }}

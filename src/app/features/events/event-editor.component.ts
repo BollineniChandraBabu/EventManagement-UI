@@ -135,7 +135,7 @@ export class EventEditorComponent {
   private loadRelationshipSeeds(): void {
     this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (seeds) => {
-        this.relationshipOptions = (seeds ?? []).map((seed) => seed.name);
+        this.relationshipOptions = (seeds ?? []).map((seed) => seed.displayName);
       }
     });
   }

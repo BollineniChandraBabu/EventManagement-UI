@@ -77,7 +77,7 @@ export class RelationshipSeedEditorComponent {
       next: (seed) => {
         this.form.patchValue({
           id: seed.id,
-          name: seed.name
+          name: seed.displayName
         });
         this.loading = false;
       },

@@ -286,6 +286,6 @@ export class ApiService {
     );
   }
 
-  private readonly relationshipSeedPaths = ['/relationship-seeds', '/relation-seeds'] as const;
+  private readonly relationshipSeedPaths = ['/seed/relationships', '/relation-seeds'] as const;
   private readonly eventTypeSeedPaths = ['/event-type-seeds', '/event-types-seeds'] as const;
 }
