@@ -1,48 +1,53 @@
-<div class="page">
-  <section class="panel mx-auto" style="max-width: 720px;">
-    <h2 class="page-title">Welcome back</h2>
-    <p class="text-secondary mb-4">Sign in to manage events, templates, and personalized wishes.</p>
+<div class="auth-layout">
+  <div class="auth-card">
+    <a class="auth-brand" routerLink="/login">
+      <span class="auth-brand-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+      <span class="auth-brand-name">Family Wishes</span>
+    </a>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-subtitle">Sign in to manage events, templates, and personalized wishes.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
       <div>
-        <label class="form-label">Email</label>
-        <input class="form-control" type="email" formControlName="email" />
+        <label class="form-label" for="loginEmail">Email address</label>
+        <input id="loginEmail" class="form-control" type="email" formControlName="email" placeholder="you@example.com" />
+        <small class="text-danger mt-1 d-block" *ngIf="form.controls.email.touched && form.controls.email.invalid">
+          Please enter a valid email address.
+        </small>
       </div>
+
       <div>
-        <label class="form-label">Password</label>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="form-label mb-0" for="loginPassword">Password</label>
+          <a class="auth-forgot-link" routerLink="/forgot-password">Forgot password?</a>
+        </div>
         <div class="input-group">
-          <input class="form-control" [type]="showPassword ? 'text' : 'password'" formControlName="password" />
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            (click)="togglePasswordVisibility()"
-            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-          >
-            <i
-              class="password-toggle-icon fa-regular fa-eye"
-              [style.display]="showPassword ? 'none' : 'block'"
-              aria-hidden="true"
-            ></i>
-            <i
-              class="password-toggle-icon fa-regular fa-eye-slash"
-              [style.display]="showPassword ? 'block' : 'none'"
-              aria-hidden="true"
-            ></i>
+          <input id="loginPassword" class="form-control" [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="••••••••" />
+          <button class="btn btn-outline-secondary" type="button" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+            <i class="fa-regular" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
           </button>
         </div>
-      </div>
-      <div class="d-flex align-items-center">
-        <div class="form-check mt-3">
-          <input class="form-check-input" type="checkbox" id="rememberMe" formControlName="rememberMe" />
-          <label class="form-check-label" for="rememberMe">Remember me</label>
-        </div>
+        <small class="text-danger mt-1 d-block" *ngIf="form.controls.password.touched && form.controls.password.invalid">
+          Password is required.
+        </small>
       </div>
 
-      <div class="d-flex flex-wrap gap-2 align-items-center">
-        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Signing in...' : 'Login' }}</button>
-        <a class="btn btn-outline-primary" routerLink="/otp-login">OTP Login</a>
-        <a class="btn btn-link" routerLink="/forgot-password">Forgot Password?</a>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="rememberMe" formControlName="rememberMe" />
+        <label class="form-check-label auth-check-label" for="rememberMe">Keep me signed in</label>
       </div>
+
+      <button class="btn btn-primary w-100 py-2 mt-1" type="submit" [disabled]="isSubmitting">
+        <span *ngIf="!isSubmitting"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i>Sign in</span>
+        <span *ngIf="isSubmitting"><i class="fa-solid fa-spinner fa-spin me-2"></i>Signing in…</span>
+      </button>
+
+      <div class="auth-divider">or</div>
+
+      <a class="btn btn-outline-secondary w-100" routerLink="/otp-login">
+        <i class="fa-solid fa-mobile-screen-button me-2"></i>Sign in with OTP
+      </a>
     </form>
-  </section>
+  </div>
 </div>

@@ -1,105 +1,138 @@
-<div class="chart-filter">
-  <label for="chartStartDate" class="chart-filter-label">Select date for charts</label>
-  <input
-    id="chartStartDate"
-    type="date"
-    class="form-control chart-filter-input"
-    [value]="selectedDate"
-    [max]="maxDate"
-    (change)="onChartDateChange($any($event.target).value)"
-  />
-</div>
-
-<div class="page" *ngIf="maildata$ | async as data">
-  <h2 class="page-title">Mail Dashboard</h2>
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-label">Total users</div>
-      <div class="kpi-value">{{ data.totalUsers }}</div>
+<div class="page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon blue"><i class="fa-solid fa-gauge-high"></i></span>
+      <div>
+        <h1 class="page-header-title">Dashboard</h1>
+        <p class="page-header-subtitle">Live overview of mail delivery, events, and system health</p>
+      </div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Upcoming events</div>
-      <div class="kpi-value">{{ data.upcomingEvents }}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Emails sent today</div>
-      <div class="kpi-value">{{ data.emailsSentToday }}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Failed emails</div>
-      <div class="kpi-value">{{ data.failedEmails }}</div>
+    <div class="page-header-actions">
+      <div class="chart-date-control">
+        <label for="chartStartDate" class="chart-date-label">
+          <i class="fa-regular fa-calendar me-1"></i>From date
+        </label>
+        <input
+          id="chartStartDate"
+          type="date"
+          class="form-control"
+          [value]="selectedDate"
+          [max]="maxDate"
+          (change)="onChartDateChange($any($event.target).value)"
+        />
+      </div>
     </div>
   </div>
 
-  <div class="mail-flow-grid" *ngIf="auth.isAdmin()">
-    <div class="chart-card" *ngIf="otpMailStats$ | async as otpStats">
-      <h3 class="chart-title">OTP Mail Dashboard</h3>
-      <div class="kpi-grid compact">
-        <div class="kpi-card" *ngFor="let metric of mailFlowCards(otpStats)">
-          <div class="kpi-label">{{ metric.label }}</div>
-          <div class="kpi-value">{{ metric.value }}</div>
+  <!-- Mail Dashboard -->
+  <div *ngIf="maildata$ | async as data">
+    <div class="dashboard-section-label">
+      <span><i class="fa-solid fa-envelope me-2"></i>Mail Dashboard</span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:#eff6ff;color:#2563eb;">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="kpi-label">Total Users</div>
+        <div class="kpi-value">{{ data.totalUsers }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:#f0fdf4;color:#16a34a;">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div class="kpi-label">Upcoming Events</div>
+        <div class="kpi-value">{{ data.upcomingEvents }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:#fefce8;color:#ca8a04;">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+        <div class="kpi-label">Sent Today</div>
+        <div class="kpi-value">{{ data.emailsSentToday }}</div>
+      </div>
+      <div class="kpi-card kpi-card--alert">
+        <div class="kpi-icon" style="background:#fef2f2;color:#dc2626;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="kpi-label">Failed Emails</div>
+        <div class="kpi-value" [style.color]="data.failedEmails > 0 ? 'var(--c-error)' : 'inherit'">{{ data.failedEmails }}</div>
+      </div>
+    </div>
+
+    <!-- Admin sub-flows -->
+    <div class="mail-flow-grid" *ngIf="auth.isAdmin()">
+      <div class="card" *ngIf="otpMailStats$ | async as otpStats">
+        <div class="card-body">
+          <h3 class="section-title mb-3"><i class="fa-solid fa-key me-2" style="color:#d97706;"></i>OTP Mail</h3>
+          <div class="kpi-grid kpi-grid--compact mb-3">
+            <div class="kpi-card kpi-card--compact" *ngFor="let metric of mailFlowCards(otpStats)">
+              <div class="kpi-label">{{ metric.label }}</div>
+              <div class="kpi-value kpi-value--sm">{{ metric.value }}</div>
+            </div>
+          </div>
+          <app-canvasjs-line-chart *ngIf="otpMailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
         </div>
       </div>
-      <app-canvasjs-line-chart
-        *ngIf="otpMailChart$ | async as otpChartData"
-        class="chart-host"
-        [chartData]="otpChartData"
-      ></app-canvasjs-line-chart>
-    </div>
 
-    <div class="chart-card" *ngIf="forgotPasswordMailStats$ | async as forgotPasswordStats">
-      <h3 class="chart-title">Forgot Password Mail Dashboard</h3>
-      <div class="kpi-grid compact">
-        <div class="kpi-card" *ngFor="let metric of mailFlowCards(forgotPasswordStats)">
-          <div class="kpi-label">{{ metric.label }}</div>
-          <div class="kpi-value">{{ metric.value }}</div>
+      <div class="card" *ngIf="forgotPasswordMailStats$ | async as fpStats">
+        <div class="card-body">
+          <h3 class="section-title mb-3"><i class="fa-solid fa-lock-open me-2" style="color:#7c3aed;"></i>Forgot Password Mail</h3>
+          <div class="kpi-grid kpi-grid--compact mb-3">
+            <div class="kpi-card kpi-card--compact" *ngFor="let metric of mailFlowCards(fpStats)">
+              <div class="kpi-label">{{ metric.label }}</div>
+              <div class="kpi-value kpi-value--sm">{{ metric.value }}</div>
+            </div>
+          </div>
+          <app-canvasjs-line-chart *ngIf="forgotPasswordMailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
         </div>
       </div>
-      <app-canvasjs-line-chart
-        *ngIf="forgotPasswordMailChart$ | async as forgotPasswordChartData"
-        class="chart-host"
-        [chartData]="forgotPasswordChartData"
-      ></app-canvasjs-line-chart>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-chart-line me-2" style="color:#2563eb;"></i>Mail Delivery Trend</h3>
+        <app-canvasjs-line-chart *ngIf="mailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
+      </div>
     </div>
   </div>
 
-  <div class="chart-card">
-    <h3 class="chart-title">Mail Delivery Trend</h3>
-    <app-canvasjs-line-chart
-      *ngIf="mailChart$ | async as mailChartData"
-      class="chart-host"
-      [chartData]="mailChartData"
-    ></app-canvasjs-line-chart>
-  </div>
-</div>
+  <!-- Insta Dashboard -->
+  <div *ngIf="igdata$ | async as data">
+    <div class="dashboard-section-label">
+      <span><i class="fa-brands fa-instagram me-2"></i>Insta Dashboard</span>
+    </div>
 
-<div class="page" *ngIf="igdata$ | async as data">
-  <h2 class="page-title">Insta Dashboard</h2>
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-label">Total users</div>
-      <div class="kpi-value">{{ data.totalUsers }}</div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:#fdf4ff;color:#a855f7;"><i class="fa-solid fa-users"></i></div>
+        <div class="kpi-label">Total Users</div>
+        <div class="kpi-value">{{ data.totalUsers }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:#f0fdf4;color:#16a34a;"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="kpi-label">Upcoming Events</div>
+        <div class="kpi-value">{{ data.upcomingEvents }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:#fefce8;color:#ca8a04;"><i class="fa-solid fa-paper-plane"></i></div>
+        <div class="kpi-label">Sent Today</div>
+        <div class="kpi-value">{{ data.emailsSentToday }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:#fef2f2;color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="kpi-label">Failed</div>
+        <div class="kpi-value" [style.color]="data.failedEmails > 0 ? 'var(--c-error)' : 'inherit'">{{ data.failedEmails }}</div>
+      </div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Upcoming events</div>
-      <div class="kpi-value">{{ data.upcomingEvents }}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Emails sent today</div>
-      <div class="kpi-value">{{ data.emailsSentToday }}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Failed emails</div>
-      <div class="kpi-value">{{ data.failedEmails }}</div>
-    </div>
-  </div>
 
-  <div class="chart-card">
-    <h3 class="chart-title">Insta Delivery Trend</h3>
-    <app-canvasjs-line-chart
-      *ngIf="instaChart$ | async as instaChartData"
-      class="chart-host"
-      [chartData]="instaChartData"
-    ></app-canvasjs-line-chart>
+    <div class="card">
+      <div class="card-body">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-chart-line me-2" style="color:#a855f7;"></i>Insta Delivery Trend</h3>
+        <app-canvasjs-line-chart *ngIf="instaChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
+      </div>
+    </div>
   </div>
 </div>

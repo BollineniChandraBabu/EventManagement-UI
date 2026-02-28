@@ -1,59 +1,103 @@
 <div class="page">
-  <section class="panel">
-    <h2 class="page-title">AI Wish Generator</h2>
-    <form [formGroup]="form" class="form-grid">
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon violet"><i class="fa-solid fa-wand-sparkles"></i></span>
       <div>
-        <label class="form-label">Name</label>
-        <input class="form-control" formControlName="name" />
+        <h1 class="page-header-title">AI Wish Generator</h1>
+        <p class="page-header-subtitle">Generate personalized, heartfelt messages for any occasion</p>
       </div>
-      <div>
-        <label class="form-label">Relation</label>
-        <select class="form-select" formControlName="relation">
-          <option value="">Select relationship</option>
-          <option *ngFor="let relation of relationshipOptions" [value]="relation">{{ relation }}</option>
-        </select>
-      </div>
-      <div>
-        <label class="form-label">Event</label>
-        <input class="form-control" formControlName="event" />
-      </div>
-      <div>
-        <label class="form-label">Tone</label>
-        <input class="form-control" formControlName="tone" />
-      </div>
-      <div>
-        <label class="form-label">Language</label>
-        <input class="form-control" formControlName="language" />
-      </div>
-    </form>
-
-    <div class="d-flex gap-2 my-3">
-      <button class="btn btn-primary" type="button" (click)="generate()">Generate</button>
     </div>
+  </div>
 
+  <div class="row g-4">
+    <!-- Generator form -->
+    <div class="col-12 col-lg-5">
+      <div class="card h-100">
+        <div class="card-body">
+          <h2 class="section-title mb-4">
+            <i class="fa-solid fa-sliders me-2" style="color:var(--c-primary);"></i>Parameters
+          </h2>
 
-    <div>
-      <label class="form-label">Subject</label>
-      <input class="form-control" [(ngModel)]="subject" />
-    </div>
+          <form [formGroup]="form" class="generator-form">
+            <div>
+              <label class="form-label">Recipient name <span class="text-danger">*</span></label>
+              <input class="form-control" formControlName="name" placeholder="e.g. Sarah" />
+            </div>
 
-    <div>
-      <label class="form-label">Editable result</label>
-      <textarea class="form-control" rows="5" [(ngModel)]="result"></textarea>
-    </div>
+            <div>
+              <label class="form-label">Relationship</label>
+              <select class="form-select" formControlName="relation">
+                <option value="">Select relationship</option>
+                <option *ngFor="let rel of relationshipOptions" [value]="rel">{{ rel }}</option>
+              </select>
+            </div>
 
-    <section class="preview-section" *ngIf="result.trim()">
-      <h3 class="preview-title">Email Preview</h3>
-      <div class="preview-grid">
-        <div class="preview-card">
-          <h4>Desktop</h4>
-          <iframe class="preview-frame" [srcdoc]="desktopPreviewSrcDoc" title="Desktop email preview"></iframe>
+            <div>
+              <label class="form-label">Occasion <span class="text-danger">*</span></label>
+              <input class="form-control" formControlName="event" placeholder="e.g. Birthday, Graduation…" />
+            </div>
+
+            <div>
+              <label class="form-label">Tone</label>
+              <input class="form-control" formControlName="tone" placeholder="e.g. Warm, Funny, Formal…" />
+            </div>
+
+            <div>
+              <label class="form-label">Language</label>
+              <input class="form-control" formControlName="language" placeholder="e.g. English, Hindi…" />
+            </div>
+
+            <button class="btn btn-primary w-100 py-2 mt-2" type="button" (click)="generate()">
+              <i class="fa-solid fa-sparkles me-2"></i>Generate Wish
+            </button>
+          </form>
         </div>
-        <div class="preview-card">
-          <h4>Mobile</h4>
-          <iframe class="preview-frame mobile" [srcdoc]="mobilePreviewSrcDoc" title="Mobile email preview"></iframe>
+      </div>
+    </div>
+
+    <!-- Result area -->
+    <div class="col-12 col-lg-7">
+      <div class="card h-100">
+        <div class="card-body">
+          <h2 class="section-title mb-4">
+            <i class="fa-regular fa-envelope-open me-2" style="color:#7c3aed;"></i>Generated Wish
+          </h2>
+
+          <div *ngIf="!result.trim()" class="empty-state py-5">
+            <div class="empty-state-icon" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;">
+              <i class="fa-solid fa-wand-sparkles"></i>
+            </div>
+            <p class="empty-state-title">No wish generated yet</p>
+            <p class="empty-state-subtitle">Fill in the parameters and click Generate Wish</p>
+          </div>
+
+          <ng-container *ngIf="result.trim()">
+            <div class="mb-3">
+              <label class="form-label">Email subject</label>
+              <input class="form-control" [(ngModel)]="subject" placeholder="Subject line…" />
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label">Message (editable)</label>
+              <textarea class="form-control" rows="6" [(ngModel)]="result" style="resize:vertical;font-size:.875rem;"></textarea>
+            </div>
+
+            <div>
+              <label class="form-label mb-3">Preview</label>
+              <div class="preview-tabs">
+                <div class="preview-tab-panel">
+                  <div class="preview-tab-label"><i class="fa-solid fa-desktop me-1"></i>Desktop</div>
+                  <iframe class="preview-frame" [srcdoc]="desktopPreviewSrcDoc" title="Desktop preview"></iframe>
+                </div>
+                <div class="preview-tab-panel">
+                  <div class="preview-tab-label"><i class="fa-solid fa-mobile-screen me-1"></i>Mobile</div>
+                  <iframe class="preview-frame preview-frame--mobile" [srcdoc]="mobilePreviewSrcDoc" title="Mobile preview"></iframe>
+                </div>
+              </div>
+            </div>
+          </ng-container>
         </div>
       </div>
-    </section>
-  </section>
+    </div>
+  </div>
 </div>

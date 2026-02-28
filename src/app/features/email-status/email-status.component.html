@@ -1,156 +1,182 @@
 <div class="page">
-  <div class="card border-0 shadow-3 rounded-5 status-card">
-    <div class="card-body p-4">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <h2 class="h4 mb-0">{{ pageTitle }}</h2>
-        <span class="badge rounded-pill badge-secondary">{{ totalElements }} records</span>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon teal"><i class="fa-solid fa-envelope-circle-check"></i></span>
+      <div>
+        <h1 class="page-header-title">{{ pageTitle }}</h1>
+        <p class="page-header-subtitle">View delivery logs and inspect individual email content</p>
       </div>
+    </div>
+    <div class="page-header-actions">
+      <span class="badge badge-secondary">{{ totalElements }} records</span>
+    </div>
+  </div>
 
-      <div class="row g-3 align-items-end mb-3">
-        <div class="col-12 col-md-6">
-          <label class="form-label">Filter emails</label>
+  <!-- Table Card -->
+  <div class="card">
+    <div class="card-body">
+
+      <!-- Filters -->
+      <div class="filter-bar mb-4">
+        <div>
+          <label class="form-label">Search emails</label>
           <div class="input-group">
-            <input class="form-control" type="text" placeholder="Search by recipient or subject" [ngModel]="filterText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loading" />
-            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loading" aria-label="Clear email search" *ngIf="filterText">
+            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+            <input class="form-control border-start-0 ps-1" type="text" placeholder="Recipient or subject…"
+              [ngModel]="filterText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loading" style="border-left:none!important;" />
+            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loading" *ngIf="filterText">
               <i class="fa-solid fa-xmark"></i>
             </button>
-            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading" aria-label="Search emails">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
+            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading">Search</button>
           </div>
         </div>
-        <div class="col-6 col-md-3">
+
+        <div>
           <label class="form-label">Status</label>
           <select class="form-select" (change)="onStatusFilter($any($event.target).value)" [disabled]="loading">
-            <option value="ALL">All status</option>
-            <option value="SENT">SENT</option>
-            <option value="QUEUED">QUEUED</option>
-            <option value="FAILED">FAILED</option>
+            <option value="ALL">All statuses</option>
+            <option value="SENT">Sent</option>
+            <option value="QUEUED">Queued</option>
+            <option value="FAILED">Failed</option>
           </select>
         </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label">Rows per page</label>
+
+        <div>
+          <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
           </select>
         </div>
       </div>
 
+      <!-- Table -->
       <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle mb-0">
-          <thead class="table-light">
+        <table class="table table-hover">
+          <thead>
             <tr>
-              <th>To</th>
+              <th>Recipient</th>
               <th>Subject</th>
               <th>Status</th>
-              <th>Sent At</th>
+              <th>Sent at</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let item of viewItems">
               <td>{{ item.toEmail }}</td>
-              <td>{{ item.subject }}</td>
+              <td><span class="email-subject">{{ item.subject || '(no subject)' }}</span></td>
               <td>
-                <span class="badge rounded-pill"
+                <span class="badge"
                   [class.badge-success]="item.status === 'SENT'"
                   [class.badge-warning]="item.status === 'QUEUED'"
                   [class.badge-danger]="item.status === 'FAILED'">
+                  <i class="fa-solid me-1"
+                    [class.fa-circle-check]="item.status === 'SENT'"
+                    [class.fa-clock]="item.status === 'QUEUED'"
+                    [class.fa-circle-xmark]="item.status === 'FAILED'"></i>
                   {{ item.status }}
                 </span>
               </td>
-                <td>{{ item.sentAt | date:'short' }}</td>
+              <td><span class="text-muted">{{ item.sentAt | date:'MMM d, y · h:mm a' }}</span></td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary me-2" *ngIf="canPreview(item)" (click)="openPreview(item)" [disabled]="loading">View</button>
-                <span *ngIf="!isAdmin()" class="text-muted small">Read only</span>
+                <button class="btn btn-sm btn-outline-primary" *ngIf="canPreview(item)" (click)="openPreview(item)" [disabled]="loading">
+                  <i class="fa-regular fa-eye me-1"></i>Preview
+                </button>
               </td>
             </tr>
-            <tr *ngIf="loading">
-              <td colspan="5" class="text-center text-muted py-4">Loading email status...</td>
+            <tr *ngIf="loading" class="table-loading">
+              <td colspan="5">
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+                <div class="mt-2">Loading records…</div>
+              </td>
             </tr>
-            <tr *ngIf="!loading && viewItems.length === 0">
-              <td colspan="5" class="text-center text-muted py-4">No records match the selected filters.</td>
+            <tr *ngIf="!loading && viewItems.length === 0" class="table-empty">
+              <td colspan="5">
+                <div class="empty-state">
+                  <div class="empty-state-icon"><i class="fa-solid fa-inbox"></i></div>
+                  <p class="empty-state-title">No records found</p>
+                  <p class="empty-state-subtitle">Try adjusting your search or status filter</p>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="d-flex justify-content-between align-items-center mt-3">
-        <small class="text-muted">Showing {{ startRow }}-{{ endRow }} of {{ totalElements }} records</small>
+      <!-- Pagination -->
+      <div class="pagination-bar">
+        <span class="pagination-info">Showing {{ startRow }}–{{ endRow }} of {{ totalElements }} records</span>
         <div class="btn-group pagination-controls">
-          <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loading || page === 0">Previous</button>
-          <button class="btn btn-sm btn-primary" type="button" disabled>Page {{ displayPage }} / {{ totalPages || 1 }}</button>
-          <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="loading || page >= totalPages - 1">Next</button>
+          <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loading || page === 0">
+            <i class="fa-solid fa-chevron-left me-1"></i>Prev
+          </button>
+          <button class="btn btn-sm btn-primary" type="button" disabled>{{ displayPage }} / {{ totalPages || 1 }}</button>
+          <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="loading || page >= totalPages - 1">
+            Next<i class="fa-solid fa-chevron-right ms-1"></i>
+          </button>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
+<!-- ── Preview Modal ──────────────────────────────────── -->
 <div class="preview-backdrop" *ngIf="selectedItem" (click)="closePreview()">
-  <div class="preview-modal card shadow-3" [class.preview-modal-mobile]="previewMode === 'mobile'" [class.preview-modal-desktop]="previewMode === 'desktop'" (click)="$event.stopPropagation()">
-    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <h3 class="h6 mb-0">Email Preview</h3>
-      <div class="d-flex align-items-center gap-2">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Preview mode">
-          <button
-            type="button"
-            class="btn"
-            [class.btn-primary]="previewMode === 'desktop'"
-            [class.btn-outline-primary]="previewMode !== 'desktop'"
-            (click)="setPreviewMode('desktop')">
-            Desktop
+  <div class="preview-modal"
+    [class.preview-modal--mobile]="previewMode === 'mobile'"
+    [class.preview-modal--desktop]="previewMode === 'desktop'"
+    (click)="$event.stopPropagation()">
+
+    <!-- Modal header -->
+    <div class="preview-modal-header">
+      <div class="preview-modal-title">
+        <i class="fa-regular fa-envelope me-2 text-muted"></i>Email Preview
+      </div>
+      <div class="preview-modal-toolbar">
+        <div class="view-toggle" role="group">
+          <button type="button" class="view-toggle-btn" [class.active]="previewMode === 'desktop'" (click)="setPreviewMode('desktop')">
+            <i class="fa-solid fa-desktop me-1"></i>Desktop
           </button>
-          <button
-            type="button"
-            class="btn"
-            [class.btn-primary]="previewMode === 'mobile'"
-            [class.btn-outline-primary]="previewMode !== 'mobile'"
-            (click)="setPreviewMode('mobile')">
-            Mobile
+          <button type="button" class="view-toggle-btn" [class.active]="previewMode === 'mobile'" (click)="setPreviewMode('mobile')">
+            <i class="fa-solid fa-mobile-screen me-1"></i>Mobile
           </button>
         </div>
-        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="closePreview()">Close</button>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="closePreview()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
     </div>
-    <div class="card-body">
-      <div class="preview-content-shell" [class.preview-content-mobile]="previewMode === 'mobile'">
-        <div class="email-client-shell">
-          <div class="email-meta-row">
-            <span class="email-meta-label">From</span>
-            <span class="email-meta-value">{{ previewFrom }}</span>
-          </div>
-          <div class="email-meta-row">
-            <span class="email-meta-label">To</span>
-            <span class="email-meta-value">{{ selectedItem.toEmail }}</span>
-          </div>
-          <div class="email-meta-row">
-            <span class="email-meta-label">Sent</span>
-            <span class="email-meta-value">{{ selectedItem.sentAt | date:'full' }}</span>
-          </div>
-          <div class="email-meta-row email-meta-row-subject">
-            <span class="email-meta-label">Subject</span>
-            <span class="email-meta-value">{{ selectedItem.subject || '(no subject)' }}</span>
-          </div>
 
-          <div class="preview-body" *ngIf="selectedItem.body" [innerHTML]="selectedItem.body"></div>
-
-          <div *ngIf="selectedItem.imgData" class="preview-image-wrap">
-            <button class="btn btn-sm btn-outline-primary mb-2" type="button" (click)="openImagePreview()">View image full screen</button>
-            <img class="preview-image" [src]="selectedItem.imgData" alt="Email image" (click)="openImagePreview()" />
+    <!-- Email client shell -->
+    <div class="preview-modal-body">
+      <div class="email-shell" [class.email-shell--mobile]="previewMode === 'mobile'">
+        <div class="email-meta">
+          <div class="email-meta-row"><span class="meta-key">From</span><span class="meta-val">{{ previewFrom }}</span></div>
+          <div class="email-meta-row"><span class="meta-key">To</span><span class="meta-val">{{ selectedItem.toEmail }}</span></div>
+          <div class="email-meta-row"><span class="meta-key">Sent</span><span class="meta-val text-muted">{{ selectedItem.sentAt | date:'full' }}</span></div>
+          <div class="email-meta-row email-meta-subject">
+            <span class="meta-key">Subject</span>
+            <span class="meta-val fw-semibold">{{ selectedItem.subject || '(no subject)' }}</span>
           </div>
+        </div>
+        <div class="email-body" *ngIf="selectedItem.body" [innerHTML]="selectedItem.body"></div>
+        <div class="email-image-wrap" *ngIf="selectedItem.imgData">
+          <button class="btn btn-sm btn-outline-primary mb-3" type="button" (click)="openImagePreview()">
+            <i class="fa-solid fa-expand me-1"></i>View full screen
+          </button>
+          <img class="email-preview-img" [src]="selectedItem.imgData" alt="Email image" (click)="openImagePreview()" />
         </div>
       </div>
     </div>
-    <div class="image-viewer-backdrop" *ngIf="isImageExpanded" (click)="closeImagePreview()">
-      <div class="image-viewer-dialog" (click)="$event.stopPropagation()">
-        <div class="d-flex justify-content-end mb-2">
-          <button class="btn btn-sm image-viewer-back-btn" type="button" (click)="closeImagePreview()">
-            <i class="fa-solid fa-arrow-left me-1"></i>Back to email preview
-          </button>
-        </div>
-        <img class="image-viewer-full" [src]="selectedItem.imgData" alt="Email full view image" />
+
+    <!-- Fullscreen image viewer -->
+    <div class="image-viewer" *ngIf="isImageExpanded" (click)="closeImagePreview()">
+      <div class="image-viewer-content" (click)="$event.stopPropagation()">
+        <button class="btn btn-sm image-viewer-close" type="button" (click)="closeImagePreview()">
+          <i class="fa-solid fa-arrow-left me-1"></i>Back to preview
+        </button>
+        <img class="image-viewer-img" [src]="selectedItem.imgData" alt="Full view" />
       </div>
     </div>
   </div>

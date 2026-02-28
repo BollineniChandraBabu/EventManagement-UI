@@ -1,14 +1,16 @@
-.auth-panel {
-  max-width: 720px;
+.otp-input {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3em;
+  text-align: center;
 }
 
-.otp-form {
-  display: grid;
-  gap: 1rem;
+.auth-link-small {
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--t-fast);
 }
 
-.auth-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
+.auth-link-small:hover { color: var(--c-primary); }

@@ -1,3 +1,6 @@
-.events-card {
-  background: #fff;
+.filter-bar {
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border-subtle);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.25rem;
 }

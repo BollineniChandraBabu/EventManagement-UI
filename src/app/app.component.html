@@ -1,51 +1,96 @@
 <div class="app-layout" *ngIf="auth.authenticated(); else guestLayout">
-  <aside class="side-nav">
-    <a class="brand" routerLink="/dashboard">
-      <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Family Wishes
-    </a>
-
-    <button
-      class="navbar-toggler mobile-menu-toggle d-lg-none"
-      type="button"
-      aria-label="Toggle navigation"
-      [attr.aria-expanded]="isMobileMenuOpen"
-      (click)="toggleMobileMenu()"
-    >
-      <i class="fa-solid fa-bars"></i>
-    </button>
+  <aside class="side-nav" [class.nav-collapsed]="isMobileMenuOpen === false && isSidebarCollapsed">
+    <!-- Brand -->
+    <div class="brand-row">
+      <a class="brand" routerLink="/dashboard">
+        <span class="brand-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+        <span class="brand-text">Family Wishes</span>
+      </a>
+      <button class="collapse-toggle d-none d-lg-flex" type="button" (click)="toggleSidebarCollapse()" [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+        <i class="fa-solid" [class.fa-chevron-left]="!isSidebarCollapsed" [class.fa-chevron-right]="isSidebarCollapsed"></i>
+      </button>
+      <button class="mobile-menu-toggle d-lg-none" type="button" (click)="toggleMobileMenu()" [attr.aria-label]="isMobileMenuOpen ? 'Close menu' : 'Open menu'">
+        <i class="fa-solid" [class.fa-xmark]="isMobileMenuOpen" [class.fa-bars]="!isMobileMenuOpen"></i>
+      </button>
+    </div>
 
     <ng-container *ngIf="auth.authenticated()">
-      <div class="desktop-menu d-none d-lg-flex align-items-center justify-content-between flex-grow-1 gap-2">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/dashboard">Dashboard</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events">Events</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes">AI Wishes</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status">Email Status</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/otp">OTP Emails</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password">Forgot Password Emails</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers">Schedulers</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds">Relationship Seeds</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/event-type-seeds">Event Type Seeds</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users">Users</a>
-        </div>
-        <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
-      </div>
+      <nav class="side-menu" [class.mobile-open]="isMobileMenuOpen">
 
-      <div class="mobile-menu w-100" *ngIf="isMobileMenuOpen">
-        <div class="mobile-menu-panel">
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/dashboard" (click)="closeMobileMenu()">Dashboard</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/events" (click)="closeMobileMenu()">Events</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/ai-wishes" (click)="closeMobileMenu()">AI Wishes</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" routerLink="/email-status" (click)="closeMobileMenu()">Email Status</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/otp" (click)="closeMobileMenu()">OTP Emails</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/email-status/forgot-password" (click)="closeMobileMenu()">Forgot Password Emails</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/schedulers" (click)="closeMobileMenu()">Schedulers</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/relationship-seeds" (click)="closeMobileMenu()">Relationship Seeds</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/event-type-seeds" (click)="closeMobileMenu()">Event Type Seeds</a>
-          <a class="btn btn-sm btn-outline-light btn-rounded" *ngIf="auth.isAdmin()" routerLink="/users" (click)="closeMobileMenu()">Users</a>
-          <a class="btn btn-light btn-sm btn-rounded account-btn" routerLink="/account" (click)="closeMobileMenu()"><i class="fa-regular fa-circle-user me-1"></i>Account</a>
+        <!-- Main section -->
+        <div class="nav-section">
+          <span class="nav-section-label">Main</span>
+
+          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+            <span class="nav-label">Dashboard</span>
+          </a>
+
+          <a class="nav-item" routerLink="/events" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span>
+            <span class="nav-label">Events</span>
+          </a>
+
+          <a class="nav-item" routerLink="/ai-wishes" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="nav-icon"><i class="fa-solid fa-wand-sparkles"></i></span>
+            <span class="nav-label">AI Wishes</span>
+          </a>
+
+          <a class="nav-item" routerLink="/email-status" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">
+            <span class="nav-icon"><i class="fa-solid fa-envelope-circle-check"></i></span>
+            <span class="nav-label">Email Status</span>
+          </a>
         </div>
-      </div>
+
+        <!-- Admin section -->
+        <ng-container *ngIf="auth.isAdmin()">
+          <div class="nav-section">
+            <span class="nav-section-label">Admin</span>
+
+            <a class="nav-item" routerLink="/email-status/otp" routerLinkActive="active" (click)="closeMobileMenu()">
+              <span class="nav-icon"><i class="fa-solid fa-key"></i></span>
+              <span class="nav-label">OTP Emails</span>
+            </a>
+
+            <a class="nav-item" routerLink="/email-status/forgot-password" routerLinkActive="active" (click)="closeMobileMenu()">
+              <span class="nav-icon"><i class="fa-solid fa-lock-open"></i></span>
+              <span class="nav-label">Forgot Password</span>
+            </a>
+
+            <a class="nav-item" routerLink="/schedulers" routerLinkActive="active" (click)="closeMobileMenu()">
+              <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+              <span class="nav-label">Schedulers</span>
+            </a>
+
+            <a class="nav-item" routerLink="/users" routerLinkActive="active" (click)="closeMobileMenu()">
+              <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+              <span class="nav-label">Users</span>
+            </a>
+          </div>
+
+          <div class="nav-section">
+            <span class="nav-section-label">Seeds</span>
+
+            <a class="nav-item" routerLink="/relationship-seeds" routerLinkActive="active" (click)="closeMobileMenu()">
+              <span class="nav-icon"><i class="fa-solid fa-heart"></i></span>
+              <span class="nav-label">Relationship Seeds</span>
+            </a>
+
+            <a class="nav-item" routerLink="/event-type-seeds" routerLinkActive="active" (click)="closeMobileMenu()">
+              <span class="nav-icon"><i class="fa-solid fa-seedling"></i></span>
+              <span class="nav-label">Event Type Seeds</span>
+            </a>
+          </div>
+        </ng-container>
+
+        <!-- Account at bottom -->
+        <div class="nav-footer">
+          <a class="nav-item account-item" routerLink="/account" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="nav-icon"><i class="fa-regular fa-circle-user"></i></span>
+            <span class="nav-label">Account</span>
+          </a>
+        </div>
+      </nav>
     </ng-container>
   </aside>
 

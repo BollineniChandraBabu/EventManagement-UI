@@ -1,29 +1,38 @@
 <div class="page">
-  <div class="card border-0 shadow-3 rounded-5 users-card">
-    <div class="card-body p-4">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <h2 class="h4 mb-0">Schedulers</h2>
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge rounded-pill badge-primary">{{ totalElements }} total jobs</span>
-          <button class="btn btn-sm btn-outline-primary" type="button" (click)="refresh()" [disabled]="loading">Refresh</button>
-        </div>
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon amber"><i class="fa-solid fa-clock-rotate-left"></i></span>
+      <div>
+        <h1 class="page-header-title">Schedulers</h1>
+        <p class="page-header-subtitle">Monitor and trigger background jobs</p>
       </div>
-      <div class="row g-3 align-items-end mb-3">
-        <div class="col-12 col-md-6">
-          <label class="form-label">Filter schedulers</label>
+    </div>
+    <div class="page-header-actions">
+      <span class="badge badge-primary">{{ totalElements }} jobs</span>
+      <button class="btn btn-outline-secondary" type="button" (click)="refresh()" [disabled]="loading">
+        <i class="fa-solid fa-arrows-rotate me-1" [class.fa-spin]="loading"></i>Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+
+      <div class="filter-bar mb-4" style="grid-template-columns: 1fr auto;">
+        <div>
+          <label class="form-label">Search schedulers</label>
           <div class="input-group">
-            <input class="form-control" type="text" placeholder="Search by name/type/status"
-                   [ngModel]="filterText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loading" />
-            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loading" aria-label="Clear scheduler search" *ngIf="filterText">
+            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+            <input class="form-control border-start-0 ps-1" type="text" placeholder="Name, type or status…"
+              [ngModel]="filterText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loading" style="border-left:none!important;" />
+            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loading" *ngIf="filterText">
               <i class="fa-solid fa-xmark"></i>
             </button>
-            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading" aria-label="Search schedulers">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
+            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading">Search</button>
           </div>
         </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label">Rows per page</label>
+        <div>
+          <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
           </select>
@@ -31,65 +40,89 @@
       </div>
 
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>State</th>
-            <th>Runs (T/S/F)</th>
-            <th>Success %</th>
-            <th>Last Status</th>
-            <th>Last Started</th>
-            <th>Last Completed</th>
-            <th>Next Fire</th>
-            <th>Previous Fire</th>
-            <th>Last Duration</th>
-            <th class="text-end">Action</th>
-          </tr>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Job name</th>
+              <th>Type</th>
+              <th>State</th>
+              <th>Runs (T/S/F)</th>
+              <th>Success %</th>
+              <th>Last status</th>
+              <th>Last started</th>
+              <th>Next fire</th>
+              <th>Duration</th>
+              <th class="text-end">Action</th>
+            </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let scheduler of viewSchedulers; trackBy: trackByScheduler">
-            <td class="fw-semibold">{{ scheduler.name }}</td>
-            <td>{{ scheduler.type }}</td>
-            <td>
-              <span class="badge rounded-pill" [class.bg-success]="scheduler.running" [class.bg-secondary]="!scheduler.running">
-                {{ scheduler.running ? 'Running' : 'Idle' }}
-              </span>
-            </td>
-            <td>{{ scheduler.totalRuns }} / {{ scheduler.successRuns }} / {{ scheduler.failedRuns }}</td>
-            <td>{{ successRate(scheduler) }}%</td>
-            <td>
-              <div>{{ scheduler.lastStatus || '-' }}</div>
-              <small class="text-danger" *ngIf="scheduler.lastError">{{ scheduler.lastError }}</small>
-            </td>
-            <td>{{ scheduler.lastStartedAt ? (scheduler.lastStartedAt | date:'medium') : '-' }}</td>
-            <td>{{ scheduler.lastCompletedAt ? (scheduler.lastCompletedAt | date:'medium') : '-' }}</td>
-            <td>{{ scheduler.nextFireTime ? (scheduler.nextFireTime | date:'medium') : '-' }}</td>
-            <td>{{ scheduler.previousFireTime ? (scheduler.previousFireTime | date:'medium') : '-' }}</td>
-            <td>{{ scheduler.lastDurationMs != null ? (scheduler.lastDurationMs + ' ms') : '-' }}</td>
-            <td class="text-end">
-              <button class="btn btn-sm btn-outline-success" type="button" (click)="trigger(scheduler)" [disabled]="isTriggering(scheduler.name)">
-                {{ isTriggering(scheduler.name) ? 'Triggering...' : 'Run now' }}
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="!loading && viewSchedulers.length === 0">
-            <td colspan="12" class="text-center text-muted py-4">No schedulers found.</td>
-          </tr>
-          <tr *ngIf="loading">
-            <td colspan="12" class="text-center text-muted py-4">Loading schedulers...</td>
-          </tr>
+            <tr *ngFor="let scheduler of viewSchedulers; trackBy: trackByScheduler">
+              <td>
+                <span class="job-name">{{ scheduler.name }}</span>
+              </td>
+              <td><span class="badge badge-secondary">{{ scheduler.type }}</span></td>
+              <td>
+                <span class="state-dot" [class.state-dot--running]="scheduler.running" [class.state-dot--idle]="!scheduler.running">
+                  <span class="dot"></span>
+                  {{ scheduler.running ? 'Running' : 'Idle' }}
+                </span>
+              </td>
+              <td class="runs-cell">
+                <span class="run-count run-count--total">{{ scheduler.totalRuns }}</span>
+                <span class="run-sep">/</span>
+                <span class="run-count run-count--success">{{ scheduler.successRuns }}</span>
+                <span class="run-sep">/</span>
+                <span class="run-count run-count--fail">{{ scheduler.failedRuns }}</span>
+              </td>
+              <td>
+                <div class="success-rate">
+                  <div class="success-bar" [style.width.%]="successRate(scheduler)"></div>
+                  <span class="success-pct">{{ successRate(scheduler) }}%</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [class.badge-success]="scheduler.lastStatus === 'SUCCESS'" [class.badge-danger]="scheduler.lastStatus === 'FAILED'" [class.badge-secondary]="!scheduler.lastStatus">
+                  {{ scheduler.lastStatus || '—' }}
+                </span>
+                <div class="text-danger small" *ngIf="scheduler.lastError">{{ scheduler.lastError }}</div>
+              </td>
+              <td><span class="text-muted small">{{ scheduler.lastStartedAt ? (scheduler.lastStartedAt | date:'MMM d · h:mm a') : '—' }}</span></td>
+              <td><span class="text-muted small">{{ scheduler.nextFireTime ? (scheduler.nextFireTime | date:'MMM d · h:mm a') : '—' }}</span></td>
+              <td><span class="text-muted small">{{ scheduler.lastDurationMs != null ? (scheduler.lastDurationMs + ' ms') : '—' }}</span></td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-success" type="button" (click)="trigger(scheduler)" [disabled]="isTriggering(scheduler.name)">
+                  <i class="fa-solid fa-play me-1"></i>{{ isTriggering(scheduler.name) ? 'Running…' : 'Run now' }}
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="loading" class="table-loading">
+              <td colspan="10">
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+                <div class="mt-2">Loading schedulers…</div>
+              </td>
+            </tr>
+            <tr *ngIf="!loading && viewSchedulers.length === 0" class="table-empty">
+              <td colspan="10">
+                <div class="empty-state">
+                  <div class="empty-state-icon"><i class="fa-solid fa-clock"></i></div>
+                  <p class="empty-state-title">No schedulers found</p>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="d-flex justify-content-between align-items-center mt-3">
-        <small class="text-muted">Showing {{ startRow }}-{{ endRow }} of {{ totalElements }} jobs</small>
+      <div class="pagination-bar">
+        <span class="pagination-info">Showing {{ startRow }}–{{ endRow }} of {{ totalElements }} jobs</span>
         <div class="btn-group pagination-controls">
-              <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loading || page === 0">Previous</button>
-              <button class="btn btn-sm btn-primary" type="button" disabled>Page {{ displayPage }} / {{ totalPages || 1 }}</button>
-              <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="loading || page >= totalPages - 1">Next</button>
+          <button class="btn btn-sm btn-outline-primary" (click)="prevPage()" [disabled]="loading || page === 0">
+            <i class="fa-solid fa-chevron-left me-1"></i>Prev
+          </button>
+          <button class="btn btn-sm btn-primary" disabled>{{ displayPage }} / {{ totalPages || 1 }}</button>
+          <button class="btn btn-sm btn-outline-primary" (click)="nextPage()" [disabled]="loading || page >= totalPages - 1">
+            Next<i class="fa-solid fa-chevron-right ms-1"></i>
+          </button>
         </div>
       </div>
     </div>

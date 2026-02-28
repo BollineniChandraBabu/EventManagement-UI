@@ -1,12 +1,25 @@
-.users-card {
-  border: 1px solid #e5ebfa;
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
-.table th,
-.table td {
-  vertical-align: middle;
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dbeafe, #c7d2fe);
+  color: #3730a3;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
 
-.pagination-controls .btn[disabled] {
-  opacity: 1;
+.input-group-text {
+  border-radius: var(--r-md) 0 0 var(--r-md) !important;
+  border: 1.5px solid var(--c-border) !important;
+  border-right: none !important;
+  background: var(--c-surface) !important;
 }

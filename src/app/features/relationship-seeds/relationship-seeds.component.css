@@ -1,3 +1,6 @@
-:host {
-  display: block;
+.input-group-text {
+  border-radius: var(--r-md) 0 0 var(--r-md) !important;
+  border: 1.5px solid var(--c-border) !important;
+  border-right: none !important;
+  background: var(--c-surface) !important;
 }

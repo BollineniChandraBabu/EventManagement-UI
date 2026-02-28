@@ -1,61 +1,75 @@
-.account-page {
-  display: grid;
-  gap: 1.25rem;
-}
-
+/* Account Hero */
 .account-hero {
-  background: linear-gradient(125deg, #edf3ff 0%, #f7f9ff 55%, #ffffff 100%);
+  background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 1.75rem 2rem;
+  box-shadow: var(--shadow-sm);
 }
 
-.letter-spacing {
-  letter-spacing: 0.08em;
+.account-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }
 
 .account-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(circle at 30% 30%, #6f84ff, #3f51b5);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
   color: #fff;
-  box-shadow: 0 14px 30px rgba(63, 81, 181, 0.3);
-}
-
-.account-avatar i {
-  font-size: 2.1rem;
-}
-
-.section-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
   display: grid;
   place-items: center;
+  font-size: 1.5rem;
+  box-shadow: 0 8px 24px rgba(37,99,235,.3);
+  flex-shrink: 0;
 }
 
-.card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Wish Settings */
+.wish-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.card:hover {
-  transform: translateY(-2px);
+.wish-toggle-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface-alt);
+  transition: all var(--t-base);
 }
 
-.form-control {
-  border-radius: 0.65rem;
+.wish-toggle-card--on {
+  border-color: var(--c-primary-muted);
+  background: var(--c-primary-light);
 }
 
-.account-session {
-  background: linear-gradient(180deg, #ffffff, #f9fbff);
+.wish-emoji { font-size: 1.35rem; flex-shrink: 0; }
+
+.wish-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--c-text);
 }
 
-
-.account-session .border-bottom {
-  border-bottom: 1px solid #e9edf8 !important;
+.wish-sub {
+  font-size: 0.775rem;
+  color: var(--c-text-muted);
 }
 
-.password-toggle-icon {
-  width: 1rem;
-  text-align: center;
+.form-check-input {
+  width: 2.2em !important;
+  height: 1.2em !important;
+  cursor: pointer;
+}
+
+/* Session card accent */
+.session-card {
+  border-color: var(--c-error-border) !important;
 }

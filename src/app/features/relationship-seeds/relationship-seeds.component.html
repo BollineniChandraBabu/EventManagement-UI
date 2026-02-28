@@ -1,31 +1,37 @@
 <div class="page">
-  <div class="card border-0 shadow-3 rounded-5 users-card">
-    <div class="card-body p-4">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <h2 class="h4 mb-0">Relationship Seeds</h2>
-        <a class="btn btn-primary" routerLink="/relationship-seeds/new">
-          <i class="fa-solid fa-plus me-2"></i>Create Relationship
-        </a>
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon rose"><i class="fa-solid fa-heart"></i></span>
+      <div>
+        <h1 class="page-header-title">Relationship Seeds</h1>
+        <p class="page-header-subtitle">Manage relationship types used in events and wishes</p>
       </div>
+    </div>
+    <div class="page-header-actions">
+      <a class="btn btn-primary" routerLink="/relationship-seeds/new">
+        <i class="fa-solid fa-plus me-1"></i>Add Relationship
+      </a>
+    </div>
+  </div>
 
-      <div class="row g-3 align-items-end mb-3">
-        <div class="col-12 col-md-8">
-          <label class="form-label">Filter relationships</label>
-          <div class="input-group">
-            <input class="form-control" type="text" placeholder="Search by relationship name" [ngModel]="filterText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loading" />
-            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loading" *ngIf="filterText">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
+  <div class="card">
+    <div class="card-body">
+      <div class="filter-bar mb-4" style="grid-template-columns: 1fr;">
+        <div>
+          <label class="form-label">Search relationships</label>
+          <div class="input-group" style="max-width:400px;">
+            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+            <input class="form-control border-start-0 ps-1" type="text" placeholder="Search by name…"
+              [ngModel]="filterText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loading" style="border-left:none!important;" />
+            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loading" *ngIf="filterText"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading">Search</button>
           </div>
         </div>
       </div>
 
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
+        <table class="table table-hover">
+          <thead>
             <tr>
               <th>Name</th>
               <th>Status</th>
@@ -36,22 +42,31 @@
             <tr *ngFor="let seed of relationshipSeeds">
               <td>{{ seed.displayName }}</td>
               <td>
-                <span class="badge rounded-pill" [class.badge-info]="seed.active !== false" [class.badge-danger]="seed.active === false">
+                <span class="badge" [class.badge-success]="seed.active !== false" [class.badge-danger]="seed.active === false">
                   {{ seed.active === false ? 'Inactive' : 'Active' }}
                 </span>
               </td>
               <td class="text-end">
-                <a class="btn btn-sm btn-link" [routerLink]="['/relationship-seeds', seed.id, 'edit']" [class.disabled]="loading || isDeleting(seed.id)">Edit</a>
+                <a class="btn btn-sm btn-link" [routerLink]="['/relationship-seeds', seed.id, 'edit']" [class.disabled]="loading || isDeleting(seed.id)">
+                  <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                </a>
                 <button class="btn btn-sm btn-link text-danger" type="button" (click)="deleteSeed(seed)" [disabled]="loading || isDeleting(seed.id)">
-                  {{ isDeleting(seed.id) ? 'Deleting...' : 'Delete' }}
+                  <i class="fa-solid fa-trash-can me-1"></i>{{ isDeleting(seed.id) ? 'Deleting…' : 'Delete' }}
                 </button>
               </td>
             </tr>
-            <tr *ngIf="loading">
-              <td colspan="3" class="text-center text-muted py-4">Loading relationships...</td>
+            <tr *ngIf="loading" class="table-loading">
+              <td colspan="3">
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+              </td>
             </tr>
-            <tr *ngIf="!loading && relationshipSeeds.length === 0">
-              <td colspan="3" class="text-center text-muted py-4">No relationships found.</td>
+            <tr *ngIf="!loading && relationshipSeeds.length === 0" class="table-empty">
+              <td colspan="3">
+                <div class="empty-state">
+                  <div class="empty-state-icon"><i class="fa-solid fa-heart-crack"></i></div>
+                  <p class="empty-state-title">No relationships found</p>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>

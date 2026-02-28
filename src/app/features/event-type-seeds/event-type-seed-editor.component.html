@@ -1,24 +1,40 @@
 <div class="page">
-  <div class="card border-0 shadow-3 rounded-5 users-card">
-    <div class="card-body p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0">{{ pageTitle }}</h2>
-        <a class="btn btn-outline-secondary" routerLink="/event-type-seeds">Back to Event Type Seeds</a>
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon indigo"><i class="fa-solid fa-seedling"></i></span>
+      <div>
+        <h1 class="page-header-title">{{ pageTitle }}</h1>
+        <p class="page-header-subtitle">{{ editingSeedId ? 'Update the event type name' : 'Add a new event type category' }}</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <a class="btn btn-outline-secondary" routerLink="/event-type-seeds">
+        <i class="fa-solid fa-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div *ngIf="loading" class="text-center py-4 text-muted">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
       </div>
 
-      <div *ngIf="loading" class="text-muted py-3">Loading event type data...</div>
-
-      <form *ngIf="!loading" [formGroup]="form" class="row g-3" novalidate>
+      <form *ngIf="!loading" [formGroup]="form" class="row g-4" novalidate>
         <div class="col-12 col-md-6">
-          <label class="form-label">Name</label>
-          <input class="form-control" formControlName="name" />
+          <label class="form-label">Event type name <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="name" placeholder="e.g. Birthday, Anniversary…" />
+          <small class="text-danger mt-1 d-block" *ngIf="form.controls.name.touched && form.controls.name.invalid">Name is required.</small>
         </div>
 
-        <div class="col-12 d-flex gap-2">
-          <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving">
-            {{ saving ? 'Saving...' : submitLabel }}
-          </button>
-          <a class="btn btn-outline-secondary" routerLink="/event-type-seeds">Cancel</a>
+        <div class="col-12">
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving">
+              <i class="fa-solid me-1" [class.fa-floppy-disk]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
+              {{ saving ? 'Saving…' : submitLabel }}
+            </button>
+            <a class="btn btn-outline-secondary" routerLink="/event-type-seeds">Cancel</a>
+          </div>
         </div>
       </form>
     </div>

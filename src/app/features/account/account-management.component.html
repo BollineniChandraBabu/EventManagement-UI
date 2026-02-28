@@ -1,173 +1,161 @@
-<div class="page account-page">
-  <section class="account-hero card border-0 shadow-4 rounded-6 overflow-hidden">
-    <div class="card-body p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between gap-4 align-items-md-center">
-      <div>
-        <p class="text-uppercase fw-semibold text-primary mb-2 small letter-spacing">Account center</p>
-        <h2 class="page-title mb-2">Manage your account</h2>
-        <p class="text-muted mb-0">View your profile information and control automated wish preferences.</p>
-      </div>
+<div class="page">
+  <!-- Hero -->
+  <div class="account-hero">
+    <div class="account-hero-content">
       <div class="account-avatar">
-        <i class="fa-regular fa-circle-user"></i>
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div>
+        <h1 class="page-header-title">My Account</h1>
+        <p class="page-header-subtitle">Manage your profile, notification preferences, and security settings</p>
       </div>
     </div>
-  </section>
+  </div>
 
-  <div class="row g-4 align-items-stretch">
+  <div class="row g-4">
+    <!-- Left: Profile + Wish Settings -->
     <div class="col-12 col-xl-7">
-      <div class="card border-0 shadow-3 rounded-5 h-100">
-        <div class="card-body p-4">
-          <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="section-icon bg-primary-subtle text-primary"><i class="fa-solid fa-id-badge"></i></span>
-            <div>
-              <h3 class="h5 mb-1">Profile details</h3>
-              <p class="text-muted mb-0">Profile editing is not available from the current backend APIs.</p>
-            </div>
+      <!-- Profile Card -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="section-title mb-4">
+            <i class="fa-solid fa-id-badge me-2" style="color:var(--c-primary);"></i>Profile Details
+          </h2>
+          <div class="alert-info rounded p-3 mb-4 d-flex align-items-center gap-2" style="font-size:.875rem;">
+            <i class="fa-solid fa-circle-info"></i>
+            Profile editing is managed by your administrator.
           </div>
-
           <form [formGroup]="profileForm" class="row g-3" novalidate>
             <div class="col-12">
-              <label for="fullName" class="form-label">Full name</label>
-              <input id="fullName" type="text" class="form-control" formControlName="fullName" readonly />
+              <label class="form-label">Full name</label>
+              <input class="form-control" type="text" formControlName="fullName" readonly />
             </div>
-
             <div class="col-12 col-md-6">
-              <label for="email" class="form-label">Email address</label>
-              <input id="email" type="email" class="form-control" formControlName="email" readonly />
+              <label class="form-label">Email address</label>
+              <input class="form-control" type="email" formControlName="email" readonly />
             </div>
-
             <div class="col-12 col-md-6">
               <label class="form-label">Role</label>
-              <select class="form-select" formControlName="role" [disabled]="true">
-                <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
-                <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
-              </select>
+              <input class="form-control" [value]="profileForm.controls.role.value" readonly />
             </div>
           </form>
         </div>
       </div>
-    </div>
 
-    <div class="col-12 col-xl-5">
-      <div class="card border-0 shadow-3 rounded-5 h-100 mb-4">
-        <div class="card-body p-4">
-          <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="section-icon bg-warning-subtle text-warning-emphasis"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-            <div>
-              <h3 class="h5 mb-1">Wish settings</h3>
-              <p class="text-muted mb-0">Enable or disable automated wishes for your account.</p>
-            </div>
-          </div>
-
-          <form [formGroup]="wishSettingsForm" class="row g-3" novalidate>
-            <div class="col-12">
-              <div class="form-check form-switch">
+      <!-- Wish Settings Card -->
+      <div class="card">
+        <div class="card-body">
+          <h2 class="section-title mb-4">
+            <i class="fa-solid fa-wand-sparkles me-2" style="color:#d97706;"></i>Wish Preferences
+          </h2>
+          <form [formGroup]="wishSettingsForm" class="wish-settings" novalidate>
+            <div class="wish-toggle-card" [class.wish-toggle-card--on]="wishSettingsForm.controls.isBirthdayEnabled.value">
+              <span class="wish-emoji">🎂</span>
+              <div class="wish-info">
+                <div class="wish-title">Birthday Wishes</div>
+                <div class="wish-sub">Automated birthday greetings</div>
+              </div>
+              <div class="form-check form-switch ms-auto mb-0">
                 <input class="form-check-input" type="checkbox" id="isBirthdayEnabled" formControlName="isBirthdayEnabled" />
-                <label class="form-check-label" for="isBirthdayEnabled">Birthday wishes</label>
-              </div>
-            </div>
-            <div class="col-12">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="isGoodMorningEnabled" formControlName="isGoodMorningEnabled" />
-                <label class="form-check-label" for="isGoodMorningEnabled">Good morning wishes</label>
-              </div>
-            </div>
-            <div class="col-12">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="isGoodNightEnabled" formControlName="isGoodNightEnabled" />
-                <label class="form-check-label" for="isGoodNightEnabled">Good night wishes</label>
               </div>
             </div>
 
-            <div class="col-12 d-flex justify-content-end">
-              <button type="button" class="btn btn-primary px-4" (click)="saveWishSettings()">
-                <i class="fa-solid fa-floppy-disk me-2"></i>Save settings
+            <div class="wish-toggle-card" [class.wish-toggle-card--on]="wishSettingsForm.controls.isGoodMorningEnabled.value">
+              <span class="wish-emoji">🌅</span>
+              <div class="wish-info">
+                <div class="wish-title">Good Morning</div>
+                <div class="wish-sub">Daily morning greetings</div>
+              </div>
+              <div class="form-check form-switch ms-auto mb-0">
+                <input class="form-check-input" type="checkbox" id="isGoodMorningEnabled" formControlName="isGoodMorningEnabled" />
+              </div>
+            </div>
+
+            <div class="wish-toggle-card" [class.wish-toggle-card--on]="wishSettingsForm.controls.isGoodNightEnabled.value">
+              <span class="wish-emoji">🌙</span>
+              <div class="wish-info">
+                <div class="wish-title">Good Night</div>
+                <div class="wish-sub">Evening goodnight messages</div>
+              </div>
+              <div class="form-check form-switch ms-auto mb-0">
+                <input class="form-check-input" type="checkbox" id="isGoodNightEnabled" formControlName="isGoodNightEnabled" />
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end pt-2">
+              <button type="button" class="btn btn-primary" (click)="saveWishSettings()">
+                <i class="fa-solid fa-floppy-disk me-2"></i>Save preferences
               </button>
             </div>
           </form>
         </div>
       </div>
+    </div>
 
-      <div class="card account-session border-0 shadow-3 rounded-5">
-        <div class="card-body p-4 border-bottom">
-          <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="section-icon bg-info-subtle text-info-emphasis"><i class="fa-solid fa-lock"></i></span>
-            <div>
-              <h3 class="h5 mb-1">Change password</h3>
-              <p class="text-muted mb-0">Update your account password regularly to keep your account secure.</p>
-            </div>
-          </div>
-
+    <!-- Right: Password + Session -->
+    <div class="col-12 col-xl-5">
+      <!-- Change Password -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="section-title mb-4">
+            <i class="fa-solid fa-lock me-2" style="color:#7c3aed;"></i>Change Password
+          </h2>
           <form [formGroup]="changePasswordForm" class="row g-3" (ngSubmit)="submitPasswordChange()" novalidate>
             <div class="col-12">
-              <label for="currentPassword" class="form-label">Current password</label>
+              <label class="form-label">Current password</label>
               <div class="input-group">
-                <input id="currentPassword" class="form-control" [type]="showCurrentPassword ? 'text' : 'password'" formControlName="currentPassword" />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  (click)="togglePasswordVisibility('current')"
-                  [attr.aria-label]="showCurrentPassword ? 'Hide current password' : 'Show current password'"
-                >
-                  <i class="password-toggle-icon fa-regular fa-eye" [style.display]="showCurrentPassword ? 'none' : 'block'" aria-hidden="true"></i>
-                  <i class="password-toggle-icon fa-regular fa-eye-slash" [style.display]="showCurrentPassword ? 'block' : 'none'" aria-hidden="true"></i>
+                <input class="form-control" [type]="showCurrentPassword ? 'text' : 'password'" formControlName="currentPassword" />
+                <button class="btn btn-outline-secondary" type="button" (click)="togglePasswordVisibility('current')">
+                  <i class="fa-regular" [class.fa-eye]="!showCurrentPassword" [class.fa-eye-slash]="showCurrentPassword"></i>
                 </button>
               </div>
-              <small class="text-danger" *ngIf="changePasswordForm.controls.currentPassword.touched && changePasswordForm.controls.currentPassword.invalid">
+              <small class="text-danger mt-1 d-block" *ngIf="changePasswordForm.controls.currentPassword.touched && changePasswordForm.controls.currentPassword.invalid">
                 Current password is required.
               </small>
             </div>
 
             <div class="col-12">
-              <label for="newPassword" class="form-label">New password</label>
+              <label class="form-label">New password</label>
               <div class="input-group">
-                <input id="newPassword" class="form-control" [type]="showNewPassword ? 'text' : 'password'" formControlName="newPassword" />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  (click)="togglePasswordVisibility('new')"
-                  [attr.aria-label]="showNewPassword ? 'Hide new password' : 'Show new password'"
-                >
-                  <i class="password-toggle-icon fa-regular fa-eye" [style.display]="showNewPassword ? 'none' : 'block'" aria-hidden="true"></i>
-                  <i class="password-toggle-icon fa-regular fa-eye-slash" [style.display]="showNewPassword ? 'block' : 'none'" aria-hidden="true"></i>
+                <input class="form-control" [type]="showNewPassword ? 'text' : 'password'" formControlName="newPassword" />
+                <button class="btn btn-outline-secondary" type="button" (click)="togglePasswordVisibility('new')">
+                  <i class="fa-regular" [class.fa-eye]="!showNewPassword" [class.fa-eye-slash]="showNewPassword"></i>
                 </button>
               </div>
-              <small class="text-danger" *ngIf="changePasswordForm.controls.newPassword.touched && changePasswordForm.controls.newPassword.invalid">
-                New password must be at least 8 characters.
+              <small class="text-danger mt-1 d-block" *ngIf="changePasswordForm.controls.newPassword.touched && changePasswordForm.controls.newPassword.invalid">
+                At least 8 characters required.
               </small>
             </div>
 
             <div class="col-12">
-              <label for="confirmPassword" class="form-label">Confirm new password</label>
+              <label class="form-label">Confirm new password</label>
               <div class="input-group">
-                <input id="confirmPassword" class="form-control" [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  (click)="togglePasswordVisibility('confirm')"
-                  [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
-                >
-                  <i class="password-toggle-icon fa-regular fa-eye" [style.display]="showConfirmPassword ? 'none' : 'block'" aria-hidden="true"></i>
-                  <i class="password-toggle-icon fa-regular fa-eye-slash" [style.display]="showConfirmPassword ? 'block' : 'none'" aria-hidden="true"></i>
+                <input class="form-control" [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" />
+                <button class="btn btn-outline-secondary" type="button" (click)="togglePasswordVisibility('confirm')">
+                  <i class="fa-regular" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
                 </button>
               </div>
-              <small class="text-danger" *ngIf="changePasswordForm.controls.confirmPassword.touched && changePasswordForm.controls.confirmPassword.invalid">
-                Please confirm the new password.
-              </small>
             </div>
 
             <div class="col-12 d-flex justify-content-end">
-              <button type="submit" class="btn btn-outline-primary px-4" [disabled]="isChangingPassword">
-                <i class="fa-solid fa-key me-2"></i>{{ isChangingPassword ? 'Changing...' : 'Change password' }}
+              <button type="submit" class="btn btn-outline-primary" [disabled]="isChangingPassword">
+                <i class="fa-solid me-1" [class.fa-key]="!isChangingPassword" [class.fa-spinner]="isChangingPassword" [class.fa-spin]="isChangingPassword"></i>
+                {{ isChangingPassword ? 'Changing…' : 'Change password' }}
               </button>
             </div>
           </form>
         </div>
+      </div>
 
-        <div class="card-body p-4">
-          <h3 class="h5 mb-2">Session</h3>
-          <p class="text-muted mb-3">On shared or public computers, always sign out to protect your account.</p>
+      <!-- Session Card -->
+      <div class="card session-card">
+        <div class="card-body">
+          <h2 class="section-title mb-2">
+            <i class="fa-solid fa-right-from-bracket me-2" style="color:var(--c-error);"></i>Session
+          </h2>
+          <p class="text-muted mb-4" style="font-size:.875rem;">Always sign out on shared or public devices to protect your account.</p>
           <button type="button" class="btn btn-outline-danger" (click)="logout()">
-            <i class="fa-solid fa-right-from-bracket me-2"></i>Logout
+            <i class="fa-solid fa-right-from-bracket me-2"></i>Sign out
           </button>
         </div>
       </div>

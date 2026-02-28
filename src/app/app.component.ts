@@ -17,6 +17,7 @@ export class AppComponent {
   readonly currentYear = new Date().getFullYear();
 
   isMobileMenuOpen = false;
+  isSidebarCollapsed = false;
 
   toggleMobileMenu(): void {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
@@ -24,5 +25,9 @@ export class AppComponent {
 
   closeMobileMenu(): void {
     this.isMobileMenuOpen = false;
+  }
+
+  toggleSidebarCollapse(): void {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 }

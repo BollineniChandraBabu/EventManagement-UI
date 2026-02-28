@@ -1,4 +1,43 @@
-.password-toggle-icon {
-  width: 1.1rem;
-  text-align: center;
+/* Shared auth CSS — applies to all auth components */
+
+.auth-forgot-link {
+  font-size: 0.8rem;
+  color: var(--c-primary);
+  text-decoration: none;
+  font-weight: 600;
 }
+
+.auth-forgot-link:hover { text-decoration: underline; }
+
+.auth-check-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--c-text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.auth-divider {
+  text-align: center;
+  position: relative;
+  color: var(--c-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 42%;
+  height: 1px;
+  background: var(--c-border);
+}
+
+.auth-divider::before { left: 0; }
+.auth-divider::after  { right: 0; }
+
+.password-toggle-icon { width: 1rem; text-align: center; }
