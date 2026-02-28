@@ -40,7 +40,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let seed of eventTypeSeeds">
-              <td>{{ seed.name }}</td>
+              <td>{{ seed.displayName }}</td>
               <td>
                 <span class="badge" [class.badge-success]="seed.active !== false" [class.badge-danger]="seed.active === false">
                   {{ seed.active === false ? 'Inactive' : 'Active' }}

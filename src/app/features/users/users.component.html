@@ -67,7 +67,7 @@
             <tr *ngFor="let user of viewUsers">
               <td>
                 <div class="user-cell">
-                  <span class="user-avatar">{{ user.name?.charAt(0) | uppercase }}</span>
+                  <span class="user-avatar">{{ user.name.charAt(0) | uppercase }}</span>
                   {{ user.name }}
                 </div>
               </td>

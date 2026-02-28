@@ -61,7 +61,7 @@ export class EventsComponent {
   private loadEventTypeOptions(): void {
     this.api.eventTypeSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (seeds) => {
-        this.eventTypeOptions = (seeds ?? []).map((seed) => seed.name);
+        this.eventTypeOptions = (seeds ?? []).map((seed) => seed.displayName);
       }
     });
   }

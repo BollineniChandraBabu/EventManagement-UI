@@ -48,7 +48,7 @@ export class EventEditorComponent {
   }
 
   get types(): string[] {
-    return this.eventTypeSeeds.length ? this.eventTypeSeeds.map((seed) => seed.name) : this.fallbackTypes;
+    return this.eventTypeSeeds.length ? this.eventTypeSeeds.map((seed) => seed.displayName) : this.fallbackTypes;
   }
 
   get pageTitle(): string {
@@ -135,7 +135,7 @@ export class EventEditorComponent {
   private loadRelationshipSeeds(): void {
     this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (seeds) => {
-        this.relationshipOptions = (seeds ?? []).map((seed) => seed.displayName);
+        this.relationshipOptions = (seeds ?? []).map((seed) => seed.code);
       }
     });
   }

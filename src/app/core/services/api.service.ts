@@ -169,8 +169,14 @@ export class ApiService {
   }
 
   emailStatuses(page = 0, size = 10, searchKey = '', emailType = ''): Observable<PagedResponse<EmailStatus>> {
+    let url = `${environment.apiUrl}/emails/status`;
+    if(emailType === 'OTP'){
+      url = url + "/admin/otp";
+    }else if(emailType === 'FORGOT_PASSWORD'){
+      url = url + "/admin/forgot-password";
+    }
     const params = this.pagedParams(page, size, searchKey);
-    const requestWithEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(`${environment.apiUrl}/emails/status`, {
+    const requestWithEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(url, {
       params: emailType ? params.set('emailType', emailType) : params
     });
 
@@ -287,5 +293,5 @@ export class ApiService {
   }
 
   private readonly relationshipSeedPaths = ['/seed/relationships', '/relation-seeds'] as const;
-  private readonly eventTypeSeedPaths = ['/event-type-seeds', '/event-types-seeds'] as const;
+  private readonly eventTypeSeedPaths = ['/seed/event-types', '/event-types-seeds'] as const;
 }

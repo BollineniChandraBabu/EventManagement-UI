@@ -55,7 +55,7 @@ export class UserEditorComponent {
   }
 
   get relationshipOptions(): string[] {
-    return this.relationshipSeeds.map((seed) => seed.displayName);
+    return this.relationshipSeeds.map((seed) => seed.code);
   }
 
   get pageTitle(): string {
