@@ -26,6 +26,7 @@ export class AccountManagementComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
+  readonly isAdmin = this.auth.isAdmin;
 
   readonly profileForm = this.fb.nonNullable.group({
     fullName: [''],
@@ -46,6 +47,8 @@ export class AccountManagementComponent {
   });
 
   isChangingPassword = false;
+  isBalanceLoading = false;
+  pollinationsBalance: number | null = null;
   showCurrentPassword = false;
   showNewPassword = false;
   showConfirmPassword = false;
@@ -82,6 +85,29 @@ export class AccountManagementComponent {
       },
       error: () => {
         this.toast.warning('Unable to fetch profile right now.');
+      }
+    });
+
+    if (this.isAdmin()) {
+      this.loadPollinationsBalance();
+    }
+  }
+
+  loadPollinationsBalance(): void {
+    if (!this.isAdmin()) {
+      return;
+    }
+
+    this.isBalanceLoading = true;
+    this.api.getPollinationsBalance().subscribe({
+      next: (balance) => {
+        this.pollinationsBalance = balance;
+        this.isBalanceLoading = false;
+      },
+      error: () => {
+        this.pollinationsBalance = null;
+        this.isBalanceLoading = false;
+        this.toast.warning('Unable to load Pollinations API balance right now.');
       }
     });
   }
