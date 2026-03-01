@@ -21,8 +21,7 @@ import {
   SchedulerItem,
   SchedulerTriggerResponse,
   RelationshipSeed,
-  WishSettingsPayload,
-  PollinationsBalanceResponse
+  WishSettingsPayload
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -205,12 +204,6 @@ export class ApiService {
     return this.http.patch(`${environment.apiUrl}/users/me/wish-settings`, payload);
   }
 
-  getPollinationsBalance(): Observable<number> {
-    return this.http.get<ApiResponse<PollinationsBalanceResponse>>(`${environment.apiUrl}/ai/pollinations/balance`).pipe(
-      map((response) => this.extractPollinationsBalance(this.unwrap(response)))
-    );
-  }
-
   schedulers(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<SchedulerItem>> {
     return this.http.get<ApiResponse<PagedResponse<SchedulerItem> | SchedulerItem[]>>(`${environment.apiUrl}/schedulers`, {
       params: this.pagedParams(page, size, searchKey)
@@ -301,23 +294,4 @@ export class ApiService {
 
   private readonly relationshipSeedPaths = ['/seed/relationships', '/relation-seeds'] as const;
   private readonly eventTypeSeedPaths = ['/seed/event-types', '/event-types-seeds'] as const;
-
-  private extractPollinationsBalance(payload: PollinationsBalanceResponse): number {
-    if (typeof payload === 'number') {
-      return payload;
-    }
-
-    if (typeof payload === 'string') {
-      const parsed = Number(payload);
-      return Number.isFinite(parsed) ? parsed : 0;
-    }
-
-    const value = payload.balance ?? payload.availableBalance ?? payload.credits;
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
 }
