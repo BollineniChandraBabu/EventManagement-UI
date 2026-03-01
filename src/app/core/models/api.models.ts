@@ -141,6 +141,10 @@ export interface WishSettingsPayload {
   isBirthdayEnabled: boolean;
 }
 
+export interface PollinationsBalanceResponse {
+  balance: number;
+}
+
 // Matches scheduler API response payload shape from backend.
 export interface SchedulerItem {
   name: string;
