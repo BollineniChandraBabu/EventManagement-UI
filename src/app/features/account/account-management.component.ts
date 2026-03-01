@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ImpersonationService } from '../../core/services/impersonation.service';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -20,6 +21,7 @@ export class AccountManagementComponent {
   private readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  readonly impersonation = inject(ImpersonationService);
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
 
@@ -49,12 +51,27 @@ export class AccountManagementComponent {
   constructor() {
     this.auth.getProfile().subscribe({
       next: (profile) => {
+        // When impersonating, show the impersonated user's details
+        if (this.impersonation.isImpersonating()) {
+          const imp = this.impersonation.impersonatedUser()!;
+          this.profileForm.patchValue({
+            fullName: imp.name ?? '',
+            email: imp.email ?? '',
+            role: imp.role,
+          });
+          this.wishSettingsForm.patchValue({
+            isBirthdayEnabled: !!imp.isBirthdayEnabled,
+            isGoodMorningEnabled: !!imp.isGoodMorningEnabled,
+            isGoodNightEnabled: !!imp.isGoodNightEnabled,
+          });
+          return;
+        }
+
         this.profileForm.patchValue({
           fullName: profile.name ?? '',
           email: profile.email ?? '',
           role: profile.role,
         });
-
         this.wishSettingsForm.patchValue({
           isBirthdayEnabled: !!profile.isBirthdayEnabled,
           isGoodMorningEnabled: !!profile.isGoodMorningEnabled,
@@ -77,6 +94,10 @@ export class AccountManagementComponent {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  returnToAdmin(): void {
+    this.impersonation.stopImpersonation();
   }
 
   submitPasswordChange(): void {

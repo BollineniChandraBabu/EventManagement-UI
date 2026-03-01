@@ -23,3 +23,13 @@
   border-right: none !important;
   background: var(--c-surface) !important;
 }
+
+/* Login as button */
+.login-as-btn {
+  color: #d97706 !important;
+}
+
+.login-as-btn:hover {
+  background: #fffbeb !important;
+  color: #b45309 !important;
+}

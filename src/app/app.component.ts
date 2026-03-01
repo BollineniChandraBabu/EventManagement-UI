@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
+import { ImpersonationService } from './core/services/impersonation.service';
 import { ToastContainerComponent } from './shared/toast-container.component';
 import { LoadingOverlayComponent } from './shared/loading-overlay.component';
 
@@ -14,6 +15,7 @@ import { LoadingOverlayComponent } from './shared/loading-overlay.component';
 })
 export class AppComponent {
   readonly auth = inject(AuthService);
+  readonly impersonation = inject(ImpersonationService);
   readonly currentYear = new Date().getFullYear();
 
   isMobileMenuOpen = false;
@@ -29,5 +31,10 @@ export class AppComponent {
 
   toggleSidebarCollapse(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+
+  exitImpersonation(): void {
+    this.impersonation.stopImpersonation();
+    this.closeMobileMenu();
   }
 }

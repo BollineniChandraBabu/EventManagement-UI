@@ -1,5 +1,5 @@
 <div class="app-layout" *ngIf="auth.authenticated(); else guestLayout">
-  <aside class="side-nav" [class.nav-collapsed]="isMobileMenuOpen === false && isSidebarCollapsed">
+  <aside class="side-nav" [class.nav-collapsed]="!isMobileMenuOpen && isSidebarCollapsed">
     <!-- Brand -->
     <div class="brand-row">
       <a class="brand" routerLink="/dashboard">
@@ -17,52 +17,61 @@
     <ng-container *ngIf="auth.authenticated()">
       <nav class="side-menu" [class.mobile-open]="isMobileMenuOpen">
 
+        <!-- Impersonation notice in sidebar -->
+        <div class="impersonation-notice" *ngIf="impersonation.isImpersonating()">
+          <div class="impersonation-notice-label">
+            <i class="fa-solid fa-user-secret me-1"></i>
+            <span class="nav-label">Viewing as</span>
+          </div>
+          <div class="impersonation-name nav-label">{{ impersonation.impersonatedUser()?.name }}</div>
+        </div>
+
         <!-- Main section -->
         <div class="nav-section">
           <span class="nav-section-label">Main</span>
 
-          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">
+          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Dashboard">
             <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
             <span class="nav-label">Dashboard</span>
           </a>
 
-          <a class="nav-item" routerLink="/events" routerLinkActive="active" (click)="closeMobileMenu()">
+          <a class="nav-item" routerLink="/events" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Events">
             <span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span>
             <span class="nav-label">Events</span>
           </a>
 
-          <a class="nav-item" routerLink="/ai-wishes" routerLinkActive="active" (click)="closeMobileMenu()">
+          <a class="nav-item" routerLink="/ai-wishes" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="AI Wishes">
             <span class="nav-icon"><i class="fa-solid fa-wand-sparkles"></i></span>
             <span class="nav-label">AI Wishes</span>
           </a>
 
-          <a class="nav-item" routerLink="/email-status" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">
+          <a class="nav-item" routerLink="/email-status" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()" data-tooltip="Email Status">
             <span class="nav-icon"><i class="fa-solid fa-envelope-circle-check"></i></span>
             <span class="nav-label">Email Status</span>
           </a>
         </div>
 
-        <!-- Admin section -->
+        <!-- Admin section — hidden while impersonating -->
         <ng-container *ngIf="auth.isAdmin()">
           <div class="nav-section">
             <span class="nav-section-label">Admin</span>
 
-            <a class="nav-item" routerLink="/email-status/otp" routerLinkActive="active" (click)="closeMobileMenu()">
+            <a class="nav-item" routerLink="/email-status/otp" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="OTP Emails">
               <span class="nav-icon"><i class="fa-solid fa-key"></i></span>
               <span class="nav-label">OTP Emails</span>
             </a>
 
-            <a class="nav-item" routerLink="/email-status/forgot-password" routerLinkActive="active" (click)="closeMobileMenu()">
+            <a class="nav-item" routerLink="/email-status/forgot-password" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Forgot Password">
               <span class="nav-icon"><i class="fa-solid fa-lock-open"></i></span>
               <span class="nav-label">Forgot Password</span>
             </a>
 
-            <a class="nav-item" routerLink="/schedulers" routerLinkActive="active" (click)="closeMobileMenu()">
+            <a class="nav-item" routerLink="/schedulers" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Schedulers">
               <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
               <span class="nav-label">Schedulers</span>
             </a>
 
-            <a class="nav-item" routerLink="/users" routerLinkActive="active" (click)="closeMobileMenu()">
+            <a class="nav-item" routerLink="/users" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Users">
               <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
               <span class="nav-label">Users</span>
             </a>
@@ -71,21 +80,41 @@
           <div class="nav-section">
             <span class="nav-section-label">Seeds</span>
 
-            <a class="nav-item" routerLink="/relationship-seeds" routerLinkActive="active" (click)="closeMobileMenu()">
+            <a class="nav-item" routerLink="/relationship-seeds" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Relationship Seeds">
               <span class="nav-icon"><i class="fa-solid fa-heart"></i></span>
               <span class="nav-label">Relationship Seeds</span>
             </a>
 
-            <a class="nav-item" routerLink="/event-type-seeds" routerLinkActive="active" (click)="closeMobileMenu()">
+            <a class="nav-item" routerLink="/event-type-seeds" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Event Type Seeds">
               <span class="nav-icon"><i class="fa-solid fa-seedling"></i></span>
               <span class="nav-label">Event Type Seeds</span>
             </a>
           </div>
         </ng-container>
 
-        <!-- Account at bottom -->
+        <!-- Footer: Return to Admin when impersonating; Account link otherwise -->
         <div class="nav-footer">
-          <a class="nav-item account-item" routerLink="/account" routerLinkActive="active" (click)="closeMobileMenu()">
+          <!-- Return to Admin button (only when impersonating) -->
+          <button
+            *ngIf="impersonation.isImpersonating()"
+            class="nav-item return-admin-btn w-100"
+            type="button"
+            (click)="exitImpersonation()"
+            data-tooltip="Return to Admin"
+          >
+            <span class="nav-icon"><i class="fa-solid fa-rotate-left"></i></span>
+            <span class="nav-label">Return to Admin</span>
+          </button>
+
+          <!-- Normal Account link (hidden when impersonating) -->
+          <a
+            *ngIf="!impersonation.isImpersonating()"
+            class="nav-item account-item"
+            routerLink="/account"
+            routerLinkActive="active"
+            (click)="closeMobileMenu()"
+            data-tooltip="Account"
+          >
             <span class="nav-icon"><i class="fa-regular fa-circle-user"></i></span>
             <span class="nav-label">Account</span>
           </a>
@@ -95,6 +124,22 @@
   </aside>
 
   <div class="content-shell">
+    <!-- Impersonation banner -->
+    <div class="impersonation-banner" *ngIf="impersonation.isImpersonating()">
+      <div class="impersonation-banner-inner">
+        <span class="impersonation-banner-icon"><i class="fa-solid fa-user-secret"></i></span>
+        <span class="impersonation-banner-text">
+          You are viewing the app as
+          <strong>{{ impersonation.impersonatedUser()?.name }}</strong>
+          ({{ impersonation.impersonatedUser()?.email }})
+          — all actions use your admin credentials
+        </span>
+        <button class="impersonation-banner-btn" type="button" (click)="exitImpersonation()">
+          <i class="fa-solid fa-rotate-left me-1"></i>Return to Admin
+        </button>
+      </div>
+    </div>
+
     <main class="app-shell container py-4">
       <router-outlet></router-outlet>
     </main>

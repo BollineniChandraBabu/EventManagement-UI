@@ -247,6 +247,66 @@
   background: #a78bfa;
 }
 
+/* ─── Return to Admin button ─────────────────────────────── */
+.return-admin-btn {
+  background: rgba(251, 191, 36, 0.12) !important;
+  border: 1px solid rgba(251, 191, 36, 0.3) !important;
+  color: #fbbf24 !important;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.return-admin-btn:hover {
+  background: rgba(251, 191, 36, 0.22) !important;
+  color: #fde68a !important;
+  transform: translateX(2px);
+}
+
+.return-admin-btn .nav-icon {
+  background: rgba(251, 191, 36, 0.15) !important;
+  color: #fbbf24 !important;
+}
+
+/* ─── Impersonation notice inside sidebar ────────────────── */
+.impersonation-notice {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem 0.5rem;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+}
+
+.impersonation-notice-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(251, 191, 36, 0.7);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+
+.impersonation-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fbbf24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-collapsed .impersonation-notice {
+  padding: 0.5rem;
+}
+
+.nav-collapsed .impersonation-notice-label span,
+.nav-collapsed .impersonation-name {
+  display: none;
+}
+
 /* ─── Tooltip on collapsed ───────────────────────────────── */
 .nav-collapsed .nav-item {
   position: relative;
@@ -285,6 +345,74 @@
   border-top: 1px solid rgba(59, 113, 202, 0.12);
   color: #6b7aa6;
   font-size: 0.8rem;
+}
+
+/* ─── Impersonation banner ───────────────────────────────── */
+.impersonation-banner {
+  background: linear-gradient(90deg, #78350f, #92400e);
+  border-bottom: 2px solid #f59e0b;
+  padding: 0.6rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  box-shadow: 0 2px 12px rgba(120, 53, 15, 0.3);
+}
+
+.impersonation-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  max-width: 1200px;
+}
+
+.impersonation-banner-icon {
+  width: 30px;
+  height: 30px;
+  background: rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #fbbf24;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.impersonation-banner-text {
+  font-size: 0.83rem;
+  color: rgba(255, 237, 213, 0.95);
+  font-weight: 500;
+  flex: 1;
+}
+
+.impersonation-banner-text strong {
+  color: #fde68a;
+  font-weight: 700;
+}
+
+.impersonation-banner-btn {
+  background: rgba(251, 191, 36, 0.18);
+  border: 1.5px solid rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.impersonation-banner-btn:hover {
+  background: rgba(251, 191, 36, 0.3);
+  border-color: #fbbf24;
+  color: #fde68a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25);
 }
 
 /* ─── Mobile ─────────────────────────────────────────────── */
@@ -346,5 +474,13 @@
   .nav-label {
     opacity: 1 !important;
     width: auto !important;
+  }
+
+  .impersonation-banner {
+    padding: 0.5rem 1rem;
+  }
+
+  .impersonation-banner-text {
+    font-size: 0.75rem;
   }
 }

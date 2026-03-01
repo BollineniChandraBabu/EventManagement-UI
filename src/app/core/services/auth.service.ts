@@ -5,7 +5,8 @@ import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
-import {AppUser} from "../models/api.models";
+import { AppUser } from '../models/api.models';
+import { ImpersonationService } from './impersonation.service';
 
 const ACCESS_TOKEN = 'fw_access_token';
 const REFRESH_TOKEN = 'fw_refresh_token';
@@ -15,6 +16,7 @@ const ROLE = 'fw_role';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly impersonation = inject(ImpersonationService);
   private readonly isAuthed = signal(this.hasToken());
   private readonly currentRole = signal(this.getStoredValue(ROLE) ?? ROLE_USER);
   private tokenExpiryTimeout?: ReturnType<typeof setTimeout>;
@@ -24,7 +26,19 @@ export class AuthService {
   readonly ROLE_USER = ROLE_USER;
   readonly authenticated = computed(() => this.isAuthed());
   readonly role = computed(() => this.currentRole());
-  readonly isAdmin = computed(() => this.currentRole() === ROLE_ADMIN);
+
+  /**
+   * isAdmin returns false when impersonating a non-admin user so that all
+   * admin-only sections are hidden, giving an accurate preview of what the
+   * impersonated user sees. The underlying JWT is still the admin token so
+   * all API calls succeed.
+   */
+  readonly isAdmin = computed(() => {
+    if (this.impersonation.isImpersonating()) {
+      return false;
+    }
+    return this.currentRole() === ROLE_ADMIN;
+  });
 
   login(request: LoginRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/login`, request).pipe(
@@ -57,11 +71,9 @@ export class AuthService {
     });
   }
 
-
   getProfile(): Observable<AppUser> {
     return this.http.get<AppUser>(`${environment.apiUrl}/users/me`);
   }
-
 
   refreshToken(): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/refresh`, {
@@ -70,6 +82,13 @@ export class AuthService {
   }
 
   logout(): void {
+    // If currently impersonating, stop impersonation first (return to admin)
+    if (this.impersonation.isImpersonating()) {
+      this.impersonation.stopImpersonation();
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
     this.clearStoredSession();
     this.isAuthed.set(false);
     this.currentRole.set(ROLE_USER);

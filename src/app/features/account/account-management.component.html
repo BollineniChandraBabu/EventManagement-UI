@@ -3,11 +3,26 @@
   <div class="account-hero">
     <div class="account-hero-content">
       <div class="account-avatar">
-        <i class="fa-solid fa-user"></i>
+        <i class="fa-solid fa-user-secret" *ngIf="impersonation.isImpersonating()"></i>
+        <i class="fa-solid fa-user" *ngIf="!impersonation.isImpersonating()"></i>
       </div>
       <div>
-        <h1 class="page-header-title">My Account</h1>
-        <p class="page-header-subtitle">Manage your profile, notification preferences, and security settings</p>
+        <h1 class="page-header-title">
+          <ng-container *ngIf="impersonation.isImpersonating()">
+            Viewing as {{ impersonation.impersonatedUser()?.name }}
+          </ng-container>
+          <ng-container *ngIf="!impersonation.isImpersonating()">My Account</ng-container>
+        </h1>
+        <p class="page-header-subtitle">
+          <ng-container *ngIf="impersonation.isImpersonating()">
+            <span class="impersonation-badge">
+              <i class="fa-solid fa-user-secret me-1"></i>Impersonation mode — your admin token is still active
+            </span>
+          </ng-container>
+          <ng-container *ngIf="!impersonation.isImpersonating()">
+            Manage your profile, notification preferences, and security settings
+          </ng-container>
+        </p>
       </div>
     </div>
   </div>
@@ -94,8 +109,8 @@
 
     <!-- Right: Password + Session -->
     <div class="col-12 col-xl-5">
-      <!-- Change Password -->
-      <div class="card mb-4">
+      <!-- Change Password (hidden while impersonating) -->
+      <div class="card mb-4" *ngIf="!impersonation.isImpersonating()">
         <div class="card-body">
           <h2 class="section-title mb-4">
             <i class="fa-solid fa-lock me-2" style="color:#7c3aed;"></i>Change Password
@@ -147,8 +162,25 @@
         </div>
       </div>
 
-      <!-- Session Card -->
-      <div class="card session-card">
+      <!-- Return to Admin card (shown only while impersonating) -->
+      <div class="card mb-4 return-admin-card" *ngIf="impersonation.isImpersonating()">
+        <div class="card-body">
+          <h2 class="section-title mb-2" style="color:#d97706;">
+            <i class="fa-solid fa-user-secret me-2"></i>Impersonation Active
+          </h2>
+          <p class="text-muted mb-4" style="font-size:.875rem;">
+            You are currently viewing the application as
+            <strong>{{ impersonation.impersonatedUser()?.name }}</strong>.
+            Password changes and sign-out are disabled in this mode.
+          </p>
+          <button type="button" class="btn btn-warning" (click)="returnToAdmin()">
+            <i class="fa-solid fa-rotate-left me-2"></i>Return to Admin Account
+          </button>
+        </div>
+      </div>
+
+      <!-- Session Card — sign out only when NOT impersonating -->
+      <div class="card session-card" *ngIf="!impersonation.isImpersonating()">
         <div class="card-body">
           <h2 class="section-title mb-2">
             <i class="fa-solid fa-right-from-bracket me-2" style="color:var(--c-error);"></i>Session

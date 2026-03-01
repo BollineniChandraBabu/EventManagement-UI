@@ -80,6 +80,17 @@
                 </span>
               </td>
               <td class="text-end">
+                <!-- Login as user button -->
+                <button
+                  class="btn btn-sm btn-link text-warning login-as-btn"
+                  type="button"
+                  (click)="loginAsUser(user)"
+                  [disabled]="loading || isDeactivating(user.id)"
+                  title="View app as this user"
+                >
+                  <i class="fa-solid fa-user-secret me-1"></i>Login as
+                </button>
+
                 <a class="btn btn-sm btn-link" [routerLink]="['/users', user.id, 'edit']" [class.disabled]="loading || isDeactivating(user.id)">
                   <i class="fa-solid fa-pen-to-square me-1"></i>Edit
                 </a>

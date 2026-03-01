@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AppUser } from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { ImpersonationService } from '../../core/services/impersonation.service';
 
 @Component({
   standalone: true,
@@ -18,6 +19,8 @@ export class UsersComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly impersonation = inject(ImpersonationService);
+  private readonly router = inject(Router);
 
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
@@ -47,7 +50,6 @@ export class UsersComponent {
     if (this.totalElements === 0 || this.viewUsers.length === 0) {
       return 0;
     }
-
     return this.page * this.pageSize + 1;
   }
 
@@ -78,10 +80,15 @@ export class UsersComponent {
     return user.dob || user.dateOfBirth || null;
   }
 
+  loginAsUser(user: AppUser): void {
+    this.impersonation.startImpersonation(user);
+    this.toast.info(`Now viewing as ${user.name}. Click "Return to Admin" to switch back.`);
+    this.router.navigate(['/dashboard']);
+  }
+
   onSearchInput(value: string): void {
     const previousFilter = this.filterText;
     this.filterText = value;
-
     if (previousFilter.trim() && !this.filterText.trim()) {
       this.applySearch();
     }
@@ -91,7 +98,6 @@ export class UsersComponent {
     if (!this.filterText) {
       return;
     }
-
     this.filterText = '';
     this.applySearch();
   }
@@ -154,7 +160,6 @@ export class UsersComponent {
       this.viewUsers = [...this.allUsers];
       return;
     }
-
     this.viewUsers = this.allUsers.filter((user) => user.role === this.filterRole);
   }
 }
