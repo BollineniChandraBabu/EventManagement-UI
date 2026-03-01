@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {Router, RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 import { ImpersonationService } from './core/services/impersonation.service';
@@ -21,6 +21,7 @@ export class AppComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   readonly currentYear = new Date().getFullYear();
+  private router = inject(Router);
 
   isMobileMenuOpen = false;
   isSidebarCollapsed = false;
@@ -42,6 +43,7 @@ export class AppComponent {
       next: () => {
         this.impersonation.stopImpersonation();
         this.closeMobileMenu();
+        this.router.navigate(['/users']);
       },
       error: () => {
         this.toast.error('Unable to switch back to admin right now.');
