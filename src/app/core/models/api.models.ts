@@ -141,15 +141,6 @@ export interface WishSettingsPayload {
   isBirthdayEnabled: boolean;
 }
 
-export type PollinationsBalanceResponse =
-  | number
-  | string
-  | {
-      balance?: number | string;
-      availableBalance?: number | string;
-      credits?: number | string;
-    };
-
 // Matches scheduler API response payload shape from backend.
 export interface SchedulerItem {
   name: string;
