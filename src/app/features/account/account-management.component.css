@@ -106,3 +106,25 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(217,119,6,.35);
 }
+
+.pollinations-balance-card {
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border-radius: var(--r-lg);
+  padding: 0.875rem 1rem;
+}
+
+.pollinations-balance-label {
+  color: #1e40af;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.pollinations-balance-value {
+  color: #1e3a8a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}

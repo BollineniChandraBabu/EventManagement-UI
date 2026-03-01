@@ -40,6 +40,23 @@
             <i class="fa-solid fa-circle-info"></i>
             Profile editing is managed by your administrator.
           </div>
+
+          <div class="pollinations-balance-card mb-4" *ngIf="isAdmin()">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <div>
+                <div class="pollinations-balance-label">Pollinations API Balance</div>
+                <div class="pollinations-balance-value" *ngIf="!isBalanceLoading; else loadingBalance">
+                  {{ pollinationsBalance ?? 0 | number:'1.0-2' }}
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="loadPollinationsBalance()" [disabled]="isBalanceLoading">
+                <i class="fa-solid" [class.fa-rotate-right]="!isBalanceLoading" [class.fa-spinner]="isBalanceLoading" [class.fa-spin]="isBalanceLoading"></i>
+              </button>
+            </div>
+            <ng-template #loadingBalance>
+              <div class="pollinations-balance-value text-muted">Loading…</div>
+            </ng-template>
+          </div>
           <form [formGroup]="profileForm" class="row g-3" novalidate>
             <div class="col-12">
               <label class="form-label">Full name</label>
