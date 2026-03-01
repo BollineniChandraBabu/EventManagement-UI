@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -22,6 +23,7 @@ export class AccountManagementComponent {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
   readonly impersonation = inject(ImpersonationService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
 
@@ -97,7 +99,15 @@ export class AccountManagementComponent {
   }
 
   returnToAdmin(): void {
-    this.impersonation.stopImpersonation();
+    this.auth.switchBackToAdmin().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.impersonation.stopImpersonation();
+        this.toast.success('Returned to admin account.');
+      },
+      error: () => {
+        this.toast.error('Unable to switch back to admin right now.');
+      }
+    });
   }
 
   submitPasswordChange(): void {
