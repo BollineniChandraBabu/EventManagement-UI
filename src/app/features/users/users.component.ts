@@ -8,6 +8,7 @@ import { AppUser } from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 import { ImpersonationService } from '../../core/services/impersonation.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   standalone: true,
@@ -21,6 +22,7 @@ export class UsersComponent {
   private readonly toast = inject(ToastService);
   private readonly impersonation = inject(ImpersonationService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
@@ -80,10 +82,26 @@ export class UsersComponent {
     return user.dob || user.dateOfBirth || null;
   }
 
+  canImpersonate(user: AppUser): boolean {
+    return user.role !== ROLE_ADMIN;
+  }
+
   loginAsUser(user: AppUser): void {
-    this.impersonation.startImpersonation(user);
-    this.toast.info(`Now viewing as ${user.name}. Click "Return to Admin" to switch back.`);
-    this.router.navigate(['/dashboard']);
+    if (!this.canImpersonate(user)) {
+      this.toast.warning('Admin users cannot be impersonated.');
+      return;
+    }
+
+    this.auth.loginAsUser(user.email).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.impersonation.startImpersonation(user);
+        this.toast.info(`Now viewing as ${user.name}. Click "Return to Admin" to switch back.`);
+        this.router.navigate(['/dashboard']);
+      },
+      error: () => {
+        this.toast.error('Unable to login as this user right now.');
+      }
+    });
   }
 
   onSearchInput(value: string): void {

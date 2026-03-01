@@ -46,6 +46,18 @@ export class AuthService {
     );
   }
 
+  loginAsUser(email: string): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/admin/login-as-user`, { email }).pipe(
+      tap((res) => this.setSession(res, this.shouldPersistSession()))
+    );
+  }
+
+  switchBackToAdmin(): Observable<TokenResponse> {
+    return this.http.get<TokenResponse>(`${environment.apiUrl}/auth/admin/switch-back`).pipe(
+      tap((res) => this.setSession(res, this.shouldPersistSession()))
+    );
+  }
+
   sendOtp(payload: OtpRequest): Observable<void> {
     return this.http.post<void>(`${environment.apiUrl}/auth/otp/send`, payload);
   }
@@ -132,6 +144,10 @@ export class AuthService {
 
   private getStorage(rememberMe: boolean): Storage {
     return rememberMe ? localStorage : sessionStorage;
+  }
+
+  private shouldPersistSession(): boolean {
+    return localStorage.getItem(ACCESS_TOKEN) !== null;
   }
 
   private getStoredValue(key: string): string | null {
