@@ -1,6 +1,7 @@
 {
   "projects": {
-    "default": "chandu-goldengreetings"
+    "default": "chandu-goldengreetings",
+    "goldengreetings": "chandu-goldengreetings"
   },
   "targets": {},
   "etags": {}
