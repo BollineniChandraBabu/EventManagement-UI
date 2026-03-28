@@ -21,6 +21,7 @@ import { RelationshipSeedEditorComponent } from './features/relationship-seeds/r
 import { RelationshipSeedsComponent } from './features/relationship-seeds/relationship-seeds.component';
 import { EventTypeSeedsComponent } from './features/event-type-seeds/event-type-seeds.component';
 import { EventTypeSeedEditorComponent } from './features/event-type-seeds/event-type-seed-editor.component';
+import { FestivalWishMappingsComponent } from './features/festival-wish-mappings/festival-wish-mappings.component';
 
 export const routes: Routes = [
   { path: '', canActivate: [resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
@@ -49,6 +50,7 @@ export const routes: Routes = [
     { path: 'event-type-seeds', component: EventTypeSeedsComponent, canActivate: [adminGuard] },
     { path: 'event-type-seeds/new', component: EventTypeSeedEditorComponent, canActivate: [adminGuard] },
     { path: 'event-type-seeds/:id/edit', component: EventTypeSeedEditorComponent, canActivate: [adminGuard] },
+    { path: 'festival-wish-mappings', component: FestivalWishMappingsComponent, canActivate: [adminGuard] },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]},
   { path: '**', redirectTo: 'dashboard' }

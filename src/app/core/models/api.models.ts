@@ -77,6 +77,30 @@ export interface EventTypeSeed {
   active?: boolean;
 }
 
+export interface FestivalItem {
+  id: number;
+  eventName: string;
+  eventDate: string;
+  active: boolean;
+}
+
+export interface FestivalWishMapping {
+  id: number;
+  specialEventId: number;
+  festivalName: string;
+  userId: number;
+  userName: string;
+  customMessage?: string;
+  active: boolean;
+}
+
+export interface SaveFestivalWishMappingPayload {
+  specialEventId: number;
+  userId: number;
+  customMessage?: string;
+  active: boolean;
+}
+
 export interface SaveEventTypeSeedPayload {
   id?: number;
   name: string;

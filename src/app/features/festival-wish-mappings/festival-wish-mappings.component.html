@@ -1,0 +1,113 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon amber"><i class="fa-solid fa-gifts"></i></span>
+      <div>
+        <h1 class="page-header-title">Festival Wishes</h1>
+        <p class="page-header-subtitle">Map festivals to users for automatic scheduler-based greeting emails</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="section-title mb-3">Create or Update Mapping</h2>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Month</label>
+          <select class="form-select" [ngModel]="selectedMonth" (ngModelChange)="onMonthChange($event)" [disabled]="loadingFestivals || saving">
+            <option *ngFor="let month of months" [ngValue]="month.value">{{ month.label }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Festival</label>
+          <select class="form-select" [(ngModel)]="form.specialEventId" [disabled]="loadingFestivals || saving || festivals.length === 0">
+            <option [ngValue]="0">Select festival</option>
+            <option *ngFor="let festival of festivals" [ngValue]="festival.id">
+              {{ festival.eventName }} ({{ festival.eventDate | date:'mediumDate' }})
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">User</label>
+          <select class="form-select" [(ngModel)]="form.userId" [disabled]="saving || users.length === 0">
+            <option [ngValue]="0">Select user</option>
+            <option *ngFor="let user of users" [ngValue]="user.id">
+              {{ user.name }} ({{ user.email }})
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-1 d-grid">
+          <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving || loadingFestivals">
+            {{ saving ? 'Saving…' : 'Save' }}
+          </button>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Custom message (optional)</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="form.customMessage" [disabled]="saving" placeholder="Override default message for this mapping"></textarea>
+        </div>
+
+        <div class="col-12">
+          <label class="checkbox-row">
+            <input class="form-check-input" type="checkbox" [(ngModel)]="form.active" [disabled]="saving" />
+            <span>Active</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h2 class="section-title mb-3">Existing Festival Wish Mappings</h2>
+
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Festival</th>
+              <th>User</th>
+              <th>Custom Message</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let mapping of mappings">
+              <td>{{ mapping.festivalName }}</td>
+              <td>{{ mapping.userName }}</td>
+              <td>{{ mapping.customMessage || '—' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="mapping.active" [class.badge-danger]="!mapping.active">
+                  {{ mapping.active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-link text-danger" type="button" (click)="deleteMapping(mapping)" [disabled]="loadingMappings || isDeleting(mapping.id)">
+                  <i class="fa-solid fa-trash-can me-1"></i>{{ isDeleting(mapping.id) ? 'Deleting…' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="loadingMappings" class="table-loading">
+              <td colspan="5">
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+              </td>
+            </tr>
+            <tr *ngIf="!loadingMappings && mappings.length === 0" class="table-empty">
+              <td colspan="5">
+                <div class="empty-state">
+                  <div class="empty-state-icon"><i class="fa-solid fa-gifts"></i></div>
+                  <p class="empty-state-title">No mappings found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -9,6 +9,8 @@ import {
   AppUser,
   DashboardChartResponse,
   DashboardStats,
+  FestivalItem,
+  FestivalWishMapping,
   MailFlowStats,
   EmailStatus,
   EventTypeSeed,
@@ -16,6 +18,7 @@ import {
   PagedResponse,
   SaveEventPayload,
   SaveEventTypeSeedPayload,
+  SaveFestivalWishMappingPayload,
   SaveUserPayload,
   SaveRelationshipSeedPayload,
   SchedulerItem,
@@ -163,6 +166,33 @@ export class ApiService {
 
   saveEvent(payload: SaveEventPayload) {
     return this.http.post(`${environment.apiUrl}/events`, payload);
+  }
+
+  festivals(month?: number): Observable<FestivalItem[]> {
+    let params = new HttpParams();
+    if (month) {
+      params = params.set('month', month);
+    }
+
+    return this.http.get<ApiResponse<FestivalItem[]>>(`${environment.apiUrl}/festivals`, { params }).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  festivalWishMappings(): Observable<FestivalWishMapping[]> {
+    return this.http.get<ApiResponse<FestivalWishMapping[]>>(`${environment.apiUrl}/festival-wish-mappings`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  saveFestivalWishMapping(payload: SaveFestivalWishMappingPayload): Observable<FestivalWishMapping> {
+    return this.http.post<ApiResponse<FestivalWishMapping>>(`${environment.apiUrl}/festival-wish-mappings`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  deleteFestivalWishMapping(id: number): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/festival-wish-mappings/${id}`);
   }
 
   aiWish(payload: AiWishRequest): Observable<AiWishResponse> {
