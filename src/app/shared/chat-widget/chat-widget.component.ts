@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import {
   ChatConversation,
   ChatDeleteEvent,
@@ -107,11 +107,9 @@ export class ChatWidgetComponent {
   }
 
   get filteredNewChatUsers(): ChatUser[] {
-    const existingIds = new Set(this.conversations.map((item) => item.otherUserId));
     const query = this.newChatSearch.trim().toLowerCase();
 
     return this.users
-      .filter((user) => !existingIds.has(user.userId))
       .filter((user) => !query || user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query))
       .slice(0, 8);
   }
@@ -207,6 +205,20 @@ export class ChatWidgetComponent {
         this.chat.publishTyping(this.activeConversation.conversationId, this.currentUserId, false);
       }
     }, 900);
+  }
+
+
+  formatMessageTime(value: string | null): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
   getActiveConversationStatus(): string {
@@ -360,8 +372,17 @@ export class ChatWidgetComponent {
 
   private reloadLists(): void {
     this.reloadConversationsOnly();
-    this.chat.listActiveUsers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((items) => {
-      this.users = items;
+    forkJoin({
+      all: this.chat.listUsers(),
+      active: this.chat.listActiveUsers()
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ all, active }) => {
+      const activeMap = new Map(active.map((item) => [item.userId, item]));
+      this.users = all.map((user) => {
+        const activeState = activeMap.get(user.userId);
+        return activeState
+          ? { ...user, online: activeState.online, lastSeenAt: activeState.lastSeenAt }
+          : user;
+      });
     });
   }
 

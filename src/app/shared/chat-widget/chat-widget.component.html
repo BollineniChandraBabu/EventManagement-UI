@@ -34,7 +34,7 @@
                 <span>{{ user.name }}</span>
                 <small [class.online]="user.online">{{ user.online ? 'Active now' : 'Last seen ' + (user.lastSeenAt ? (user.lastSeenAt | date: 'short') : 'recently') }}</small>
               </button>
-              <p *ngIf="!filteredNewChatUsers.length">No users found.</p>
+              <p *ngIf="!filteredNewChatUsers.length">No matching users. Try a different name/email.</p>
             </div>
           </div>
         </div>
@@ -51,6 +51,7 @@
               {{ convo.otherUserName }}
             </strong>
             <p>{{ convo.lastMessage || 'Start chatting...' }}</p>
+            <small class="convo-time" *ngIf="convo.lastMessageAt">Last message {{ formatMessageTime(convo.lastMessageAt) }}</small>
           </div>
           <span class="mini-badge" *ngIf="convo.unreadCount > 0">{{ convo.unreadCount }}</span>
         </button>
@@ -97,6 +98,7 @@
               </button>
 
               <small>{{ message.sentAt | date: 'shortTime' }}</small>
+              <small class="seen-time" *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">Seen {{ formatMessageTime(message.seenAt) }}</small>
             </div>
 
             <div

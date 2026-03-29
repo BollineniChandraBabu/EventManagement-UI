@@ -158,6 +158,7 @@
 
 .conversation-row:hover { background: #f4f8ff; border-color: #dbe7ff; }
 .conversation-row p { margin: 0; color: #64748b; font-size: 0.78rem; }
+.convo-time { display: block; margin-top: 0.12rem; color: #94a3b8; font-size: 0.67rem; }
 .conversation-row strong { display: inline-flex; align-items: center; }
 .mini-badge { background: #2563eb; color: #fff; border-radius: 999px; min-width: 20px; height: 20px; display: grid; place-items: center; font-size: 0.7rem; }
 
@@ -189,7 +190,8 @@
 }
 
 .message-body p { margin: 0 0 0.2rem; }
-.message-body small { color: #64748b; font-size: 0.68rem; }
+.message-body small { color: #64748b; font-size: 0.68rem; display: block; }
+.seen-time { color: #2563eb; font-size: 0.66rem; margin-top: 0.1rem; }
 
 .message-actions { display: flex; gap: 0.2rem; padding-top: 0.2rem; }
 .action-btn {
