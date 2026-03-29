@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.checkbox-row {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
