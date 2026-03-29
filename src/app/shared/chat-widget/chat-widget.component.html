@@ -1,0 +1,59 @@
+<div class="chat-widget" [class.open]="isOpen">
+  <button class="chat-launcher" type="button" (click)="toggle()" aria-label="Toggle messages">
+    <span class="chat-icon-wrap">
+      <i class="fa-regular fa-message"></i>
+      <span class="chat-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    </span>
+    <span class="chat-launcher-title">Messages</span>
+    <span class="chat-avatar"><i class="fa-solid fa-user"></i></span>
+  </button>
+
+  <section class="chat-panel" *ngIf="isOpen">
+    <header class="chat-panel-header">
+      <button type="button" class="mobile-back" *ngIf="mobileConversationView" (click)="closeConversation()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <h2>{{ activeConversation ? activeConversation.otherUserName : 'Messages' }}</h2>
+      <button type="button" class="chat-close" (click)="toggle()"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+
+    <div class="chat-panel-body" [class.mobile-thread]="mobileConversationView">
+      <aside class="chat-conversations" [class.hidden-mobile]="mobileConversationView">
+        <div class="chat-user-shortcuts" *ngIf="users.length">
+          <button type="button" *ngFor="let user of users" (click)="startConversation(user)">{{ user.name }}</button>
+        </div>
+
+        <button type="button" class="conversation-row" *ngFor="let convo of conversations" (click)="chooseConversation(convo)">
+          <div>
+            <strong>{{ convo.otherUserName }}</strong>
+            <p>{{ convo.lastMessage || 'Start chatting...' }}</p>
+          </div>
+          <span class="mini-badge" *ngIf="convo.unreadCount > 0">{{ convo.unreadCount }}</span>
+        </button>
+      </aside>
+
+      <div class="chat-thread" *ngIf="activeConversation; else emptyState">
+        <div class="chat-messages" #messageScroller>
+          <div class="chat-message" *ngFor="let message of messages" [class.mine]="message.mine">
+            <p>{{ message.messageText }}</p>
+            <small>{{ message.sentAt | date: 'shortTime' }}</small>
+          </div>
+        </div>
+
+        <div class="chat-composer">
+          <textarea
+            [(ngModel)]="composer"
+            rows="1"
+            placeholder="Type a message..."
+            (keydown.enter)="$event.preventDefault(); send()"
+          ></textarea>
+          <button type="button" (click)="send()" [disabled]="!composer.trim()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+      </div>
+
+      <ng-template #emptyState>
+        <div class="chat-empty">Pick a conversation to start chatting in real time.</div>
+      </ng-template>
+    </div>
+  </section>
+</div>
