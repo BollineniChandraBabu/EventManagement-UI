@@ -165,7 +165,8 @@
 .chat-messages { flex: 1; min-height: 0; overflow-y: auto; padding: 0.9rem; }
 
 .chat-message {
-  max-width: 82%;
+  width: fit-content;
+  max-width: min(70%, 520px);
   margin-bottom: 0.55rem;
   display: flex;
   gap: 0.4rem;

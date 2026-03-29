@@ -88,7 +88,7 @@ export class ChatWidgetComponent {
 
       this.upsertConversationFromMessage(event);
       if (this.activeConversation?.conversationId === event.conversationId) {
-        this.messages = [...this.messages, event];
+        this.mergeIncomingMessage(event);
         this.scrollToBottom();
       }
     });
@@ -178,8 +178,8 @@ export class ChatWidgetComponent {
     this.chat.sendMessage(receiverId, text, this.selectedAttachment).pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => (this.isSending = false))
-    ).subscribe((message) => {
-      this.messages = [...this.messages, message];
+).subscribe((message) => {
+      this.mergeIncomingMessage(message);
       this.upsertConversationFromMessage(message);
       this.reloadConversationsOnly();
       this.scrollToBottom();
@@ -300,6 +300,19 @@ export class ChatWidgetComponent {
       anchor.click();
       URL.revokeObjectURL(url);
     });
+  }
+
+
+  private mergeIncomingMessage(message: ChatMessage): void {
+    const index = this.messages.findIndex((item) => item.messageId === message.messageId);
+    if (index >= 0) {
+      const updated = [...this.messages];
+      updated[index] = message;
+      this.messages = updated;
+      return;
+    }
+
+    this.messages = [...this.messages, message];
   }
 
   canEdit(message: ChatMessage): boolean {
