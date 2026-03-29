@@ -2,7 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ChatConversation, ChatMessage, ChatMessagePage, ChatUser } from '../models/chat.models';
+import {
+  ChatConversation,
+  ChatDeleteEvent,
+  ChatEditEvent,
+  ChatMessage,
+  ChatPresenceEvent,
+  ChatMessagePage,
+  ChatSocketEvent,
+  ChatUser
+} from '../models/chat.models';
 import { AuthService } from './auth.service';
 
 interface StompFrame {
@@ -16,7 +25,7 @@ export class ChatService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
 
-  private readonly socketEventsSubject = new Subject<ChatMessage | { type: 'SEEN' | 'TYPING'; conversationId: number; viewerId?: number; userId?: number; typing?: boolean }>();
+  private readonly socketEventsSubject = new Subject<ChatSocketEvent>();
   readonly socketEvents$ = this.socketEventsSubject.asObservable();
 
   private socket: WebSocket | null = null;
@@ -43,24 +52,64 @@ export class ChatService {
     return this.http.get<ChatUser[]>(`${environment.apiUrl}/chat/users`);
   }
 
+  listActiveUsers(): Observable<ChatUser[]> {
+    return this.http.get<ChatUser[]>(`${environment.apiUrl}/chat/users/active`);
+  }
+
   listConversations(): Observable<ChatConversation[]> {
     return this.http.get<ChatConversation[]>(`${environment.apiUrl}/chat/conversations`);
   }
 
   conversationMessages(otherUserId: number, page = 0, size = 30, markSeen = true): Observable<ChatMessagePage> {
     return this.http.get<ChatMessagePage>(`${environment.apiUrl}/chat/messages/${otherUserId}`, {
-      params: new HttpParams()
-        .set('page', page)
-        .set('size', size)
-        .set('markSeen', markSeen)
+      params: new HttpParams().set('page', page).set('size', size).set('markSeen', markSeen)
     });
   }
 
-  sendMessage(receiverId: number, messageText: string): Observable<ChatMessage> {
+  sendMessage(receiverId: number, messageText: string, attachment?: File | null): Observable<ChatMessage> {
     const payload = { receiverId, messageText };
     const form = new FormData();
     form.append('payload', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    if (attachment) {
+      form.append('attachment', attachment, attachment.name);
+    }
     return this.http.post<ChatMessage>(`${environment.apiUrl}/chat`, form);
+  }
+
+  deleteLastSentMessage(otherUserId: number): Observable<{ messageId: number; conversationId: number; deletedAt: string }> {
+    return this.http.delete<{ messageId: number; conversationId: number; deletedAt: string }>(
+      `${environment.apiUrl}/chat/messages/last/${otherUserId}`
+    );
+  }
+
+  editMessage(messageId: number, messageText: string): Observable<ChatMessage> {
+    return this.http.patch<ChatMessage>(`${environment.apiUrl}/chat/messages/${messageId}`, { messageText });
+  }
+
+  downloadAttachment(messageId: number): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}/chat/messages/${messageId}/attachment`, { responseType: 'blob' });
+  }
+
+  heartbeat(): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/chat/presence/heartbeat`, {});
+  }
+
+  markOffline(): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/chat/presence/offline`, {});
+  }
+
+  subscribePresence(): void {
+    const topic = '/topic/presence';
+    const alreadySubscribed = this.subscribedTopics.has(topic);
+    this.subscribedTopics.add(topic);
+    if (!this.stompConnected || alreadySubscribed) {
+      return;
+    }
+
+    this.sendFrame('SUBSCRIBE', {
+      id: 'sub-presence',
+      destination: topic
+    });
   }
 
   connectSocket(): void {
@@ -99,15 +148,17 @@ export class ChatService {
 
   subscribeToConversation(conversationId: number): void {
     const topic = `/topic/chat/${conversationId}`;
-    if (!this.stompConnected || this.subscribedTopics.has(topic)) {
+    const alreadySubscribed = this.subscribedTopics.has(topic);
+    this.subscribedTopics.add(topic);
+
+    if (!this.stompConnected || alreadySubscribed) {
       return;
     }
 
     this.sendFrame('SUBSCRIBE', {
-      id: `sub-${conversationId}`,
+      id: `sub-chat-${conversationId}`,
       destination: topic
     });
-    this.subscribedTopics.add(topic);
   }
 
   publishTyping(conversationId: number, userId: number, typing: boolean): void {
@@ -173,14 +224,39 @@ export class ChatService {
 
       if (parsed.command === 'CONNECTED') {
         this.stompConnected = true;
+        this.subscribedTopics.forEach((topic) => {
+          const subId = topic === '/topic/presence' ? 'sub-presence' : `sub-chat-${topic.split('/').pop()}`;
+          this.sendFrame('SUBSCRIBE', { id: subId, destination: topic });
+        });
         return;
       }
 
       if (parsed.command === 'MESSAGE') {
         try {
-          const body = JSON.parse(parsed.body || '{}');
-          if (body.type === 'SEEN' || body.type === 'TYPING') {
-            this.socketEventsSubject.next(body);
+          const body = JSON.parse(parsed.body || '{}') as ChatSocketEvent | { type?: string; message?: ChatMessage };
+          if ((body as { type?: string }).type === 'SEEN' || (body as { type?: string }).type === 'TYPING') {
+            this.socketEventsSubject.next(body as ChatSocketEvent);
+            return;
+          }
+
+          if ((body as ChatDeleteEvent).type === 'MESSAGE_DELETED') {
+            this.socketEventsSubject.next(body as ChatDeleteEvent);
+            return;
+          }
+
+          if ((body as ChatEditEvent).type === 'MESSAGE_EDITED') {
+            this.socketEventsSubject.next(body as ChatEditEvent);
+            return;
+          }
+
+          if ('userId' in (body as Record<string, unknown>) && 'online' in (body as Record<string, unknown>)) {
+            const presence = body as { userId: number; online: boolean; lastSeenAt?: string | null };
+            this.socketEventsSubject.next({
+              type: 'PRESENCE',
+              userId: presence.userId,
+              online: presence.online,
+              lastSeenAt: presence.lastSeenAt ?? null
+            } as ChatPresenceEvent);
             return;
           }
 

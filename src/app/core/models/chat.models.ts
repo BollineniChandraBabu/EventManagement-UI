@@ -38,3 +38,33 @@ export interface ChatMessagePage {
   size: number;
   hasNext: boolean;
 }
+
+export interface ChatSeenOrTypingEvent {
+  type: 'SEEN' | 'TYPING';
+  conversationId: number;
+  viewerId?: number;
+  userId?: number;
+  typing?: boolean;
+}
+
+export interface ChatDeleteEvent {
+  type: 'MESSAGE_DELETED';
+  conversationId: number;
+  messageId: number;
+  deletedByUserId: number;
+}
+
+export interface ChatEditEvent {
+  type: 'MESSAGE_EDITED';
+  message: ChatMessage;
+  editedByUserId: number;
+}
+
+export interface ChatPresenceEvent {
+  type: 'PRESENCE';
+  userId: number;
+  online: boolean;
+  lastSeenAt: string | null;
+}
+
+export type ChatSocketEvent = ChatMessage | ChatSeenOrTypingEvent | ChatDeleteEvent | ChatEditEvent | ChatPresenceEvent;
