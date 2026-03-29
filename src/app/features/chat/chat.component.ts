@@ -37,6 +37,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   editingMessageId: number | null = null;
   editDraft = '';
   pendingAttachment: File | null = null;
+  hoveredMessageId: number | null = null;
 
   loading = false;
   sending = false;
@@ -231,8 +232,12 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteLastSent(): void {
-    if (!this.selectedUser) {
+  canDeleteMessage(message: ChatMessage): boolean {
+    return this.canEditOrDelete(message) && this.isLatestOwnMessage(message);
+  }
+
+  deleteMessage(message: ChatMessage): void {
+    if (!this.selectedUser || !this.canDeleteMessage(message)) {
       return;
     }
 
@@ -274,6 +279,17 @@ export class ChatComponent implements OnInit, OnDestroy {
       online: conversation.otherUserOnline,
       lastSeenAt: conversation.otherUserLastSeenAt
     };
+  }
+
+  private isLatestOwnMessage(target: ChatMessage): boolean {
+    const mine = this.messages.filter((m) => m.mine);
+    if (mine.length === 0) {
+      return false;
+    }
+    const latest = mine.reduce((latestMessage, current) =>
+      new Date(current.sentAt).getTime() > new Date(latestMessage.sentAt).getTime() ? current : latestMessage
+    );
+    return latest.messageId === target.messageId;
   }
 
   private sendHeartbeat(): void {

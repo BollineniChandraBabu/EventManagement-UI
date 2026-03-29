@@ -34,20 +34,37 @@
         <h3>{{ selectedUser.name }}</h3>
         <p>{{ statusLabel() }}</p>
       </div>
-      <button type="button" class="delete-btn" (click)="deleteLastSent()">Delete last sent (&lt;15m)</button>
     </header>
 
     <div class="messages">
-      <div class="message" *ngFor="let message of messages" [class.mine]="message.mine">
+      <div
+        class="message"
+        *ngFor="let message of messages"
+        [class.mine]="message.mine"
+        (mouseenter)="hoveredMessageId = message.messageId"
+        (mouseleave)="hoveredMessageId = null">
         <div class="bubble">
           <ng-container *ngIf="editingMessageId !== message.messageId; else editBox">
             <p *ngIf="message.messageText">{{ message.messageText }}</p>
-            <a *ngIf="message.attachmentFileName" [href]="attachmentDownloadUrl(message)" target="_blank" rel="noopener">
-              📎 {{ message.attachmentFileName }}
+            <a *ngIf="message.attachmentFileName" class="attachment-link" [href]="attachmentDownloadUrl(message)" target="_blank" rel="noopener">
+              <i class="fa-solid fa-paperclip"></i>
+              <span>{{ message.attachmentFileName }}</span>
             </a>
             <div class="meta-row">
               <small>{{ message.sentAt | date:'shortTime' }}</small>
-              <button *ngIf="canEditOrDelete(message)" type="button" (click)="beginEdit(message)">Edit</button>
+              <div class="message-actions" *ngIf="hoveredMessageId === message.messageId && canEditOrDelete(message)">
+                <button type="button" class="icon-btn" title="Edit" (click)="beginEdit(message)">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn danger"
+                  title="Delete"
+                  *ngIf="canDeleteMessage(message)"
+                  (click)="deleteMessage(message)">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
             </div>
           </ng-container>
 
@@ -63,9 +80,15 @@
     </div>
 
     <form class="composer" (submit)="$event.preventDefault(); sendMessage(fileInput)">
-      <input type="text" [(ngModel)]="newMessageText" name="message" placeholder="Type a message..." [disabled]="sending" />
-      <input #fileInput type="file" (change)="onAttachmentSelected($event)" />
-      <button type="submit" [disabled]="sending">Send</button>
+      <div class="input-shell">
+        <input type="text" [(ngModel)]="newMessageText" name="message" placeholder="Type a message..." [disabled]="sending" />
+        <label class="attach-btn" title="Attach file">
+          <i class="fa-solid fa-paperclip"></i>
+          <input #fileInput type="file" (change)="onAttachmentSelected($event)" />
+        </label>
+      </div>
+      <span class="file-pill" *ngIf="pendingAttachment">{{ pendingAttachment.name }}</span>
+      <button type="submit" class="send-btn" [disabled]="sending">Send</button>
     </form>
   </section>
 
