@@ -5,13 +5,14 @@ import { AuthService } from './core/services/auth.service';
 import { ImpersonationService } from './core/services/impersonation.service';
 import { ToastContainerComponent } from './shared/toast-container.component';
 import { LoadingOverlayComponent } from './shared/loading-overlay.component';
+import { ChatWidgetComponent } from './shared/chat-widget/chat-widget.component';
 import { ToastService } from './core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastContainerComponent, LoadingOverlayComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastContainerComponent, LoadingOverlayComponent, ChatWidgetComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
