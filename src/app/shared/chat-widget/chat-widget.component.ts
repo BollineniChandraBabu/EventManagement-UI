@@ -252,7 +252,7 @@ export class ChatWidgetComponent {
 
     this.chat.editMessage(message.messageId, nextText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((updated) => {
       this.messages = this.messages.map((item) => (item.messageId === updated.messageId ? updated : item));
-      this.upsertConversationFromMessage(updated);
+      this.reloadConversationsOnly();
       this.cancelEdit();
     });
   }
@@ -453,7 +453,7 @@ export class ChatWidgetComponent {
       this.messages = this.messages.map((item) => item.messageId === event.message.messageId ? event.message : item);
     }
 
-    this.upsertConversationFromMessage(event.message);
+    this.reloadConversationsOnly();
   }
 
   private startHeartbeat(): void {

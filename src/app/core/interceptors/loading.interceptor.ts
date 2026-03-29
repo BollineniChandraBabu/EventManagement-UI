@@ -5,6 +5,11 @@ import { LoadingService } from '../services/loading.service';
 
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   const loading = inject(LoadingService);
+  const isChatRequest = req.url.includes('/chat');
+
+  if (isChatRequest) {
+    return next(req);
+  }
 
   loading.start();
 
