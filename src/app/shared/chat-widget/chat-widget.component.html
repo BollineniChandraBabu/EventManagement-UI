@@ -14,14 +14,15 @@
         <i class="fa-solid fa-chevron-left"></i>
       </button>
       <div class="chat-title-wrap">
-        <h2>{{ activeConversation ? activeConversation.otherUserName : 'Messages' }}</h2>
-        <small *ngIf="activeConversation">{{ getActiveConversationStatus() }}</small>
+        <h2>Messages</h2>
+        <small>Realtime chat</small>
       </div>
       <button type="button" class="chat-close" (click)="toggle()"><i class="fa-solid fa-xmark"></i></button>
     </header>
 
     <div class="chat-panel-body" [class.mobile-thread]="mobileConversationView">
       <aside class="chat-conversations" [class.hidden-mobile]="mobileConversationView">
+        <div class="pane-header">Conversations</div>
         <div class="new-chat-box">
           <button type="button" class="btn btn-sm btn-primary" (click)="showNewChatPicker = !showNewChatPicker">
             <i class="fa-solid fa-plus me-1"></i>New chat
@@ -56,6 +57,13 @@
       </aside>
 
       <div class="chat-thread" *ngIf="activeConversation; else emptyState">
+        <div class="thread-header">
+          <div>
+            <h3>{{ activeConversation.otherUserName }}</h3>
+            <small>{{ getActiveConversationStatus() }}</small>
+          </div>
+        </div>
+
         <div class="chat-messages" #messageScroller>
           <div
             class="chat-message"

@@ -65,6 +65,32 @@
 .chat-title-wrap { display: flex; flex-direction: column; line-height: 1.2; flex: 1; }
 .chat-title-wrap small { color: #64748b; font-size: 0.72rem; }
 
+.pane-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  padding: 0.15rem 0.35rem 0.55rem;
+}
+
+.thread-header {
+  border-bottom: 1px solid #e6edf9;
+  background: #fcfdff;
+  padding: 0.55rem 0.8rem;
+}
+
+.thread-header h3 {
+  margin: 0;
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+
+.thread-header small {
+  color: #64748b;
+  font-size: 0.73rem;
+}
+
 .presence-dot {
   width: 8px;
   height: 8px;
