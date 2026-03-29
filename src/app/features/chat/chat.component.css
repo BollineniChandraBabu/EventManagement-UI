@@ -1,0 +1,25 @@
+.chat-page { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 120px); border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+.sidebar { border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
+.sidebar-head { padding: 12px; display: grid; gap: 8px; }
+.sidebar-head input, .sidebar-head select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; }
+.conversation-list { overflow: auto; }
+.conversation-item { width: 100%; border: 0; background: transparent; padding: 10px 12px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+.conversation-item.active { background: #eff6ff; }
+.title-row, .sub-row { display: flex; justify-content: space-between; gap: 8px; }
+.name { font-weight: 600; }
+.last-msg { color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.badge { background: #2563eb; color: #fff; border-radius: 999px; padding: 0 8px; font-size: 12px; }
+.thread { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+.thread-head { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+.thread-head p { margin: 2px 0 0; color: #6b7280; }
+.messages { overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f9fafb; }
+.message { display: flex; }
+.message.mine { justify-content: flex-end; }
+.bubble { max-width: 70%; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px; }
+.message.mine .bubble { background: #dbeafe; }
+.meta-row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+.meta-row button, .delete-btn, .composer button, .edit-actions button { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.composer { border-top: 1px solid #e5e7eb; padding: 10px; display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+.composer input[type="text"] { padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
+.empty { place-items: center; display: grid; }
+@media (max-width: 900px) { .chat-page { grid-template-columns: 1fr; height: auto; } .sidebar { max-height: 280px; } }

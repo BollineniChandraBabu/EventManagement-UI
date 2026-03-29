@@ -1,0 +1,78 @@
+<div class="chat-page">
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <h2>Chats</h2>
+      <input type="text" [(ngModel)]="searchText" placeholder="Search conversations" />
+      <select [ngModel]="newChatUserId" (ngModelChange)="onNewChatSelect($event)" name="newChatUser">
+        <option [ngValue]="null">Start new chat</option>
+        <option *ngFor="let user of filteredUsersForNewChat" [ngValue]="user.userId">{{ user.name }}</option>
+      </select>
+    </div>
+
+    <div class="conversation-list">
+      <button
+        type="button"
+        class="conversation-item"
+        *ngFor="let conversation of visibleConversations"
+        [class.active]="conversation.conversationId === selectedConversation?.conversationId"
+        (click)="openConversation(conversation)">
+        <div class="title-row">
+          <span class="name">{{ conversation.otherUserName }}</span>
+          <span class="time" *ngIf="conversation.lastMessageAt">{{ conversation.lastMessageAt | date:'shortTime' }}</span>
+        </div>
+        <div class="sub-row">
+          <span class="last-msg">{{ conversation.lastMessage || 'Attachment' }}</span>
+          <span class="badge" *ngIf="conversation.unreadCount > 0">{{ conversation.unreadCount }}</span>
+        </div>
+      </button>
+    </div>
+  </aside>
+
+  <section class="thread" *ngIf="selectedUser; else emptyState">
+    <header class="thread-head">
+      <div>
+        <h3>{{ selectedUser.name }}</h3>
+        <p>{{ statusLabel() }}</p>
+      </div>
+      <button type="button" class="delete-btn" (click)="deleteLastSent()">Delete last sent (&lt;15m)</button>
+    </header>
+
+    <div class="messages">
+      <div class="message" *ngFor="let message of messages" [class.mine]="message.mine">
+        <div class="bubble">
+          <ng-container *ngIf="editingMessageId !== message.messageId; else editBox">
+            <p *ngIf="message.messageText">{{ message.messageText }}</p>
+            <a *ngIf="message.attachmentFileName" [href]="attachmentDownloadUrl(message)" target="_blank" rel="noopener">
+              📎 {{ message.attachmentFileName }}
+            </a>
+            <div class="meta-row">
+              <small>{{ message.sentAt | date:'shortTime' }}</small>
+              <button *ngIf="canEditOrDelete(message)" type="button" (click)="beginEdit(message)">Edit</button>
+            </div>
+          </ng-container>
+
+          <ng-template #editBox>
+            <textarea [(ngModel)]="editDraft" rows="2"></textarea>
+            <div class="edit-actions">
+              <button type="button" (click)="saveEdit(message.messageId)">Save</button>
+              <button type="button" (click)="cancelEdit()">Cancel</button>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <form class="composer" (submit)="$event.preventDefault(); sendMessage(fileInput)">
+      <input type="text" [(ngModel)]="newMessageText" name="message" placeholder="Type a message..." [disabled]="sending" />
+      <input #fileInput type="file" (change)="onAttachmentSelected($event)" />
+      <button type="submit" [disabled]="sending">Send</button>
+    </form>
+  </section>
+
+  <ng-template #emptyState>
+    <section class="thread empty">
+      <h3>Select a conversation</h3>
+      <p>Choose an existing chat or start a new one.</p>
+    </section>
+  </ng-template>
+</div>
