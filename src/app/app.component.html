@@ -4,7 +4,7 @@
     <div class="brand-row">
       <a class="brand" routerLink="/dashboard">
         <span class="brand-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-        <span class="brand-text">Family Wishes</span>
+        <span class="brand-text">Golden Greetings</span>
       </a>
       <button class="collapse-toggle d-none d-lg-flex" type="button" (click)="toggleSidebarCollapse()" [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
         <i class="fa-solid" [class.fa-chevron-left]="!isSidebarCollapsed" [class.fa-chevron-right]="isSidebarCollapsed"></i>
@@ -148,7 +148,7 @@
     <main class="app-shell container py-4">
       <router-outlet></router-outlet>
     </main>
-    <footer class="app-footer py-3 px-4 text-center small">© {{ currentYear }} Family Wishes</footer>
+    <footer class="app-footer py-3 px-4 text-center small">© {{ currentYear }} Golden Greetings</footer>
     <app-chat-widget></app-chat-widget>
   </div>
 </div>

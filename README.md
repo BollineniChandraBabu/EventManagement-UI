@@ -1,6 +1,6 @@
-# family-wishes-ui
+# golden-greetings-ui
 
-Angular 17 + Angular Material UI for a Spring Boot Family Wishes backend.
+Angular 17 + Angular Material UI for a Spring Boot Golden Greetings backend.
 
 ## Features
 - JWT auth (login, OTP login, forgot/reset password, change password, remember me)
