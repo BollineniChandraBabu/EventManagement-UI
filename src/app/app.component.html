@@ -149,7 +149,7 @@
       <router-outlet></router-outlet>
     </main>
     <footer class="app-footer py-3 px-4 text-center small">© {{ currentYear }} Golden Greetings</footer>
-    <app-chat-widget></app-chat-widget>
+    <app-chat-widget [class.hide-on-mobile-menu]="isMobileMenuOpen"></app-chat-widget>
   </div>
 </div>
 

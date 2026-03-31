@@ -450,9 +450,10 @@
     border-bottom-right-radius: 16px;
     padding: 0.75rem 1rem 1rem;
     box-shadow: 0 8px 24px rgba(14, 30, 80, 0.35);
-    max-height: calc(100vh - 64px);
+    max-height: calc(100dvh - 64px);
     overflow-y: auto;
     flex-direction: column;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .side-menu.mobile-open {
@@ -482,5 +483,9 @@
 
   .impersonation-banner-text {
     font-size: 0.75rem;
+  }
+
+  app-chat-widget.hide-on-mobile-menu {
+    display: none;
   }
 }
