@@ -7,10 +7,13 @@ import { ApiService } from '../../core/services/api.service';
 import { AppUser, RelationshipSeed } from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
+import { Observable, map, startWith } from 'rxjs';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatAutocompleteModule, MatInputModule],
   templateUrl: './user-editor.component.html',
   styleUrl: './user-editor.component.css'
 })
@@ -28,6 +31,7 @@ export class UserEditorComponent {
   loading = false;
   saving = false;
   relationshipSeeds: RelationshipSeed[] = [];
+  filteredRelationshipOptions$!: Observable<Array<{ label: string; value: string }>>;
   editingUserId: number | null = null;
 
   form = this.fb.nonNullable.group({
@@ -43,6 +47,11 @@ export class UserEditorComponent {
   });
 
   constructor() {
+    this.filteredRelationshipOptions$ = this.form.controls.relationShip.valueChanges.pipe(
+      startWith(this.form.controls.relationShip.value),
+      map((value) => this.filterRelationshipOptions(value))
+    );
+
     this.loadRelationshipSeeds();
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = Number(params.get('id'));
@@ -59,6 +68,11 @@ export class UserEditorComponent {
       label: seed.displayName || seed.code,
       value: seed.displayName || seed.code
     }));
+  }
+
+  private filterRelationshipOptions(value: string): Array<{ label: string; value: string }> {
+    const normalized = (value || '').toLowerCase();
+    return this.relationshipOptions.filter((option) => option.label.toLowerCase().includes(normalized));
   }
 
   get pageTitle(): string {
