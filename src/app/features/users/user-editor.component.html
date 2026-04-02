@@ -45,18 +45,12 @@
           </div>
           <div class="col-12 col-md-4">
             <label class="form-label">Relationship <span class="text-danger">*</span></label>
-            <input
-              matInput
-              class="form-control"
-              type="text"
-              formControlName="relationShip"
-              [matAutocomplete]="relationshipAuto"
-              placeholder="Select relationship" />
-            <mat-autocomplete #relationshipAuto="matAutocomplete">
-              <mat-option *ngFor="let rel of filteredRelationshipOptions$ | async" [value]="rel.value">
+            <select class="form-select" formControlName="relationShip">
+              <option value="" disabled>Select relationship</option>
+              <option *ngFor="let rel of relationshipOptions" [value]="rel.value">
                 {{ rel.label }}
-              </mat-option>
-            </mat-autocomplete>
+              </option>
+            </select>
           </div>
           <div class="col-12 col-md-4">
             <label class="form-label">Role <span class="text-danger">*</span></label>
