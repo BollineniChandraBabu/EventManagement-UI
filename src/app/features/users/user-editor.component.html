@@ -45,7 +45,7 @@
           </div>
           <div class="col-12 col-md-4">
             <label class="form-label">Relationship <span class="text-danger">*</span></label>
-            <select #relationshipSelect class="select" data-mdb-select-init data-mdb-filter="true" formControlName="relationShip">
+            <select class="form-select" formControlName="relationShip">
               <option value="" disabled>Select relationship</option>
               <option *ngFor="let rel of relationshipOptions" [value]="rel.value">
                 {{ rel.label }}

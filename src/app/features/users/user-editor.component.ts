@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -14,7 +14,7 @@ import { ToastService } from '../../core/services/toast.service';
   templateUrl: './user-editor.component.html',
   styleUrl: './user-editor.component.css'
 })
-export class UserEditorComponent implements AfterViewInit {
+export class UserEditorComponent {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
@@ -29,7 +29,6 @@ export class UserEditorComponent implements AfterViewInit {
   saving = false;
   relationshipSeeds: RelationshipSeed[] = [];
   editingUserId: number | null = null;
-  @ViewChild('relationshipSelect') private relationshipSelectRef?: ElementRef<HTMLSelectElement>;
 
   form = this.fb.nonNullable.group({
     id: [0],
@@ -53,10 +52,6 @@ export class UserEditorComponent implements AfterViewInit {
         this.loadUser(this.editingUserId);
       }
     });
-  }
-
-  ngAfterViewInit(): void {
-    this.initRelationshipSelect();
   }
 
   get relationshipOptions(): Array<{ label: string; value: string }> {
@@ -131,7 +126,6 @@ export class UserEditorComponent implements AfterViewInit {
         if (matched) {
           this.form.controls.relationShip.setValue(matched.displayName || matched.code);
         }
-        this.initRelationshipSelect();
       },
       error: () => {
         this.toast.error('Unable to load relationship options right now.');
@@ -167,21 +161,4 @@ export class UserEditorComponent implements AfterViewInit {
     });
   }
 
-  private initRelationshipSelect(): void {
-    setTimeout(() => {
-      const selectElement = this.relationshipSelectRef?.nativeElement;
-      const mdbLib = (window as unknown as { mdb?: { Select?: { getInstance: (el: Element) => unknown; new (el: Element): unknown } } }).mdb;
-
-      if (!selectElement || !mdbLib?.Select) {
-        return;
-      }
-
-      if (mdbLib.Select.getInstance(selectElement)) {
-        return;
-      }
-
-      // eslint-disable-next-line no-new
-      new mdbLib.Select(selectElement);
-    });
-  }
 }
