@@ -110,9 +110,15 @@ export class ApiService {
     return this.http.post(`${environment.apiUrl}/users/${id}/deactivate`, {});
   }
 
-  relationshipSeeds(searchKey = ''): Observable<RelationshipSeed[]> {
+  relationshipSeeds(
+    searchKey = '',
+    page = 0,
+    size = 200,
+    sortBy = 'displayName',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<RelationshipSeed[]> {
     return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed[] | PagedResponse<RelationshipSeed>>>(`${environment.apiUrl}${path}`, {
-      params: new HttpParams().set('searchKey', searchKey)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
     })).pipe(
       map((response) => this.unwrap(response)),
       map((payload) => this.normalizeCollection(payload))
@@ -137,9 +143,15 @@ export class ApiService {
     return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`));
   }
 
-  eventTypeSeeds(searchKey = ''): Observable<EventTypeSeed[]> {
+  eventTypeSeeds(
+    searchKey = '',
+    page = 0,
+    size = 200,
+    sortBy = 'displayName',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<EventTypeSeed[]> {
     return this.requestWithFallback<ApiResponse<EventTypeSeed[] | PagedResponse<EventTypeSeed>>>((path) => this.http.get<ApiResponse<EventTypeSeed[] | PagedResponse<EventTypeSeed>>>(`${environment.apiUrl}${path}`, {
-      params: new HttpParams().set('searchKey', searchKey)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
     }), this.eventTypeSeedPaths).pipe(
       map((response) => this.unwrap(response)),
       map((payload) => this.normalizeCollection(payload))
@@ -180,8 +192,15 @@ export class ApiService {
     return this.http.post(`${environment.apiUrl}/events`, payload);
   }
 
-  festivals(month?: number): Observable<FestivalItem[]> {
-    let params = new HttpParams();
+  festivals(
+    month?: number,
+    page = 0,
+    size = 200,
+    searchKey = '',
+    sortBy = 'eventDate',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<FestivalItem[]> {
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
     if (month) {
       params = params.set('month', month);
     }
@@ -192,8 +211,16 @@ export class ApiService {
     );
   }
 
-  festivalWishMappings(): Observable<FestivalWishMapping[]> {
-    return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`).pipe(
+  festivalWishMappings(
+    page = 0,
+    size = 200,
+    searchKey = '',
+    sortBy = 'id',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<FestivalWishMapping[]> {
+    return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    }).pipe(
       map((response) => this.unwrap(response)),
       map((payload) => this.normalizeCollection(payload))
     );
