@@ -75,6 +75,7 @@ export interface SaveRelationshipSeedPayload {
 
 export interface EventTypeSeed {
   id: number;
+  code?: string;
   displayName: string;
   active?: boolean;
 }

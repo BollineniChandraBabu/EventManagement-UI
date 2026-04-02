@@ -26,6 +26,7 @@ export class EventTypeSeedEditorComponent {
 
   form = this.fb.nonNullable.group({
     id: [0],
+    code: [''],
     name: ['', [Validators.required]]
   });
 
@@ -54,8 +55,8 @@ export class EventTypeSeedEditorComponent {
       return;
     }
 
-    const { id, ...payload } = this.form.getRawValue();
-    const request = id ? this.api.updateEventTypeSeed(id, payload) : this.api.saveEventTypeSeed(payload);
+    const { id, code, ...payload } = this.form.getRawValue();
+    const request = id ? this.api.updateEventTypeSeed(code || this.asCode(payload.name), payload) : this.api.saveEventTypeSeed(payload);
 
     this.saving = true;
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -77,6 +78,7 @@ export class EventTypeSeedEditorComponent {
       next: (seed) => {
         this.form.patchValue({
           id: seed.id,
+          code: seed.code ?? '',
           name: seed.displayName
         });
         this.loading = false;
@@ -92,7 +94,12 @@ export class EventTypeSeedEditorComponent {
   private resetForm(): void {
     this.form.reset({
       id: 0,
+      code: '',
       name: ''
     });
+  }
+
+  private asCode(value: string): string {
+    return value.trim().replace(/\s+/g, '_').toUpperCase();
   }
 }

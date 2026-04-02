@@ -113,7 +113,7 @@ export class ApiService {
   relationshipSeeds(
     searchKey = '',
     page = 0,
-    size = 200,
+    size = 1000,
     sortBy = 'displayName',
     sortDir: 'asc' | 'desc' = 'asc'
   ): Observable<RelationshipSeed[]> {
@@ -147,8 +147,8 @@ export class ApiService {
     return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, this.normalizeEnumSeedPayload(payload)));
   }
 
-  updateRelationshipSeed(id: number, payload: SaveRelationshipSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${id}`, this.normalizeEnumSeedPayload(payload)));
+  updateRelationshipSeed(code: string, payload: SaveRelationshipSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${encodeURIComponent(code)}`, this.normalizeEnumSeedPayload(payload)));
   }
 
   deleteRelationshipSeed(id: number): Observable<unknown> {
@@ -158,7 +158,7 @@ export class ApiService {
   eventTypeSeeds(
     searchKey = '',
     page = 0,
-    size = 200,
+    size = 1000,
     sortBy = 'displayName',
     sortDir: 'asc' | 'desc' = 'asc'
   ): Observable<EventTypeSeed[]> {
@@ -180,8 +180,8 @@ export class ApiService {
     return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, this.normalizeEnumSeedPayload(payload)), this.eventTypeSeedPaths);
   }
 
-  updateEventTypeSeed(id: number, payload: SaveEventTypeSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${id}`, this.normalizeEnumSeedPayload(payload)), this.eventTypeSeedPaths);
+  updateEventTypeSeed(code: string, payload: SaveEventTypeSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${encodeURIComponent(code)}`, this.normalizeEnumSeedPayload(payload)), this.eventTypeSeedPaths);
   }
 
   deleteEventTypeSeed(id: number): Observable<unknown> {

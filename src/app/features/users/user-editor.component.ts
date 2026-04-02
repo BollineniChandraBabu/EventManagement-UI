@@ -54,8 +54,11 @@ export class UserEditorComponent {
     });
   }
 
-  get relationshipOptions(): string[] {
-    return this.relationshipSeeds.map((seed) => seed.code);
+  get relationshipOptions(): Array<{ label: string; value: string }> {
+    return this.relationshipSeeds.map((seed) => ({
+      label: seed.displayName || seed.code,
+      value: seed.displayName || seed.code
+    }));
   }
 
   get pageTitle(): string {
@@ -108,6 +111,21 @@ export class UserEditorComponent {
     this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (seeds) => {
         this.relationshipSeeds = seeds ?? [];
+        const currentValue = this.form.controls.relationShip.value;
+        if (!currentValue) {
+          return;
+        }
+
+        const matched = this.relationshipSeeds.find((seed) => {
+          const displayName = (seed.displayName || '').toLowerCase();
+          const code = (seed.code || '').toLowerCase();
+          const target = currentValue.toLowerCase();
+          return displayName === target || code === target;
+        });
+
+        if (matched) {
+          this.form.controls.relationShip.setValue(matched.displayName || matched.code);
+        }
       },
       error: () => {
         this.toast.error('Unable to load relationship options right now.');
