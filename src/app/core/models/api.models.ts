@@ -62,7 +62,9 @@ export interface SaveUserPayload {
 
 export interface RelationshipSeed {
   id: number;
+  category?: string;
   code: string;
+  displayName?: string;
   active?: boolean;
 }
 

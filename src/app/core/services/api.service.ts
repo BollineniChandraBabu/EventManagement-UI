@@ -125,6 +125,18 @@ export class ApiService {
     );
   }
 
+  relationshipSeedsPaged(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'displayName',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<PagedResponse<RelationshipSeed>> {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<PagedResponse<RelationshipSeed> | RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    })).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
   relationshipSeedById(id: number): Observable<RelationshipSeed> {
     return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed>>(`${environment.apiUrl}${path}/${id}`)).pipe(
       map((response) => this.unwrap(response))
@@ -132,11 +144,11 @@ export class ApiService {
   }
 
   saveRelationshipSeed(payload: SaveRelationshipSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, payload));
+    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, this.normalizeEnumSeedPayload(payload)));
   }
 
   updateRelationshipSeed(id: number, payload: SaveRelationshipSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}`, { ...payload, id }));
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${id}`, this.normalizeEnumSeedPayload(payload)));
   }
 
   deleteRelationshipSeed(id: number): Observable<unknown> {
@@ -165,11 +177,11 @@ export class ApiService {
   }
 
   saveEventTypeSeed(payload: SaveEventTypeSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, payload), this.eventTypeSeedPaths);
+    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, this.normalizeEnumSeedPayload(payload)), this.eventTypeSeedPaths);
   }
 
   updateEventTypeSeed(id: number, payload: SaveEventTypeSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}`, { ...payload, id }), this.eventTypeSeedPaths);
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${id}`, this.normalizeEnumSeedPayload(payload)), this.eventTypeSeedPaths);
   }
 
   deleteEventTypeSeed(id: number): Observable<unknown> {
@@ -366,6 +378,17 @@ export class ApiService {
       isBirthdayEnabled: payload.isBirthdayEnabled ?? false,
       isGoodMorningEnabled: payload.isGoodMorningEnabled ?? false,
       isGoodNightEnabled: payload.isGoodNightEnabled ?? false
+    };
+  }
+
+  private normalizeEnumSeedPayload(payload: SaveRelationshipSeedPayload | SaveEventTypeSeedPayload): Record<string, unknown> {
+    const normalizedName = (payload.name ?? '').trim();
+    const normalizedCode = normalizedName.replace(/\s+/g, '_').toUpperCase();
+
+    return {
+      code: normalizedCode,
+      displayName: normalizedName,
+      active: true
     };
   }
 

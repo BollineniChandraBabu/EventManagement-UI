@@ -20,6 +20,11 @@ export class RelationshipSeedsComponent {
 
   relationshipSeeds: RelationshipSeed[] = [];
   filterText = '';
+  page = 0;
+  readonly pageSizes = [5, 10, 20];
+  pageSize = 10;
+  totalPages = 0;
+  totalElements = 0;
   loading = false;
   deletingIds = new Set<number>();
 
@@ -38,6 +43,7 @@ export class RelationshipSeedsComponent {
 
   applySearch(): void {
     this.filterText = this.filterText.trim();
+    this.page = 0;
     this.loadRelationshipSeeds();
   }
 
@@ -47,7 +53,43 @@ export class RelationshipSeedsComponent {
     }
 
     this.filterText = '';
+    this.page = 0;
     this.loadRelationshipSeeds();
+  }
+
+  onPageSizeChange(value: string): void {
+    this.pageSize = Number(value);
+    this.page = 0;
+    this.loadRelationshipSeeds();
+  }
+
+  nextPage(): void {
+    if (this.page < this.totalPages - 1) {
+      this.page++;
+      this.loadRelationshipSeeds();
+    }
+  }
+
+  prevPage(): void {
+    if (this.page > 0) {
+      this.page--;
+      this.loadRelationshipSeeds();
+    }
+  }
+
+  get displayPage(): number {
+    return this.page + 1;
+  }
+
+  get startRow(): number {
+    if (this.totalElements === 0 || this.relationshipSeeds.length === 0) {
+      return 0;
+    }
+    return this.page * this.pageSize + 1;
+  }
+
+  get endRow(): number {
+    return this.relationshipSeeds.length === 0 ? 0 : this.startRow + this.relationshipSeeds.length - 1;
   }
 
   deleteSeed(seed: RelationshipSeed): void {
@@ -73,13 +115,17 @@ export class RelationshipSeedsComponent {
     this.loading = true;
     this.relationshipSeeds = [];
 
-    this.api.relationshipSeeds(this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.relationshipSeedsPaged(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
-        this.relationshipSeeds = response ?? [];
+        this.relationshipSeeds = response.content ?? [];
+        this.totalElements = response.totalElements ?? this.relationshipSeeds.length;
+        this.totalPages = response.totalPages ?? 0;
         this.loading = false;
       },
       error: () => {
         this.toast.error('Unable to load relationship seeds right now.');
+        this.totalElements = 0;
+        this.totalPages = 0;
         this.loading = false;
       }
     });
