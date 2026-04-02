@@ -95,6 +95,22 @@ export class SchedulersComponent {
     this.loadSchedulers();
   }
 
+  toggleSort(field: string): void {
+    if (this.sortBy === field) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = field;
+      this.sortDir = 'asc';
+    }
+
+    this.page = 0;
+    this.loadSchedulers();
+  }
+
+  isSortedBy(field: string): boolean {
+    return this.sortBy === field;
+  }
+
   nextPage(): void {
     if (this.page < this.totalPages - 1) {
       this.page++;

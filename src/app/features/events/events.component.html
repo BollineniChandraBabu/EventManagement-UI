@@ -39,24 +39,6 @@
         </div>
 
         <div>
-          <label class="form-label">Sort by</label>
-          <select class="form-select" (change)="onSortByChange($any($event.target).value)" [disabled]="loading">
-            <option value="eventDate" [selected]="sortBy === 'eventDate'">Event date</option>
-            <option value="createdAt" [selected]="sortBy === 'createdAt'">Created date</option>
-            <option value="festivalName" [selected]="sortBy === 'festivalName'">Festival name</option>
-            <option value="eventType" [selected]="sortBy === 'eventType'">Event type</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Order</label>
-          <select class="form-select" (change)="onSortDirChange($any($event.target).value)" [disabled]="loading">
-            <option value="desc" [selected]="sortDir === 'desc'">Newest first</option>
-            <option value="asc" [selected]="sortDir === 'asc'">Oldest first</option>
-          </select>
-        </div>
-
-        <div>
           <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
@@ -68,10 +50,30 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>Event Type</th>
-              <th>Festival / Name</th>
-              <th>Date</th>
-              <th>User ID</th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('eventType')" [disabled]="loading">
+                  Event Type
+                  <i *ngIf="isSortedBy('eventType')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('festivalName')" [disabled]="loading">
+                  Festival / Name
+                  <i *ngIf="isSortedBy('festivalName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('eventDate')" [disabled]="loading">
+                  Date
+                  <i *ngIf="isSortedBy('eventDate')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('userId')" [disabled]="loading">
+                  User ID
+                  <i *ngIf="isSortedBy('userId')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
               <th>Recurring</th>
             </tr>
           </thead>

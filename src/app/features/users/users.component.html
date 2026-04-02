@@ -44,24 +44,6 @@
         </div>
 
         <div>
-          <label class="form-label">Sort by</label>
-          <select class="form-select" (change)="onSortByChange($any($event.target).value)" [disabled]="loading">
-            <option value="createdAt" [selected]="sortBy === 'createdAt'">Created date</option>
-            <option value="name" [selected]="sortBy === 'name'">Name</option>
-            <option value="email" [selected]="sortBy === 'email'">Email</option>
-            <option value="role" [selected]="sortBy === 'role'">Role</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Order</label>
-          <select class="form-select" (change)="onSortDirChange($any($event.target).value)" [disabled]="loading">
-            <option value="desc" [selected]="sortDir === 'desc'">Descending</option>
-            <option value="asc" [selected]="sortDir === 'asc'">Ascending</option>
-          </select>
-        </div>
-
-        <div>
           <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
@@ -74,10 +56,25 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('name')" [disabled]="loading">
+                  Name
+                  <i *ngIf="isSortedBy('name')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('email')" [disabled]="loading">
+                  Email
+                  <i *ngIf="isSortedBy('email')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
               <th>Date of Birth</th>
-              <th>Role</th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('role')" [disabled]="loading">
+                  Role
+                  <i *ngIf="isSortedBy('role')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
