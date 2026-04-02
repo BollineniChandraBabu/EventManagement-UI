@@ -186,8 +186,19 @@ export class ApiService {
   }
 
   festivalWishMappings(): Observable<FestivalWishMapping[]> {
-    return this.http.get<ApiResponse<FestivalWishMapping[]>>(`${environment.apiUrl}/festival-wish-mappings`).pipe(
-      map((response) => this.unwrap(response))
+    return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => {
+        if (Array.isArray(payload)) {
+          return payload;
+        }
+
+        if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
+          return payload.content;
+        }
+
+        return [];
+      })
     );
   }
 
