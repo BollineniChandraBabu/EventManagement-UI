@@ -18,7 +18,7 @@
   <div class="card">
     <div class="card-body">
 
-      <div class="filter-bar mb-4" style="grid-template-columns: 1fr auto;">
+      <div class="filter-bar mb-4" style="grid-template-columns: 1fr auto auto auto;">
         <div>
           <label class="form-label">Search schedulers</label>
           <div class="input-group">
@@ -31,6 +31,24 @@
             <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading">Search</button>
           </div>
         </div>
+        <div>
+          <label class="form-label">Sort by</label>
+          <select class="form-select" (change)="onSortByChange($any($event.target).value)" [disabled]="loading">
+            <option value="name" [selected]="sortBy === 'name'">Job name</option>
+            <option value="type" [selected]="sortBy === 'type'">Type</option>
+            <option value="lastStartedAt" [selected]="sortBy === 'lastStartedAt'">Last started</option>
+            <option value="nextFireTime" [selected]="sortBy === 'nextFireTime'">Next fire</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Order</label>
+          <select class="form-select" (change)="onSortDirChange($any($event.target).value)" [disabled]="loading">
+            <option value="asc" [selected]="sortDir === 'asc'">Ascending</option>
+            <option value="desc" [selected]="sortDir === 'desc'">Descending</option>
+          </select>
+        </div>
+
         <div>
           <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">

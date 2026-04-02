@@ -158,9 +158,15 @@ export class ApiService {
     return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`), this.eventTypeSeedPaths);
   }
 
-  events(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<EventItem>> {
+  events(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'eventDate',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<PagedResponse<EventItem>> {
     return this.http.get<ApiResponse<PagedResponse<EventItem> | EventItem[]>>(`${environment.apiUrl}/events`, {
-      params: this.pagedParams(page, size, searchKey)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
@@ -241,9 +247,15 @@ export class ApiService {
     );
   }
 
-  schedulers(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<SchedulerItem>> {
+  schedulers(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'name',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<PagedResponse<SchedulerItem>> {
     return this.http.get<ApiResponse<PagedResponse<SchedulerItem> | SchedulerItem[]>>(`${environment.apiUrl}/schedulers`, {
-      params: this.pagedParams(page, size, searchKey)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 

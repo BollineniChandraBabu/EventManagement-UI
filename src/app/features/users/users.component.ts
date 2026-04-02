@@ -37,6 +37,8 @@ export class UsersComponent {
   pageSize = 10;
   totalPages = 0;
   totalElements = 0;
+  sortBy = 'createdAt';
+  sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
   deactivatingIds = new Set<number>();
 
@@ -137,6 +139,18 @@ export class UsersComponent {
     this.loadUsers();
   }
 
+  onSortByChange(value: string): void {
+    this.sortBy = value;
+    this.page = 0;
+    this.loadUsers();
+  }
+
+  onSortDirChange(value: string): void {
+    this.sortDir = value === 'asc' ? 'asc' : 'desc';
+    this.page = 0;
+    this.loadUsers();
+  }
+
   nextPage(): void {
     if (this.page < this.totalPages - 1) {
       this.page++;
@@ -158,7 +172,7 @@ export class UsersComponent {
     this.totalElements = 0;
     this.totalPages = 0;
 
-    this.api.users(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.users(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.allUsers = response.content ?? [];
         this.totalElements = response.totalElements ?? this.allUsers.length;

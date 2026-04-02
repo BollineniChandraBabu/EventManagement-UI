@@ -44,6 +44,24 @@
         </div>
 
         <div>
+          <label class="form-label">Sort by</label>
+          <select class="form-select" (change)="onSortByChange($any($event.target).value)" [disabled]="loading">
+            <option value="createdAt" [selected]="sortBy === 'createdAt'">Created date</option>
+            <option value="name" [selected]="sortBy === 'name'">Name</option>
+            <option value="email" [selected]="sortBy === 'email'">Email</option>
+            <option value="role" [selected]="sortBy === 'role'">Role</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Order</label>
+          <select class="form-select" (change)="onSortDirChange($any($event.target).value)" [disabled]="loading">
+            <option value="desc" [selected]="sortDir === 'desc'">Descending</option>
+            <option value="asc" [selected]="sortDir === 'asc'">Ascending</option>
+          </select>
+        </div>
+
+        <div>
           <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
