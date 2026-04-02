@@ -180,8 +180,19 @@ export class ApiService {
       params = params.set('month', month);
     }
 
-    return this.http.get<ApiResponse<FestivalItem[]>>(`${environment.apiUrl}/festivals`, { params }).pipe(
-      map((response) => this.unwrap(response))
+    return this.http.get<ApiResponse<FestivalItem[] | PagedResponse<FestivalItem>>>(`${environment.apiUrl}/festivals`, { params }).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => {
+        if (Array.isArray(payload)) {
+          return payload;
+        }
+
+        if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
+          return payload.content;
+        }
+
+        return [];
+      })
     );
   }
 
