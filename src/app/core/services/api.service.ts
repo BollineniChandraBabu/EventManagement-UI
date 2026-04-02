@@ -93,11 +93,11 @@ export class ApiService {
   }
 
   saveUser(payload: SaveUserPayload) {
-    return this.http.post(`${environment.apiUrl}/users`, payload);
+    return this.http.post(`${environment.apiUrl}/users`, this.normalizeUserPayload(payload));
   }
 
   updateUser(id: number, payload: SaveUserPayload) {
-    return this.http.put(`${environment.apiUrl}/users`, { ...payload, id });
+    return this.http.put(`${environment.apiUrl}/users`, this.normalizeUserPayload(payload, id));
   }
 
   userById(id: number): Observable<AppUser> {
@@ -326,6 +326,20 @@ export class ApiService {
     }
 
     return [];
+  }
+
+  private normalizeUserPayload(payload: SaveUserPayload, id?: number): Record<string, unknown> {
+    return {
+      ...payload,
+      ...(id ? { id, userId: id } : {}),
+      dob: payload.dob ?? '',
+      dateOfBirth: payload.dob ?? '',
+      relationShip: payload.relationShip ?? '',
+      relationship: payload.relationShip ?? '',
+      isBirthdayEnabled: payload.isBirthdayEnabled ?? false,
+      isGoodMorningEnabled: payload.isGoodMorningEnabled ?? false,
+      isGoodNightEnabled: payload.isGoodNightEnabled ?? false
+    };
   }
 
   private unwrap<T>(response: ApiResponse<T>): T {
