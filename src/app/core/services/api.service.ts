@@ -111,9 +111,12 @@ export class ApiService {
   }
 
   relationshipSeeds(searchKey = ''): Observable<RelationshipSeed[]> {
-    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed[] | PagedResponse<RelationshipSeed>>>(`${environment.apiUrl}${path}`, {
       params: new HttpParams().set('searchKey', searchKey)
-    })).pipe(map((response) => this.unwrap(response)));
+    })).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
   }
 
   relationshipSeedById(id: number): Observable<RelationshipSeed> {
@@ -135,9 +138,12 @@ export class ApiService {
   }
 
   eventTypeSeeds(searchKey = ''): Observable<EventTypeSeed[]> {
-    return this.requestWithFallback<ApiResponse<EventTypeSeed[]>>((path) => this.http.get<ApiResponse<EventTypeSeed[]>>(`${environment.apiUrl}${path}`, {
+    return this.requestWithFallback<ApiResponse<EventTypeSeed[] | PagedResponse<EventTypeSeed>>>((path) => this.http.get<ApiResponse<EventTypeSeed[] | PagedResponse<EventTypeSeed>>>(`${environment.apiUrl}${path}`, {
       params: new HttpParams().set('searchKey', searchKey)
-    }), this.eventTypeSeedPaths).pipe(map((response) => this.unwrap(response)));
+    }), this.eventTypeSeedPaths).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
   }
 
   eventTypeSeedById(id: number): Observable<EventTypeSeed> {
@@ -182,34 +188,14 @@ export class ApiService {
 
     return this.http.get<ApiResponse<FestivalItem[] | PagedResponse<FestivalItem>>>(`${environment.apiUrl}/festivals`, { params }).pipe(
       map((response) => this.unwrap(response)),
-      map((payload) => {
-        if (Array.isArray(payload)) {
-          return payload;
-        }
-
-        if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
-          return payload.content;
-        }
-
-        return [];
-      })
+      map((payload) => this.normalizeCollection(payload))
     );
   }
 
   festivalWishMappings(): Observable<FestivalWishMapping[]> {
     return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`).pipe(
       map((response) => this.unwrap(response)),
-      map((payload) => {
-        if (Array.isArray(payload)) {
-          return payload;
-        }
-
-        if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
-          return payload.content;
-        }
-
-        return [];
-      })
+      map((payload) => this.normalizeCollection(payload))
     );
   }
 
@@ -328,6 +314,18 @@ export class ApiService {
       totalElements: payload.totalElements ?? (payload.content?.length ?? 0),
       totalPages: payload.totalPages ?? 0
     };
+  }
+
+  private normalizeCollection<T>(payload: T[] | PagedResponse<T> | unknown): T[] {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
+      return payload.content as T[];
+    }
+
+    return [];
   }
 
   private unwrap<T>(response: ApiResponse<T>): T {
