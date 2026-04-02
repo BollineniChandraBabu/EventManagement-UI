@@ -13,6 +13,7 @@ import {
   ChatUser
 } from '../models/chat.models';
 import { AuthService } from './auth.service';
+import { ApiResponse } from '../models/api.models';
 
 interface StompFrame {
   command: string;
@@ -49,21 +50,33 @@ export class ChatService {
   }
 
   listUsers(): Observable<ChatUser[]> {
-    return this.http.get<ChatUser[]>(`${environment.apiUrl}/chat/users`);
+    return this.http.get<ApiResponse<ChatUser[] | { content: ChatUser[] }>>(`${environment.apiUrl}/chat/users`).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
   }
 
   listActiveUsers(): Observable<ChatUser[]> {
-    return this.http.get<ChatUser[]>(`${environment.apiUrl}/chat/users/active`);
+    return this.http.get<ApiResponse<ChatUser[] | { content: ChatUser[] }>>(`${environment.apiUrl}/chat/users/active`).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
   }
 
   listConversations(): Observable<ChatConversation[]> {
-    return this.http.get<ChatConversation[]>(`${environment.apiUrl}/chat/conversations`);
+    return this.http.get<ApiResponse<ChatConversation[] | { content: ChatConversation[] }>>(`${environment.apiUrl}/chat/conversations`).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
   }
 
   conversationMessages(otherUserId: number, page = 0, size = 30, markSeen = true): Observable<ChatMessagePage> {
-    return this.http.get<ChatMessagePage>(`${environment.apiUrl}/chat/messages/${otherUserId}`, {
+    return this.http.get<ApiResponse<ChatMessagePage | { content: ChatMessage[]; page?: number; size?: number; hasNext?: boolean }>>(`${environment.apiUrl}/chat/messages/${otherUserId}`, {
       params: new HttpParams().set('page', page).set('size', size).set('markSeen', markSeen)
-    });
+    }).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeMessagePage(payload, page, size))
+    );
   }
 
   sendMessage(receiverId: number, messageText: string, attachment?: File | null): Observable<ChatMessage> {
@@ -306,5 +319,46 @@ export class ChatService {
     }
 
     this.reconnectTimer = setTimeout(() => this.connectSocket(), 3000);
+  }
+
+  private unwrap<T>(response: ApiResponse<T>): T {
+    if (typeof response === 'object' && response !== null && 'data' in response) {
+      return response.data;
+    }
+    return response as T;
+  }
+
+  private normalizeCollection<T>(payload: T[] | { content?: T[] } | unknown): T[] {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
+      return payload.content;
+    }
+
+    return [];
+  }
+
+  private normalizeMessagePage(
+    payload: ChatMessagePage | { content?: ChatMessage[]; page?: number; size?: number; hasNext?: boolean } | unknown,
+    page: number,
+    size: number
+  ): ChatMessagePage {
+    if (payload && typeof payload === 'object' && 'items' in payload && Array.isArray(payload.items)) {
+      return payload as ChatMessagePage;
+    }
+
+    if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
+      const typedPayload = payload as { content: ChatMessage[]; page?: number; size?: number; hasNext?: boolean };
+      return {
+        items: typedPayload.content,
+        page: typedPayload.page ?? page,
+        size: typedPayload.size ?? size,
+        hasNext: typedPayload.hasNext ?? false
+      };
+    }
+
+    return { items: [], page, size, hasNext: false };
   }
 }
