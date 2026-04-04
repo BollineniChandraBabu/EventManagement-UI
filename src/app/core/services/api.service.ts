@@ -25,7 +25,12 @@ import {
   SchedulerTriggerResponse,
   RelationshipSeed,
   WishSettingsPayload,
-  PollinationsBalanceResponse
+  PollinationsBalanceResponse,
+  ChatConversation,
+  ChatMessage,
+  ChatMessagePage,
+  ChatUser,
+  DeleteMessageResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -310,6 +315,56 @@ export class ApiService {
     return this.http.post<ApiResponse<SchedulerTriggerResponse>>(`${environment.apiUrl}/schedulers/${encodeURIComponent(jobName)}/trigger`, {}).pipe(
       map((response) => this.unwrap(response))
     );
+  }
+
+  chatUsers(): Observable<ChatUser[]> {
+    return this.http.get<ChatUser[]>(`${environment.apiUrl}/chat/users`);
+  }
+
+  chatActiveUsers(): Observable<ChatUser[]> {
+    return this.http.get<ChatUser[]>(`${environment.apiUrl}/chat/users/active`);
+  }
+
+  chatConversations(): Observable<ChatConversation[]> {
+    return this.http.get<ChatConversation[]>(`${environment.apiUrl}/chat/conversations`);
+  }
+
+  chatMessages(otherUserId: number, page = 0, size = 30, markSeen = true): Observable<ChatMessagePage> {
+    return this.http.get<ChatMessagePage>(`${environment.apiUrl}/chat/messages/${otherUserId}`, {
+      params: new HttpParams()
+        .set('page', page)
+        .set('size', size)
+        .set('markSeen', markSeen)
+    });
+  }
+
+  sendChatMessage(receiverId: number, messageText: string, attachment?: File): Observable<ChatMessage> {
+    const formData = new FormData();
+    formData.append('payload', new Blob([JSON.stringify({ receiverId, messageText })], { type: 'application/json' }));
+    if (attachment) {
+      formData.append('attachment', attachment);
+    }
+    return this.http.post<ChatMessage>(`${environment.apiUrl}/chat`, formData);
+  }
+
+  editChatMessage(messageId: number, messageText: string): Observable<ChatMessage> {
+    return this.http.patch<ChatMessage>(`${environment.apiUrl}/chat/messages/${messageId}`, { messageText });
+  }
+
+  deleteLastChatMessage(otherUserId: number): Observable<DeleteMessageResponse> {
+    return this.http.delete<DeleteMessageResponse>(`${environment.apiUrl}/chat/messages/last/${otherUserId}`);
+  }
+
+  chatHeartbeat(): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/chat/presence/heartbeat`, {});
+  }
+
+  chatOffline(): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/chat/presence/offline`, {});
+  }
+
+  chatAttachmentUrl(messageId: number): string {
+    return `${environment.apiUrl}/chat/messages/${messageId}/attachment`;
   }
 
   private pagedParams(

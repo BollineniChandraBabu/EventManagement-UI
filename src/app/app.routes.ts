@@ -22,6 +22,7 @@ import { RelationshipSeedsComponent } from './features/relationship-seeds/relati
 import { EventTypeSeedsComponent } from './features/event-type-seeds/event-type-seeds.component';
 import { EventTypeSeedEditorComponent } from './features/event-type-seeds/event-type-seed-editor.component';
 import { FestivalWishMappingsComponent } from './features/festival-wish-mappings/festival-wish-mappings.component';
+import { ChatComponent } from './features/chat/chat.component';
 
 export const routes: Routes = [
   { path: '', canActivate: [resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
@@ -40,6 +41,7 @@ export const routes: Routes = [
     { path: 'events/new', component: EventEditorComponent, canActivate: [adminGuard] },
     { path: 'ai-wishes', component: AiWishesComponent },
     { path: 'email-preview', component: EmailPreviewComponent },
+    { path: 'chat', component: ChatComponent },
     { path: 'email-status', component: EmailStatusComponent },
     { path: 'email-status/otp', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'OTP Email Status', emailType: 'OTP' } },
     { path: 'email-status/forgot-password', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'Forgot Password Email Status', emailType: 'FORGOT_PASSWORD' } },
