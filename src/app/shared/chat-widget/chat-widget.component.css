@@ -171,7 +171,14 @@
 .mini-badge { background: #2563eb; color: #fff; border-radius: 999px; min-width: 20px; height: 20px; display: grid; place-items: center; font-size: 0.7rem; }
 
 .chat-thread { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #f7faff; }
-.chat-messages { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0.9rem; }
+.chat-messages { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 2.6rem 0.9rem 0.9rem; }
+
+.day-divider {
+  text-align: center;
+  color: #64748b;
+  font-size: 0.82rem;
+  margin: 0.25rem 0 0.7rem;
+}
 
 .chat-message {
   width: fit-content;
@@ -485,6 +492,7 @@
   .message-tools-bar { max-width: 100%; }
   .message-body { max-width: min(92vw, 100%); }
   .attachment-chip { max-width: 100%; }
+  .chat-messages { padding-top: 0.9rem; }
 }
 
 @media (min-width: 992px) {

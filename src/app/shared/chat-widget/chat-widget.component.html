@@ -66,14 +66,16 @@
         </div>
 
         <div class="chat-messages" #messageScroller (mouseleave)="hoveredMessageId = null">
-          <div
-            class="chat-message"
-            *ngFor="let message of messages"
-            [class.mine]="message.mine"
-            [class.highlighted]="highlightedMessageId === message.messageId"
-            [attr.data-message-id]="message.messageId"
-            (mouseenter)="hoveredMessageId = message.messageId"
-          >
+          <ng-container *ngFor="let entry of timelineEntries">
+            <div class="day-divider" *ngIf="entry.kind === 'day'">{{ entry.dayLabel }}</div>
+            <div
+              class="chat-message"
+              *ngIf="entry.kind === 'message' && entry.message as message"
+              [class.mine]="message.mine"
+              [class.highlighted]="highlightedMessageId === message.messageId"
+              [attr.data-message-id]="message.messageId"
+              (mouseenter)="hoveredMessageId = message.messageId"
+            >
             <div class="message-tools" [class.visible]="hoveredMessageId === message.messageId">
               <div class="message-tools-bar">
                 <button type="button" *ngFor="let emoji of quickReactions" (click)="reactToMessage(message, emoji)">{{ emoji }}</button>
@@ -131,7 +133,7 @@
                 {{ message.attachmentFileName }}
               </button>
 
-              <small>{{ message.sentAt | date: 'shortTime' }}</small>
+              <small>{{ formatMessageDisplayTime(message.sentAt) }}</small>
               <small class="seen-time" *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">Seen {{ formatMessageTime(message.seenAt) }}</small>
               <div class="message-reactions" *ngIf="reactionsForMessage(message.messageId).length">
                 <span *ngFor="let reaction of reactionsForMessage(message.messageId)" [class.mine]="reaction.mine">
@@ -147,7 +149,8 @@
                 </span>
               </div>
             </div>
-          </div>
+            </div>
+          </ng-container>
         </div>
 
         <div class="chat-composer-shell">

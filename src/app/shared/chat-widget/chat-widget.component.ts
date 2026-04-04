@@ -16,6 +16,13 @@ import {
 } from '../../core/models/chat.models';
 import { ChatService } from '../../core/services/chat.service';
 
+interface ChatTimelineEntry {
+  kind: 'day' | 'message';
+  dayKey?: string;
+  dayLabel?: string;
+  message?: ChatMessage;
+}
+
 @Component({
   selector: 'app-chat-widget',
   standalone: true,
@@ -61,6 +68,30 @@ export class ChatWidgetComponent {
   users: ChatUser[] = [];
   activeConversation: ChatConversation | null = null;
   messages: ChatMessage[] = [];
+
+  get timelineEntries(): ChatTimelineEntry[] {
+    const timeline: ChatTimelineEntry[] = [];
+    let previousDayKey: string | null = null;
+
+    this.messages.forEach((message) => {
+      const dayKey = this.dayKey(message.sentAt);
+      if (dayKey && dayKey !== previousDayKey) {
+        timeline.push({
+          kind: 'day',
+          dayKey,
+          dayLabel: this.formatDayLabel(message.sentAt)
+        });
+        previousDayKey = dayKey;
+      }
+
+      timeline.push({
+        kind: 'message',
+        message
+      });
+    });
+
+    return timeline;
+  }
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -247,6 +278,27 @@ export class ChatWidgetComponent {
     }
 
     return date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  formatMessageDisplayTime(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    const isToday = now.toDateString() === date.toDateString();
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    if (diffDays < 7) {
+      return `${date.toLocaleDateString([], { weekday: 'long' })} ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    }
+
+    return date.toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
   getActiveConversationStatus(): string {
@@ -646,6 +698,31 @@ export class ChatWidgetComponent {
         this.messageScroller.nativeElement.scrollTop = this.messageScroller.nativeElement.scrollHeight;
       }
     });
+  }
+
+  private dayKey(value: string): string | null {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  }
+
+  private formatDayLabel(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    if (diffDays < 7) {
+      return date.toLocaleDateString([], { weekday: 'long' });
+    }
+
+    return date.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   }
 
   private resolveAttachmentPreviewType(message: ChatMessage): 'image' | 'pdf' | null {
