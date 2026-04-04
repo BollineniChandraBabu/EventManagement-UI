@@ -70,6 +70,8 @@
             class="chat-message"
             *ngFor="let message of messages"
             [class.mine]="message.mine"
+            [class.highlighted]="highlightedMessageId === message.messageId"
+            [attr.data-message-id]="message.messageId"
             (mouseenter)="hoveredMessageId = message.messageId"
           >
             <div class="message-tools" [class.visible]="hoveredMessageId === message.messageId">
@@ -110,10 +112,10 @@
             </div>
 
             <div class="message-body">
-              <div class="reply-context" *ngIf="message.replyToMessageId">
+              <button class="reply-context" type="button" *ngIf="message.replyToMessageId" (click)="jumpToMessage(message.replyToMessageId)">
                 <i class="fa-solid fa-reply"></i>
                 <span>{{ message.replyToMessageText || ('Reply #' + message.replyToMessageId) }}</span>
-              </div>
+              </button>
               <ng-container *ngIf="editingMessageId !== message.messageId; else editBox">
                 <p *ngIf="message.messageText">{{ message.messageText }}</p>
                 <p class="reaction-only" *ngIf="message.reactionEmoji">{{ message.reactionEmoji }}</p>

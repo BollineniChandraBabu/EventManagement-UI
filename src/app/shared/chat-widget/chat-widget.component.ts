@@ -50,6 +50,7 @@ export class ChatWidgetComponent {
   attachmentPreviewName = '';
   attachmentPreviewLoading = false;
   attachmentPreviewOpen = false;
+  highlightedMessageId: number | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -358,6 +359,25 @@ export class ChatWidgetComponent {
 
   reactionsForMessage(messageId: number): ChatMessageReaction[] {
     return this.messageReactions[messageId] ?? [];
+  }
+
+  jumpToMessage(messageId: number | null | undefined): void {
+    if (!messageId) {
+      return;
+    }
+
+    const target = this.messageScroller?.nativeElement.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.highlightedMessageId = messageId;
+    setTimeout(() => {
+      if (this.highlightedMessageId === messageId) {
+        this.highlightedMessageId = null;
+      }
+    }, 1500);
   }
 
   openAttachment(message: ChatMessage): void {

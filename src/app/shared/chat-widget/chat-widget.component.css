@@ -157,7 +157,15 @@
 }
 
 .conversation-row:hover { background: #f4f8ff; border-color: #dbe7ff; }
-.conversation-row p { margin: 0; color: #64748b; font-size: 0.78rem; }
+.conversation-row p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 210px;
+}
 .convo-time { display: block; margin-top: 0.12rem; color: #94a3b8; font-size: 0.67rem; }
 .conversation-row strong { display: inline-flex; align-items: center; }
 .mini-badge { background: #2563eb; color: #fff; border-radius: 999px; min-width: 20px; height: 20px; display: grid; place-items: center; font-size: 0.7rem; }
@@ -176,6 +184,9 @@
 }
 
 .chat-message.mine { margin-left: auto; }
+.chat-message.highlighted .message-body {
+  box-shadow: 0 0 0 2px #93c5fd, 0 6px 16px rgba(30, 41, 59, 0.12);
+}
 
 .message-body {
   background: #fff;
@@ -190,7 +201,11 @@
   border-color: #d4e2ff;
 }
 
-.message-body p { margin: 0 0 0.2rem; }
+.message-body p {
+  margin: 0 0 0.2rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .message-body small { color: #64748b; font-size: 0.68rem; display: block; }
 .seen-time { color: #2563eb; font-size: 0.66rem; margin-top: 0.1rem; }
 
@@ -266,6 +281,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  width: 100%;
 }
 
 .reply-context {
@@ -279,6 +295,16 @@
   display: flex;
   gap: 0.3rem;
   align-items: center;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+  text-align: left;
+}
+.reply-context span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reaction-only { font-size: 1.35rem; line-height: 1.2; }
