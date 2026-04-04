@@ -170,7 +170,7 @@
   max-width: min(70%, 520px);
   margin-bottom: 0.55rem;
   display: flex;
-  gap: 0.4rem;
+  gap: 0.25rem;
   align-items: flex-start;
 }
 
@@ -193,12 +193,12 @@
 .message-body small { color: #64748b; font-size: 0.68rem; display: block; }
 .seen-time { color: #2563eb; font-size: 0.66rem; margin-top: 0.1rem; }
 
-.message-actions { display: flex; gap: 0.2rem; padding-top: 0.2rem; min-width: 92px; }
+.message-actions { display: flex; gap: 0.2rem; padding-top: 0.2rem; min-width: 0; }
 .message-reaction-actions {
   display: flex;
   gap: 0.2rem;
   flex-wrap: wrap;
-  max-width: 145px;
+  max-width: 120px;
 }
 .message-reaction-actions button {
   border: 1px solid #d7e3ff;
@@ -267,10 +267,21 @@
   border-radius: 999px;
   padding: 0.08rem 0.38rem;
   font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
 }
 .message-reactions span.mine {
   background: #dbeafe;
   color: #1d4ed8;
+}
+.message-reactions span button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.62rem;
+  line-height: 1;
+  padding: 0;
 }
 
 .chat-composer-shell { border-top: 1px solid #e6edf9; background: #fff; padding: 0.5rem; }

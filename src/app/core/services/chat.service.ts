@@ -133,6 +133,14 @@ export class ChatService {
     ).pipe(map((response) => response.reactions ?? []));
   }
 
+  removeReaction(messageId: number, emoji: string): Observable<ChatMessageReaction[]> {
+    return this.http.request<{ messageId: number; reactions: ChatMessageReaction[] }>(
+      'delete',
+      `${environment.apiUrl}/chat/messages/${messageId}/like`,
+      { body: { emoji } }
+    ).pipe(map((response) => response.reactions ?? []));
+  }
+
   downloadAttachment(messageId: number): Observable<Blob> {
     return this.http.get(`${environment.apiUrl}/chat/messages/${messageId}/attachment`, { responseType: 'blob' });
   }

@@ -350,6 +350,12 @@ export class ChatWidgetComponent {
     });
   }
 
+  removeReaction(message: ChatMessage, emoji: string): void {
+    this.chat.removeReaction(message.messageId, emoji).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+      this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+    });
+  }
+
   reactionsForMessage(messageId: number): ChatMessageReaction[] {
     return this.messageReactions[messageId] ?? [];
   }
@@ -548,9 +554,8 @@ export class ChatWidgetComponent {
       return;
     }
 
-    this.messages = this.messages.map((msg) =>
-      msg.conversationId === event.conversationId && msg.mine ? { ...msg, seenAt: new Date().toISOString() } : msg
-    );
+    // Do not optimistically stamp seenAt client-side.
+    // Backend may still report null, and synthetic timestamps cause flicker/wrong seen labels.
   }
 
   private applyPresenceEvent(event: ChatPresenceEvent): void {
