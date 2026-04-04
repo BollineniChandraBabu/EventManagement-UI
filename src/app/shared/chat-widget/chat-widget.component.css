@@ -232,7 +232,8 @@
   z-index: 12;
 }
 .chat-message:not(.mine) .message-tools { left: 0; right: auto; }
-.message-tools.visible {
+.chat-message:hover .message-tools,
+.chat-message:focus-within .message-tools {
   visibility: visible;
   opacity: 1;
   pointer-events: auto;

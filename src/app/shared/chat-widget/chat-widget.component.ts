@@ -60,7 +60,6 @@ export class ChatWidgetComponent {
   highlightedMessageId: number | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
-  private messageToolsHideTimer: ReturnType<typeof setTimeout> | null = null;
 
   showNewChatPicker = false;
   newChatSearch = '';
@@ -99,9 +98,6 @@ export class ChatWidgetComponent {
       this.stopHeartbeat();
       if (this.typingTimer) {
         clearTimeout(this.typingTimer);
-      }
-      if (this.messageToolsHideTimer) {
-        clearTimeout(this.messageToolsHideTimer);
       }
       this.clearAttachmentPreviewState();
     });
@@ -379,30 +375,6 @@ export class ChatWidgetComponent {
     this.replyingToMessage = null;
   }
 
-  showMessageTools(messageId: number): void {
-    if (this.messageToolsHideTimer) {
-      clearTimeout(this.messageToolsHideTimer);
-      this.messageToolsHideTimer = null;
-    }
-    this.hoveredMessageId = messageId;
-  }
-
-  hideMessageTools(messageId: number): void {
-    if (this.hoveredMessageId !== messageId) {
-      return;
-    }
-
-    if (this.messageToolsHideTimer) {
-      clearTimeout(this.messageToolsHideTimer);
-    }
-
-    this.messageToolsHideTimer = setTimeout(() => {
-      if (this.hoveredMessageId === messageId) {
-        this.hoveredMessageId = null;
-      }
-      this.messageToolsHideTimer = null;
-    }, 120);
-  }
 
   displayConversationName(conversation: ChatConversation): string {
     return conversation.otherUserActive === false
@@ -424,30 +396,6 @@ export class ChatWidgetComponent {
     this.chat.removeReaction(message.messageId, emoji).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
       this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
     });
-  }
-
-  handleQuickReaction(event: MouseEvent, message: ChatMessage, emoji: string): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.reactToMessage(message, emoji);
-  }
-
-  handleReplyAction(event: MouseEvent, message: ChatMessage): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.startReply(message);
-  }
-
-  handleEditAction(event: MouseEvent, message: ChatMessage): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.startEdit(message);
-  }
-
-  handleDeleteAction(event: MouseEvent, message: ChatMessage): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.deleteLatestIfEligible(message);
   }
 
   reactionsForMessage(messageId: number): ChatMessageReaction[] {

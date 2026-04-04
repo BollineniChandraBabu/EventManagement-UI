@@ -74,33 +74,30 @@
               [class.mine]="message.mine"
               [class.highlighted]="highlightedMessageId === message.messageId"
               [attr.data-message-id]="message.messageId"
-              (mouseenter)="showMessageTools(message.messageId)"
-              (mouseleave)="hideMessageTools(message.messageId)"
+              (mouseenter)="hoveredMessageId = message.messageId"
+              (mouseleave)="hoveredMessageId = null"
             >
             <div
               class="message-tools"
-              [class.visible]="hoveredMessageId === message.messageId"
-              (mouseenter)="showMessageTools(message.messageId)"
-              (mouseleave)="hideMessageTools(message.messageId)"
               (click)="$event.stopPropagation()"
             >
               <div class="message-tools-bar">
                 <button
                   type="button"
                   *ngFor="let emoji of quickReactions"
-                  (mousedown)="handleQuickReaction($event, message, emoji)"
+                  (click)="$event.stopPropagation(); reactToMessage(message, emoji)"
                 >
                   {{ emoji }}
                 </button>
                 <span class="tool-divider"></span>
-                <button type="button" class="action-btn" (mousedown)="handleReplyAction($event, message)" title="Reply">
+                <button type="button" class="action-btn" (click)="$event.stopPropagation(); startReply(message)" title="Reply">
                   <i class="fa-solid fa-reply"></i>
                 </button>
                 <button
                   type="button"
                   class="action-btn"
                   *ngIf="canEdit(message) && editingMessageId !== message.messageId"
-                  (mousedown)="handleEditAction($event, message)"
+                  (click)="$event.stopPropagation(); startEdit(message)"
                   title="Edit"
                 >
                   <i class="fa-solid fa-pen"></i>
@@ -109,7 +106,7 @@
                   type="button"
                   class="action-btn danger"
                   *ngIf="canDelete(message) && editingMessageId !== message.messageId"
-                  (mousedown)="handleDeleteAction($event, message)"
+                  (click)="$event.stopPropagation(); deleteLatestIfEligible(message)"
                   title="Delete"
                 >
                   <i class="fa-solid fa-trash"></i>
