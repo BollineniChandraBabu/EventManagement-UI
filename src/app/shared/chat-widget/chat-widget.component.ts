@@ -44,6 +44,7 @@ export class ChatWidgetComponent {
   composer = '';
   currentUserId: number | null = null;
   hoveredMessageId: number | null = null;
+  activeMessageToolsId: number | null = null;
   editingMessageId: number | null = null;
   editDraft = '';
   selectedAttachment: File | null = null;
@@ -179,12 +180,14 @@ export class ChatWidgetComponent {
   closeConversation(): void {
     this.activeConversation = null;
     this.messages = [];
+    this.activeMessageToolsId = null;
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
   }
 
   chooseConversation(conversation: ChatConversation): void {
     this.activeConversation = conversation;
+    this.activeMessageToolsId = null;
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
     this.chat.subscribeToConversation(conversation.conversationId);
@@ -214,6 +217,7 @@ export class ChatWidgetComponent {
 
     this.activeConversation = draftConversation;
     this.messages = [];
+    this.activeMessageToolsId = null;
     this.showNewChatPicker = false;
   }
 
@@ -277,7 +281,7 @@ export class ChatWidgetComponent {
       return '';
     }
 
-    return date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    return this.formatTeamsLikeDateTime(date);
   }
 
   formatMessageDisplayTime(value: string): string {
@@ -286,19 +290,7 @@ export class ChatWidgetComponent {
       return '';
     }
 
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-    const isToday = now.toDateString() === date.toDateString();
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    }
-
-    if (diffDays < 7) {
-      return `${date.toLocaleDateString([], { weekday: 'long' })} ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
-    }
-
-    return date.toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    return this.formatTeamsLikeDateTime(date);
   }
 
   getActiveConversationStatus(): string {
@@ -386,6 +378,20 @@ export class ChatWidgetComponent {
   cancelReply(): void {
     this.replyingToMessage = null;
   }
+
+  isMessageToolsVisible(messageId: number): boolean {
+    return this.hoveredMessageId === messageId || this.activeMessageToolsId === messageId;
+  }
+
+  onMessageClick(messageId: number, event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, input, textarea, a')) {
+      return;
+    }
+
+    this.activeMessageToolsId = this.activeMessageToolsId === messageId ? null : messageId;
+  }
+
 
   displayConversationName(conversation: ChatConversation): string {
     return conversation.otherUserActive === false
@@ -659,7 +665,34 @@ export class ChatWidgetComponent {
       return 'recently';
     }
 
-    return date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    return this.formatTeamsLikeDateTime(date);
+  }
+
+  private formatTeamsLikeDateTime(date: Date): string {
+    const dayDiff = this.diffInCalendarDays(date, new Date());
+    const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    if (dayDiff === 0) {
+      return time;
+    }
+
+    if (dayDiff === 1) {
+      return `Yesterday ${time}`;
+    }
+
+    if (dayDiff > 1 && dayDiff < 7) {
+      const dayName = date.toLocaleDateString([], { weekday: 'long' });
+      return `${dayName} ${time}`;
+    }
+
+    return `${date.toLocaleDateString([], { day: '2-digit', month: '2-digit' })} ${time}`;
+  }
+
+  private diffInCalendarDays(earlier: Date, later: Date): number {
+    const earlierStart = new Date(earlier.getFullYear(), earlier.getMonth(), earlier.getDate());
+    const laterStart = new Date(later.getFullYear(), later.getMonth(), later.getDate());
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    return Math.floor((laterStart.getTime() - earlierStart.getTime()) / millisecondsPerDay);
   }
 
   private applyDeleteEvent(event: ChatDeleteEvent): void {
