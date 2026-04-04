@@ -209,41 +209,47 @@
 .message-body small { color: #64748b; font-size: 0.68rem; display: block; }
 .seen-time { color: #2563eb; font-size: 0.66rem; margin-top: 0.1rem; }
 
-.message-actions { display: flex; gap: 0.2rem; padding-top: 0.2rem; min-width: 0; }
 .message-tools {
   position: absolute;
-  right: calc(100% + 6px);
-  top: 0;
-  width: 210px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  align-items: flex-start;
+  top: -44px;
+  right: 0;
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.12s ease;
   z-index: 2;
 }
+.chat-message:not(.mine) .message-tools { left: 0; right: auto; }
 .message-tools.visible {
   visibility: visible;
   opacity: 1;
   pointer-events: auto;
 }
-.message-reaction-actions {
+.message-tools-bar {
   display: flex;
+  align-items: center;
   gap: 0.2rem;
-  flex-wrap: nowrap;
+  background: #fff;
+  border: 1px solid #dbe7ff;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+  padding: 0.25rem;
+  max-width: min(80vw, 390px);
   overflow-x: auto;
-  max-width: 100%;
 }
-.message-reaction-actions button {
+.message-tools-bar > button:not(.action-btn) {
   border: 1px solid #d7e3ff;
   background: #f8fbff;
   border-radius: 999px;
   min-width: 28px;
   height: 28px;
   line-height: 1;
+}
+.tool-divider {
+  width: 1px;
+  height: 22px;
+  background: #e2e8f0;
+  margin: 0 0.2rem;
 }
 .action-btn {
   width: 28px;
@@ -471,18 +477,12 @@
   .chat-message.mine { align-items: flex-end; }
   .message-tools {
     position: static;
-    width: auto;
-    max-width: 100%;
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.25rem;
+    margin-bottom: 0.1rem;
   }
-  .message-actions,
-  .message-reaction-actions { padding-top: 0; max-width: 100%; overflow: visible; }
+  .message-tools-bar { max-width: 100%; }
   .message-body { max-width: min(92vw, 100%); }
   .attachment-chip { max-width: 100%; }
 }

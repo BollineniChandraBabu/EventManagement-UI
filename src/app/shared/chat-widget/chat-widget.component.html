@@ -75,22 +75,16 @@
             (mouseenter)="hoveredMessageId = message.messageId"
           >
             <div class="message-tools" [class.visible]="hoveredMessageId === message.messageId">
-              <div
-                class="message-actions"
-                *ngIf="editingMessageId !== message.messageId"
-              >
-                <button
-                  type="button"
-                  class="action-btn"
-                  (click)="startReply(message)"
-                  title="Reply"
-                >
+              <div class="message-tools-bar">
+                <button type="button" *ngFor="let emoji of quickReactions" (click)="reactToMessage(message, emoji)">{{ emoji }}</button>
+                <span class="tool-divider"></span>
+                <button type="button" class="action-btn" (click)="startReply(message)" title="Reply">
                   <i class="fa-solid fa-reply"></i>
                 </button>
                 <button
                   type="button"
                   class="action-btn"
-                  *ngIf="canEdit(message)"
+                  *ngIf="canEdit(message) && editingMessageId !== message.messageId"
                   (click)="startEdit(message)"
                   title="Edit"
                 >
@@ -99,15 +93,12 @@
                 <button
                   type="button"
                   class="action-btn danger"
-                  *ngIf="canDelete(message)"
+                  *ngIf="canDelete(message) && editingMessageId !== message.messageId"
                   (click)="deleteLatestIfEligible(message)"
                   title="Delete"
                 >
                   <i class="fa-solid fa-trash"></i>
                 </button>
-              </div>
-              <div class="message-reaction-actions">
-                <button type="button" *ngFor="let emoji of quickReactions" (click)="reactToMessage(message, emoji)">{{ emoji }}</button>
               </div>
             </div>
 
