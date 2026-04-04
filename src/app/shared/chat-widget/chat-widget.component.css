@@ -172,6 +172,7 @@
   display: flex;
   gap: 0.25rem;
   align-items: flex-start;
+  position: relative;
 }
 
 .chat-message.mine { margin-left: auto; }
@@ -195,15 +196,19 @@
 
 .message-actions { display: flex; gap: 0.2rem; padding-top: 0.2rem; min-width: 0; }
 .message-tools {
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 0;
+  width: 210px;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   align-items: flex-start;
-  max-width: 210px;
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.12s ease;
+  z-index: 2;
 }
 .message-tools.visible {
   visibility: visible;
@@ -215,7 +220,7 @@
   gap: 0.2rem;
   flex-wrap: nowrap;
   overflow-x: auto;
-  max-width: 210px;
+  max-width: 100%;
 }
 .message-reaction-actions button {
   border: 1px solid #d7e3ff;

@@ -65,13 +65,12 @@
           </div>
         </div>
 
-        <div class="chat-messages" #messageScroller>
+        <div class="chat-messages" #messageScroller (mouseleave)="hoveredMessageId = null">
           <div
             class="chat-message"
             *ngFor="let message of messages"
             [class.mine]="message.mine"
             (mouseenter)="hoveredMessageId = message.messageId"
-            (mouseleave)="hoveredMessageId = null"
           >
             <div class="message-tools" [class.visible]="hoveredMessageId === message.messageId">
               <div
