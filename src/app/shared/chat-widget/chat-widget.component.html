@@ -104,6 +104,9 @@
                 <i class="fa-solid fa-trash"></i>
               </button>
             </div>
+            <div class="message-reaction-actions" *ngIf="hoveredMessageId === message.messageId">
+              <button type="button" *ngFor="let emoji of quickReactions" (click)="reactToMessage(message, emoji)">{{ emoji }}</button>
+            </div>
 
             <div class="message-body">
               <div class="reply-context" *ngIf="message.replyToMessageId">
@@ -136,6 +139,11 @@
 
               <small>{{ message.sentAt | date: 'shortTime' }}</small>
               <small class="seen-time" *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">Seen {{ formatMessageTime(message.seenAt) }}</small>
+              <div class="message-reactions" *ngIf="reactionsForMessage(message.messageId).length">
+                <span *ngFor="let reaction of reactionsForMessage(message.messageId)" [class.mine]="reaction.mine">
+                  {{ reaction.emoji }} {{ reaction.count }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -147,10 +155,6 @@
             <i class="fa-solid fa-reply"></i>
             <span>{{ replyingToMessage.messageText || replyingToMessage.reactionEmoji || ('Reply #' + replyingToMessage.messageId) }}</span>
             <button type="button" (click)="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-
-          <div class="quick-reactions" *ngIf="canSendToActiveUser">
-            <button type="button" *ngFor="let emoji of quickReactions" (click)="quickReply(emoji)">{{ emoji }}</button>
           </div>
 
           <div class="disabled-chat-note" *ngIf="!canSendToActiveUser">

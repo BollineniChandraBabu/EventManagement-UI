@@ -194,6 +194,20 @@
 .seen-time { color: #2563eb; font-size: 0.66rem; margin-top: 0.1rem; }
 
 .message-actions { display: flex; gap: 0.2rem; padding-top: 0.2rem; min-width: 92px; }
+.message-reaction-actions {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  max-width: 145px;
+}
+.message-reaction-actions button {
+  border: 1px solid #d7e3ff;
+  background: #f8fbff;
+  border-radius: 999px;
+  min-width: 28px;
+  height: 28px;
+  line-height: 1;
+}
 .action-btn {
   width: 28px;
   height: 28px;
@@ -242,6 +256,22 @@
 }
 
 .reaction-only { font-size: 1.35rem; line-height: 1.2; }
+.message-reactions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+.message-reactions span {
+  background: #eef2ff;
+  border-radius: 999px;
+  padding: 0.08rem 0.38rem;
+  font-size: 0.68rem;
+}
+.message-reactions span.mine {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
 
 .chat-composer-shell { border-top: 1px solid #e6edf9; background: #fff; padding: 0.5rem; }
 .replying-pill,
@@ -268,14 +298,6 @@
 .replying-pill button,
 .selected-file-pill button { border: none; background: transparent; color: #64748b; }
 
-.quick-reactions { display: flex; gap: 0.4rem; margin-bottom: 0.45rem; }
-.quick-reactions button {
-  border: 1px solid #d7e3ff;
-  background: #f4f8ff;
-  border-radius: 999px;
-  min-width: 38px;
-  height: 34px;
-}
 .disabled-chat-note {
   font-size: 0.75rem;
   color: #b45309;

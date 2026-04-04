@@ -37,6 +37,12 @@ export interface ChatMessage {
   reactionEmoji?: string | null;
 }
 
+export interface ChatMessageReaction {
+  emoji: string;
+  count: number;
+  mine: boolean;
+}
+
 export interface ChatMessagePage {
   items: ChatMessage[];
   page: number;

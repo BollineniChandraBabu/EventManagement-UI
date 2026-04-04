@@ -9,6 +9,7 @@ import {
   ChatDeleteEvent,
   ChatEditEvent,
   ChatMessage,
+  ChatMessageReaction,
   ChatPresenceEvent,
   ChatSeenOrTypingEvent,
   ChatUser
@@ -42,6 +43,7 @@ export class ChatWidgetComponent {
   typingUserId: number | null = null;
   replyingToMessage: ChatMessage | null = null;
   readonly quickReactions = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+  messageReactions: Record<number, ChatMessageReaction[]> = {};
   attachmentPreviewUrl: string | null = null;
   attachmentPreviewSafeUrl: SafeResourceUrl | null = null;
   attachmentPreviewType: 'image' | 'pdf' | null = null;
@@ -125,6 +127,7 @@ export class ChatWidgetComponent {
     const query = this.newChatSearch.trim().toLowerCase();
 
     return this.users
+      .filter((user) => user.active !== false)
       .filter((user) => !query || user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query))
       .slice(0, 8);
   }
@@ -171,6 +174,7 @@ export class ChatWidgetComponent {
       otherUserEmail: user.email,
       otherUserOnline: user.online,
       otherUserLastSeenAt: user.lastSeenAt,
+      otherUserActive: user.active !== false,
       lastMessage: '',
       lastMessageAt: null,
       unreadCount: 0
@@ -212,31 +216,6 @@ export class ChatWidgetComponent {
       }
     });
   }
-
-  quickReply(emoji: string): void {
-    if (!this.activeConversation || !this.currentUserId || !this.canSendToActiveUser || this.isSending) {
-      return;
-    }
-
-    this.isSending = true;
-    this.chat.sendMessage(
-      this.activeConversation.otherUserId,
-      '',
-      null,
-      this.replyingToMessage?.messageId ?? null,
-      emoji
-    ).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => (this.isSending = false))
-    ).subscribe((message) => {
-      this.mergeIncomingMessage(message);
-      this.upsertConversationFromMessage(message);
-      this.reloadConversationsOnly();
-      this.scrollToBottom();
-      this.replyingToMessage = null;
-    });
-  }
-
 
   onComposerInput(): void {
     if (!this.activeConversation || !this.currentUserId || !this.canSendToActiveUser) {
@@ -362,7 +341,17 @@ export class ChatWidgetComponent {
   }
 
   displayUserName(user: ChatUser): string {
-    return user.active === false ? `${user.name} (Disabled user)` : user.name;
+    return user.name;
+  }
+
+  reactToMessage(message: ChatMessage, emoji: string): void {
+    this.chat.reactToMessage(message.messageId, emoji).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+      this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+    });
+  }
+
+  reactionsForMessage(messageId: number): ChatMessageReaction[] {
+    return this.messageReactions[messageId] ?? [];
   }
 
   openAttachment(message: ChatMessage): void {
@@ -491,14 +480,26 @@ export class ChatWidgetComponent {
           ? { ...user, online: activeState.online, lastSeenAt: activeState.lastSeenAt }
           : user;
       });
+      this.applyActiveFlagsToConversations();
     });
   }
 
   private reloadConversationsOnly(): void {
     this.chat.listConversations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((items) => {
-      this.conversations = items;
+      const userMap = new Map(this.users.map((user) => [user.userId, user.active]));
+      this.conversations = items.map((conversation) => ({
+        ...conversation,
+        otherUserActive: conversation.otherUserActive ?? userMap.get(conversation.otherUserId) ?? true
+      }));
       if (items.length && !this.activeConversation) {
-        this.chooseConversation(items[0]);
+        this.chooseConversation(this.conversations[0]);
+      }
+
+      if (this.activeConversation) {
+        const matched = this.conversations.find((item) => item.conversationId === this.activeConversation?.conversationId);
+        if (matched) {
+          this.activeConversation = matched;
+        }
       }
     });
   }
@@ -506,6 +507,7 @@ export class ChatWidgetComponent {
   private loadMessages(otherUserId: number): void {
     this.chat.conversationMessages(otherUserId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
       this.messages = [...response.items].reverse();
+      this.loadReactionsForMessages(this.messages);
       this.markConversationRead(otherUserId);
       this.scrollToBottom();
     });
@@ -660,6 +662,29 @@ export class ChatWidgetComponent {
     this.attachmentPreviewName = '';
     if (close) {
       this.attachmentPreviewOpen = false;
+    }
+  }
+
+  private loadReactionsForMessages(messages: ChatMessage[]): void {
+    messages.forEach((message) => {
+      this.chat.listMessageReactions(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+        this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+      });
+    });
+  }
+
+  private applyActiveFlagsToConversations(): void {
+    const activeByUser = new Map(this.users.map((user) => [user.userId, user.active !== false]));
+    this.conversations = this.conversations.map((conversation) => ({
+      ...conversation,
+      otherUserActive: activeByUser.get(conversation.otherUserId) ?? conversation.otherUserActive ?? true
+    }));
+
+    if (this.activeConversation) {
+      this.activeConversation = {
+        ...this.activeConversation,
+        otherUserActive: activeByUser.get(this.activeConversation.otherUserId) ?? this.activeConversation.otherUserActive ?? true
+      };
     }
   }
 }

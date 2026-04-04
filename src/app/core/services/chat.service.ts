@@ -9,6 +9,7 @@ import {
   ChatMessage,
   ChatPresenceEvent,
   ChatMessagePage,
+  ChatMessageReaction,
   ChatSocketEvent,
   ChatUser
 } from '../models/chat.models';
@@ -117,6 +118,19 @@ export class ChatService {
 
   editMessage(messageId: number, messageText: string): Observable<ChatMessage> {
     return this.http.patch<ChatMessage>(`${environment.apiUrl}/chat/messages/${messageId}`, { messageText });
+  }
+
+  listMessageReactions(messageId: number): Observable<ChatMessageReaction[]> {
+    return this.http.get<{ messageId: number; reactions: ChatMessageReaction[] }>(`${environment.apiUrl}/chat/messages/${messageId}/reactions`).pipe(
+      map((response) => response.reactions ?? [])
+    );
+  }
+
+  reactToMessage(messageId: number, emoji: string): Observable<ChatMessageReaction[]> {
+    return this.http.post<{ messageId: number; reactions: ChatMessageReaction[] }>(
+      `${environment.apiUrl}/chat/messages/${messageId}/reactions`,
+      { emoji }
+    ).pipe(map((response) => response.reactions ?? []));
   }
 
   downloadAttachment(messageId: number): Observable<Blob> {
