@@ -25,6 +25,8 @@ export class SchedulersComponent {
   pageSize = 10;
   totalPages = 0;
   totalElements = 0;
+  sortBy = 'name';
+  sortDir: 'asc' | 'desc' = 'asc';
   triggeringJobs = new Set<string>();
 
   constructor() {
@@ -79,6 +81,34 @@ export class SchedulersComponent {
     this.pageSize = Number(value);
     this.page = 0;
     this.loadSchedulers();
+  }
+
+  onSortByChange(value: string): void {
+    this.sortBy = value;
+    this.page = 0;
+    this.loadSchedulers();
+  }
+
+  onSortDirChange(value: string): void {
+    this.sortDir = value === 'desc' ? 'desc' : 'asc';
+    this.page = 0;
+    this.loadSchedulers();
+  }
+
+  toggleSort(field: string): void {
+    if (this.sortBy === field) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = field;
+      this.sortDir = 'asc';
+    }
+
+    this.page = 0;
+    this.loadSchedulers();
+  }
+
+  isSortedBy(field: string): boolean {
+    return this.sortBy === field;
   }
 
   nextPage(): void {
@@ -137,9 +167,9 @@ export class SchedulersComponent {
     this.totalElements = 0;
     this.totalPages = 0;
 
-    this.api.schedulers(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.schedulers(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
-        this.viewSchedulers = (response.content ?? []).slice().sort((a, b) => `${a.type}-${a.name}`.localeCompare(`${b.type}-${b.name}`));
+        this.viewSchedulers = response.content ?? [];
         this.totalElements = response.totalElements ?? this.viewSchedulers.length;
         this.totalPages = response.totalPages ?? 0;
         this.loading = false;

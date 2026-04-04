@@ -62,7 +62,9 @@ export interface SaveUserPayload {
 
 export interface RelationshipSeed {
   id: number;
+  category?: string;
   code: string;
+  displayName?: string;
   active?: boolean;
 }
 
@@ -73,6 +75,7 @@ export interface SaveRelationshipSeedPayload {
 
 export interface EventTypeSeed {
   id: number;
+  code?: string;
   displayName: string;
   active?: boolean;
 }

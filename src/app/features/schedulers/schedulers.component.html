@@ -43,14 +43,34 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>Job name</th>
-              <th>Type</th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('name')" [disabled]="loading">
+                  Job name
+                  <i *ngIf="isSortedBy('name')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('type')" [disabled]="loading">
+                  Type
+                  <i *ngIf="isSortedBy('type')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
               <th>State</th>
               <th>Runs (T/S/F)</th>
               <th>Success %</th>
               <th>Last status</th>
-              <th>Last started</th>
-              <th>Next fire</th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('lastStartedAt')" [disabled]="loading">
+                  Last started
+                  <i *ngIf="isSortedBy('lastStartedAt')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('nextFireTime')" [disabled]="loading">
+                  Next fire
+                  <i *ngIf="isSortedBy('nextFireTime')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
               <th>Duration</th>
               <th class="text-end">Action</th>
             </tr>

@@ -26,6 +26,7 @@ export class RelationshipSeedEditorComponent {
 
   form = this.fb.nonNullable.group({
     id: [0],
+    code: [''],
     name: ['', [Validators.required]]
   });
 
@@ -54,8 +55,8 @@ export class RelationshipSeedEditorComponent {
       return;
     }
 
-    const { id, ...payload } = this.form.getRawValue();
-    const request = id ? this.api.updateRelationshipSeed(id, payload) : this.api.saveRelationshipSeed(payload);
+    const { id, code, ...payload } = this.form.getRawValue();
+    const request = id ? this.api.updateRelationshipSeed(code || this.asCode(payload.name), payload) : this.api.saveRelationshipSeed(payload);
 
     this.saving = true;
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -77,7 +78,8 @@ export class RelationshipSeedEditorComponent {
       next: (seed) => {
         this.form.patchValue({
           id: seed.id,
-          name: seed.code
+          code: seed.code,
+          name: seed.displayName || seed.code
         });
         this.loading = false;
       },
@@ -92,7 +94,12 @@ export class RelationshipSeedEditorComponent {
   private resetForm(): void {
     this.form.reset({
       id: 0,
+      code: '',
       name: ''
     });
+  }
+
+  private asCode(value: string): string {
+    return value.trim().replace(/\s+/g, '_').toUpperCase();
   }
 }

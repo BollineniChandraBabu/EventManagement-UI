@@ -93,11 +93,11 @@ export class ApiService {
   }
 
   saveUser(payload: SaveUserPayload) {
-    return this.http.post(`${environment.apiUrl}/users`, payload);
+    return this.http.post(`${environment.apiUrl}/users`, this.normalizeUserPayload(payload));
   }
 
   updateUser(id: number, payload: SaveUserPayload) {
-    return this.http.put(`${environment.apiUrl}/users`, { ...payload, id });
+    return this.http.put(`${environment.apiUrl}/users`, this.normalizeUserPayload(payload, id));
   }
 
   userById(id: number): Observable<AppUser> {
@@ -110,10 +110,31 @@ export class ApiService {
     return this.http.post(`${environment.apiUrl}/users/${id}/deactivate`, {});
   }
 
-  relationshipSeeds(searchKey = ''): Observable<RelationshipSeed[]> {
-    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
-      params: new HttpParams().set('searchKey', searchKey)
-    })).pipe(map((response) => this.unwrap(response)));
+  relationshipSeeds(
+    searchKey = '',
+    page = 0,
+    size = 1000,
+    sortBy = 'displayName',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<RelationshipSeed[]> {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<RelationshipSeed[] | PagedResponse<RelationshipSeed>>>(`${environment.apiUrl}${path}`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    })).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
+  }
+
+  relationshipSeedsPaged(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'displayName',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<PagedResponse<RelationshipSeed>> {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<PagedResponse<RelationshipSeed> | RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    })).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
   relationshipSeedById(id: number): Observable<RelationshipSeed> {
@@ -123,21 +144,30 @@ export class ApiService {
   }
 
   saveRelationshipSeed(payload: SaveRelationshipSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, payload));
+    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, this.normalizeEnumSeedPayload(payload)));
   }
 
-  updateRelationshipSeed(id: number, payload: SaveRelationshipSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}`, { ...payload, id }));
+  updateRelationshipSeed(code: string, payload: SaveRelationshipSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${encodeURIComponent(code)}`, this.normalizeEnumSeedPayload(payload)));
   }
 
   deleteRelationshipSeed(id: number): Observable<unknown> {
     return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`));
   }
 
-  eventTypeSeeds(searchKey = ''): Observable<EventTypeSeed[]> {
-    return this.requestWithFallback<ApiResponse<EventTypeSeed[]>>((path) => this.http.get<ApiResponse<EventTypeSeed[]>>(`${environment.apiUrl}${path}`, {
-      params: new HttpParams().set('searchKey', searchKey)
-    }), this.eventTypeSeedPaths).pipe(map((response) => this.unwrap(response)));
+  eventTypeSeeds(
+    searchKey = '',
+    page = 0,
+    size = 1000,
+    sortBy = 'displayName',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<EventTypeSeed[]> {
+    return this.requestWithFallback<ApiResponse<EventTypeSeed[] | PagedResponse<EventTypeSeed>>>((path) => this.http.get<ApiResponse<EventTypeSeed[] | PagedResponse<EventTypeSeed>>>(`${environment.apiUrl}${path}`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    }), this.eventTypeSeedPaths).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
   }
 
   eventTypeSeedById(id: number): Observable<EventTypeSeed> {
@@ -147,20 +177,26 @@ export class ApiService {
   }
 
   saveEventTypeSeed(payload: SaveEventTypeSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, payload), this.eventTypeSeedPaths);
+    return this.requestWithFallback((path) => this.http.post(`${environment.apiUrl}${path}`, this.normalizeEnumSeedPayload(payload)), this.eventTypeSeedPaths);
   }
 
-  updateEventTypeSeed(id: number, payload: SaveEventTypeSeedPayload): Observable<unknown> {
-    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}`, { ...payload, id }), this.eventTypeSeedPaths);
+  updateEventTypeSeed(code: string, payload: SaveEventTypeSeedPayload): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.put(`${environment.apiUrl}${path}/${encodeURIComponent(code)}`, this.normalizeEnumSeedPayload(payload)), this.eventTypeSeedPaths);
   }
 
   deleteEventTypeSeed(id: number): Observable<unknown> {
     return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`), this.eventTypeSeedPaths);
   }
 
-  events(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<EventItem>> {
+  events(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'eventDate',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<PagedResponse<EventItem>> {
     return this.http.get<ApiResponse<PagedResponse<EventItem> | EventItem[]>>(`${environment.apiUrl}/events`, {
-      params: this.pagedParams(page, size, searchKey)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
@@ -168,20 +204,37 @@ export class ApiService {
     return this.http.post(`${environment.apiUrl}/events`, payload);
   }
 
-  festivals(month?: number): Observable<FestivalItem[]> {
-    let params = new HttpParams();
+  festivals(
+    month?: number,
+    page = 0,
+    size = 200,
+    searchKey = '',
+    sortBy = 'eventDate',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<FestivalItem[]> {
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
     if (month) {
       params = params.set('month', month);
     }
 
-    return this.http.get<ApiResponse<FestivalItem[]>>(`${environment.apiUrl}/festivals`, { params }).pipe(
-      map((response) => this.unwrap(response))
+    return this.http.get<ApiResponse<FestivalItem[] | PagedResponse<FestivalItem>>>(`${environment.apiUrl}/festivals`, { params }).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
     );
   }
 
-  festivalWishMappings(): Observable<FestivalWishMapping[]> {
-    return this.http.get<ApiResponse<FestivalWishMapping[]>>(`${environment.apiUrl}/festival-wish-mappings`).pipe(
-      map((response) => this.unwrap(response))
+  festivalWishMappings(
+    page = 0,
+    size = 200,
+    searchKey = '',
+    sortBy = 'id',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<FestivalWishMapping[]> {
+    return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    }).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
     );
   }
 
@@ -241,9 +294,15 @@ export class ApiService {
     );
   }
 
-  schedulers(page = 0, size = 10, searchKey = ''): Observable<PagedResponse<SchedulerItem>> {
+  schedulers(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'name',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<PagedResponse<SchedulerItem>> {
     return this.http.get<ApiResponse<PagedResponse<SchedulerItem> | SchedulerItem[]>>(`${environment.apiUrl}/schedulers`, {
-      params: this.pagedParams(page, size, searchKey)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
@@ -293,6 +352,43 @@ export class ApiService {
       size: payload.size ?? size,
       totalElements: payload.totalElements ?? (payload.content?.length ?? 0),
       totalPages: payload.totalPages ?? 0
+    };
+  }
+
+  private normalizeCollection<T>(payload: T[] | PagedResponse<T> | unknown): T[] {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && typeof payload === 'object' && 'content' in payload && Array.isArray(payload.content)) {
+      return payload.content as T[];
+    }
+
+    return [];
+  }
+
+  private normalizeUserPayload(payload: SaveUserPayload, id?: number): Record<string, unknown> {
+    return {
+      ...payload,
+      ...(id ? { id, userId: id } : {}),
+      dob: payload.dob ?? '',
+      dateOfBirth: payload.dob ?? '',
+      relationShip: payload.relationShip ?? '',
+      relationship: payload.relationShip ?? '',
+      isBirthdayEnabled: payload.isBirthdayEnabled ?? false,
+      isGoodMorningEnabled: payload.isGoodMorningEnabled ?? false,
+      isGoodNightEnabled: payload.isGoodNightEnabled ?? false
+    };
+  }
+
+  private normalizeEnumSeedPayload(payload: SaveRelationshipSeedPayload | SaveEventTypeSeedPayload): Record<string, unknown> {
+    const normalizedName = (payload.name ?? '').trim();
+    const normalizedCode = normalizedName.replace(/\s+/g, '_').toUpperCase();
+
+    return {
+      code: normalizedCode,
+      displayName: normalizedName,
+      active: true
     };
   }
 

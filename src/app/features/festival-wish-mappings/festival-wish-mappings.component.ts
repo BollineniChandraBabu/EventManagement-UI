@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AppUser, FestivalItem, FestivalWishMapping, SaveFestivalWishMappingPayload } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -17,6 +18,8 @@ export class FestivalWishMappingsComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   festivals: FestivalItem[] = [];
   users: AppUser[] = [];
@@ -28,6 +31,8 @@ export class FestivalWishMappingsComponent {
   deletingIds = new Set<number>();
 
   selectedMonth = new Date().getMonth() + 1;
+  mode: 'dashboard' | 'editor' = 'dashboard';
+  editingMappingId: number | null = null;
 
   form: SaveFestivalWishMappingPayload = {
     specialEventId: 0,
@@ -55,6 +60,10 @@ export class FestivalWishMappingsComponent {
     this.loadUsers();
     this.loadFestivals();
     this.loadMappings();
+
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.mode = params.get('mode') === 'editor' ? 'editor' : 'dashboard';
+    });
   }
 
   loadFestivals(): void {
@@ -107,11 +116,11 @@ export class FestivalWishMappingsComponent {
 
     this.api.saveFestivalWishMapping(payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.toast.success('Festival wish mapping saved successfully.');
+        this.toast.success(this.editingMappingId ? 'Festival wish mapping updated successfully.' : 'Festival wish mapping saved successfully.');
         this.saving = false;
-        this.form.customMessage = '';
-        this.form.active = true;
+        this.resetForm();
         this.loadMappings();
+        this.goToDashboardMode();
       },
       error: () => {
         this.toast.error('Unable to save festival wish mapping.');
@@ -139,6 +148,39 @@ export class FestivalWishMappingsComponent {
     return this.deletingIds.has(id);
   }
 
+  goToEditorMode(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { mode: 'editor' },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  goToDashboardMode(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { mode: null },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  startCreate(): void {
+    this.editingMappingId = null;
+    this.resetForm();
+    this.goToEditorMode();
+  }
+
+  startEdit(mapping: FestivalWishMapping): void {
+    this.editingMappingId = mapping.id;
+    this.form = {
+      specialEventId: mapping.specialEventId,
+      userId: mapping.userId,
+      customMessage: mapping.customMessage ?? '',
+      active: mapping.active
+    };
+    this.goToEditorMode();
+  }
+
   private loadUsers(): void {
     this.api.users(0, 500, '', 'name', 'asc').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
@@ -148,5 +190,14 @@ export class FestivalWishMappingsComponent {
       },
       error: () => this.toast.error('Unable to load users right now.')
     });
+  }
+
+  private resetForm(): void {
+    this.form = {
+      specialEventId: this.festivals[0]?.id ?? 0,
+      userId: this.users[0]?.id ?? 0,
+      customMessage: '',
+      active: true
+    };
   }
 }
