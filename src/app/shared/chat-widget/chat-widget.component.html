@@ -73,7 +73,7 @@
             (mouseenter)="hoveredMessageId = message.messageId"
             (mouseleave)="hoveredMessageId = null"
           >
-            <div class="message-tools" *ngIf="hoveredMessageId === message.messageId">
+            <div class="message-tools" [class.visible]="hoveredMessageId === message.messageId">
               <div
                 class="message-actions"
                 *ngIf="editingMessageId !== message.messageId"
