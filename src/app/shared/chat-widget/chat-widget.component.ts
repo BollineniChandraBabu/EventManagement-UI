@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, ViewChild, inject } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin } from 'rxjs';
@@ -8,11 +9,19 @@ import {
   ChatDeleteEvent,
   ChatEditEvent,
   ChatMessage,
+  ChatMessageReaction,
   ChatPresenceEvent,
   ChatSeenOrTypingEvent,
   ChatUser
 } from '../../core/models/chat.models';
 import { ChatService } from '../../core/services/chat.service';
+
+interface ChatTimelineEntry {
+  kind: 'day' | 'message';
+  dayKey?: string;
+  dayLabel?: string;
+  message?: ChatMessage;
+}
 
 @Component({
   selector: 'app-chat-widget',
@@ -24,6 +33,7 @@ import { ChatService } from '../../core/services/chat.service';
 export class ChatWidgetComponent {
   private readonly chat = inject(ChatService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sanitizer = inject(DomSanitizer);
 
   @ViewChild('messageScroller') messageScroller?: ElementRef<HTMLDivElement>;
   @ViewChild('attachmentInput') attachmentInput?: ElementRef<HTMLInputElement>;
@@ -38,6 +48,16 @@ export class ChatWidgetComponent {
   editDraft = '';
   selectedAttachment: File | null = null;
   typingUserId: number | null = null;
+  replyingToMessage: ChatMessage | null = null;
+  readonly quickReactions = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+  messageReactions: Record<number, ChatMessageReaction[]> = {};
+  attachmentPreviewUrl: string | null = null;
+  attachmentPreviewSafeUrl: SafeResourceUrl | null = null;
+  attachmentPreviewType: 'image' | 'pdf' | null = null;
+  attachmentPreviewName = '';
+  attachmentPreviewLoading = false;
+  attachmentPreviewOpen = false;
+  highlightedMessageId: number | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -49,12 +69,37 @@ export class ChatWidgetComponent {
   activeConversation: ChatConversation | null = null;
   messages: ChatMessage[] = [];
 
+  get timelineEntries(): ChatTimelineEntry[] {
+    const timeline: ChatTimelineEntry[] = [];
+    let previousDayKey: string | null = null;
+
+    this.messages.forEach((message) => {
+      const dayKey = this.dayKey(message.sentAt);
+      if (dayKey && dayKey !== previousDayKey) {
+        timeline.push({
+          kind: 'day',
+          dayKey,
+          dayLabel: this.formatDayLabel(message.sentAt)
+        });
+        previousDayKey = dayKey;
+      }
+
+      timeline.push({
+        kind: 'message',
+        message
+      });
+    });
+
+    return timeline;
+  }
+
   constructor() {
     this.destroyRef.onDestroy(() => {
       this.stopHeartbeat();
       if (this.typingTimer) {
         clearTimeout(this.typingTimer);
       }
+      this.clearAttachmentPreviewState();
     });
 
     this.chat.currentUserId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
@@ -103,13 +148,18 @@ export class ChatWidgetComponent {
   }
 
   get canSend(): boolean {
-    return !!this.activeConversation && (!!this.composer.trim() || !!this.selectedAttachment) && !this.isSending;
+    return !!this.activeConversation && this.canSendToActiveUser && (!!this.composer.trim() || !!this.selectedAttachment) && !this.isSending;
+  }
+
+  get canSendToActiveUser(): boolean {
+    return !!this.activeConversation && this.activeConversation.otherUserActive !== false;
   }
 
   get filteredNewChatUsers(): ChatUser[] {
     const query = this.newChatSearch.trim().toLowerCase();
 
     return this.users
+      .filter((user) => user.active !== false)
       .filter((user) => !query || user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query))
       .slice(0, 8);
   }
@@ -130,11 +180,13 @@ export class ChatWidgetComponent {
     this.activeConversation = null;
     this.messages = [];
     this.showNewChatPicker = false;
+    this.replyingToMessage = null;
   }
 
   chooseConversation(conversation: ChatConversation): void {
     this.activeConversation = conversation;
     this.showNewChatPicker = false;
+    this.replyingToMessage = null;
     this.chat.subscribeToConversation(conversation.conversationId);
     this.typingUserId = null;
     this.loadMessages(conversation.otherUserId);
@@ -154,6 +206,7 @@ export class ChatWidgetComponent {
       otherUserEmail: user.email,
       otherUserOnline: user.online,
       otherUserLastSeenAt: user.lastSeenAt,
+      otherUserActive: user.active !== false,
       lastMessage: '',
       lastMessageAt: null,
       unreadCount: 0
@@ -166,14 +219,20 @@ export class ChatWidgetComponent {
 
   send(): void {
     const text = this.composer.trim();
-    if ((!text && !this.selectedAttachment) || !this.activeConversation || !this.currentUserId || this.isSending) {
+    if ((!text && !this.selectedAttachment) || !this.activeConversation || !this.currentUserId || this.isSending || !this.canSendToActiveUser) {
       return;
     }
 
     this.isSending = true;
     const receiverId = this.activeConversation.otherUserId;
 
-    this.chat.sendMessage(receiverId, text, this.selectedAttachment).pipe(
+    this.chat.sendMessage(
+      receiverId,
+      text,
+      this.selectedAttachment,
+      this.replyingToMessage?.messageId ?? null,
+      null
+    ).pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => (this.isSending = false))
 ).subscribe((message) => {
@@ -183,15 +242,15 @@ export class ChatWidgetComponent {
       this.scrollToBottom();
       this.composer = '';
       this.clearAttachment();
+      this.replyingToMessage = null;
       if (this.activeConversation && this.currentUserId) {
         this.chat.publishTyping(this.activeConversation.conversationId, this.currentUserId, false);
       }
     });
   }
 
-
   onComposerInput(): void {
-    if (!this.activeConversation || !this.currentUserId) {
+    if (!this.activeConversation || !this.currentUserId || !this.canSendToActiveUser) {
       return;
     }
 
@@ -219,6 +278,27 @@ export class ChatWidgetComponent {
     }
 
     return date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  formatMessageDisplayTime(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    const isToday = now.toDateString() === date.toDateString();
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    if (diffDays < 7) {
+      return `${date.toLocaleDateString([], { weekday: 'long' })} ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    }
+
+    return date.toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
   getActiveConversationStatus(): string {
@@ -299,18 +379,114 @@ export class ChatWidgetComponent {
     }
   }
 
+  startReply(message: ChatMessage): void {
+    this.replyingToMessage = message;
+  }
+
+  cancelReply(): void {
+    this.replyingToMessage = null;
+  }
+
+  displayConversationName(conversation: ChatConversation): string {
+    return conversation.otherUserActive === false
+      ? `${conversation.otherUserName} (Disabled user)`
+      : conversation.otherUserName;
+  }
+
+  displayUserName(user: ChatUser): string {
+    return user.name;
+  }
+
+  reactToMessage(message: ChatMessage, emoji: string): void {
+    this.chat.reactToMessage(message.messageId, emoji).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+      this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+    });
+  }
+
+  removeReaction(message: ChatMessage, emoji: string): void {
+    this.chat.removeReaction(message.messageId, emoji).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+      this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+    });
+  }
+
+  reactionsForMessage(messageId: number): ChatMessageReaction[] {
+    return this.messageReactions[messageId] ?? [];
+  }
+
+  jumpToMessage(messageId: number | null | undefined): void {
+    if (!messageId) {
+      return;
+    }
+
+    const target = this.messageScroller?.nativeElement.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.highlightedMessageId = messageId;
+    setTimeout(() => {
+      if (this.highlightedMessageId === messageId) {
+        this.highlightedMessageId = null;
+      }
+    }, 1500);
+  }
+
+  openAttachment(message: ChatMessage): void {
+    if (!message.attachmentFileName) {
+      return;
+    }
+
+    if (!this.isPreviewSupported(message)) {
+      this.downloadAttachment(message);
+      return;
+    }
+
+    this.attachmentPreviewLoading = true;
+    this.attachmentPreviewOpen = true;
+    this.attachmentPreviewName = message.attachmentFileName;
+    this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (blob) => {
+        const normalizedBlob = this.normalizeAttachmentBlob(blob, message);
+        const url = URL.createObjectURL(normalizedBlob);
+        this.clearAttachmentPreviewState(false);
+        this.attachmentPreviewOpen = true;
+        this.attachmentPreviewName = message.attachmentFileName ?? 'attachment';
+        this.attachmentPreviewUrl = url;
+        this.attachmentPreviewSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        this.attachmentPreviewType = this.resolveAttachmentPreviewType(message);
+        this.attachmentPreviewLoading = false;
+      },
+      error: () => {
+        this.attachmentPreviewLoading = false;
+        this.attachmentPreviewOpen = false;
+        this.downloadAttachment(message);
+      }
+    });
+  }
+
+  closeAttachmentPreview(): void {
+    this.clearAttachmentPreviewState();
+  }
+
+  downloadPreviewAttachment(): void {
+    if (!this.attachmentPreviewUrl) {
+      return;
+    }
+
+    const anchor = document.createElement('a');
+    anchor.href = this.attachmentPreviewUrl;
+    anchor.download = this.attachmentPreviewName || 'attachment';
+    anchor.click();
+  }
+
   downloadAttachment(message: ChatMessage): void {
     if (!message.attachmentFileName) {
       return;
     }
 
     this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((blob) => {
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = message.attachmentFileName || 'attachment';
-      anchor.click();
-      URL.revokeObjectURL(url);
+      this.downloadBlob(this.normalizeAttachmentBlob(blob, message), message.attachmentFileName || 'attachment');
     });
   }
 
@@ -383,14 +559,26 @@ export class ChatWidgetComponent {
           ? { ...user, online: activeState.online, lastSeenAt: activeState.lastSeenAt }
           : user;
       });
+      this.applyActiveFlagsToConversations();
     });
   }
 
   private reloadConversationsOnly(): void {
     this.chat.listConversations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((items) => {
-      this.conversations = items;
+      const userMap = new Map(this.users.map((user) => [user.userId, user.active]));
+      this.conversations = items.map((conversation) => ({
+        ...conversation,
+        otherUserActive: conversation.otherUserActive ?? userMap.get(conversation.otherUserId) ?? true
+      }));
       if (items.length && !this.activeConversation) {
-        this.chooseConversation(items[0]);
+        this.chooseConversation(this.conversations[0]);
+      }
+
+      if (this.activeConversation) {
+        const matched = this.conversations.find((item) => item.conversationId === this.activeConversation?.conversationId);
+        if (matched) {
+          this.activeConversation = matched;
+        }
       }
     });
   }
@@ -398,6 +586,7 @@ export class ChatWidgetComponent {
   private loadMessages(otherUserId: number): void {
     this.chat.conversationMessages(otherUserId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
       this.messages = [...response.items].reverse();
+      this.loadReactionsForMessages(this.messages);
       this.markConversationRead(otherUserId);
       this.scrollToBottom();
     });
@@ -438,9 +627,8 @@ export class ChatWidgetComponent {
       return;
     }
 
-    this.messages = this.messages.map((msg) =>
-      msg.conversationId === event.conversationId && msg.mine ? { ...msg, seenAt: new Date().toISOString() } : msg
-    );
+    // Do not optimistically stamp seenAt client-side.
+    // Backend may still report null, and synthetic timestamps cause flicker/wrong seen labels.
   }
 
   private applyPresenceEvent(event: ChatPresenceEvent): void {
@@ -510,5 +698,126 @@ export class ChatWidgetComponent {
         this.messageScroller.nativeElement.scrollTop = this.messageScroller.nativeElement.scrollHeight;
       }
     });
+  }
+
+  private dayKey(value: string): string | null {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  }
+
+  private formatDayLabel(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    if (diffDays < 7) {
+      return date.toLocaleDateString([], { weekday: 'long' });
+    }
+
+    return date.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  private resolveAttachmentPreviewType(message: ChatMessage): 'image' | 'pdf' | null {
+    const contentType = (message.attachmentContentType || '').toLowerCase();
+    const fileName = (message.attachmentFileName || '').toLowerCase();
+
+    if (contentType.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(fileName)) {
+      return 'image';
+    }
+
+    if (contentType === 'application/pdf' || fileName.endsWith('.pdf')) {
+      return 'pdf';
+    }
+
+    return null;
+  }
+
+  private isPreviewSupported(message: ChatMessage): boolean {
+    return this.resolveAttachmentPreviewType(message) !== null;
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private normalizeAttachmentBlob(blob: Blob, message: ChatMessage): Blob {
+    const type = this.resolveAttachmentMimeType(message);
+    if (!type || blob.type === type) {
+      return blob;
+    }
+    return new Blob([blob], { type });
+  }
+
+  private resolveAttachmentMimeType(message: ChatMessage): string {
+    const contentType = (message.attachmentContentType || '').trim().toLowerCase();
+    if (contentType) {
+      return contentType;
+    }
+
+    const fileName = (message.attachmentFileName || '').toLowerCase();
+    if (fileName.endsWith('.pdf')) {
+      return 'application/pdf';
+    }
+    if (/\.(png)$/.test(fileName)) {
+      return 'image/png';
+    }
+    if (/\.(jpe?g)$/.test(fileName)) {
+      return 'image/jpeg';
+    }
+    if (fileName.endsWith('.webp')) {
+      return 'image/webp';
+    }
+    return 'application/octet-stream';
+  }
+
+  private clearAttachmentPreviewState(close = true): void {
+    if (this.attachmentPreviewUrl) {
+      URL.revokeObjectURL(this.attachmentPreviewUrl);
+    }
+
+    this.attachmentPreviewUrl = null;
+    this.attachmentPreviewSafeUrl = null;
+    this.attachmentPreviewType = null;
+    this.attachmentPreviewLoading = false;
+    this.attachmentPreviewName = '';
+    if (close) {
+      this.attachmentPreviewOpen = false;
+    }
+  }
+
+  private loadReactionsForMessages(messages: ChatMessage[]): void {
+    messages.forEach((message) => {
+      this.chat.listMessageReactions(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+        this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+      });
+    });
+  }
+
+  private applyActiveFlagsToConversations(): void {
+    const activeByUser = new Map(this.users.map((user) => [user.userId, user.active !== false]));
+    this.conversations = this.conversations.map((conversation) => ({
+      ...conversation,
+      otherUserActive: activeByUser.get(conversation.otherUserId) ?? conversation.otherUserActive ?? true
+    }));
+
+    if (this.activeConversation) {
+      this.activeConversation = {
+        ...this.activeConversation,
+        otherUserActive: activeByUser.get(this.activeConversation.otherUserId) ?? this.activeConversation.otherUserActive ?? true
+      };
+    }
   }
 }

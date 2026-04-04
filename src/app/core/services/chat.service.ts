@@ -9,6 +9,7 @@ import {
   ChatMessage,
   ChatPresenceEvent,
   ChatMessagePage,
+  ChatMessageReaction,
   ChatSocketEvent,
   ChatUser
 } from '../models/chat.models';
@@ -79,8 +80,28 @@ export class ChatService {
     );
   }
 
-  sendMessage(receiverId: number, messageText: string, attachment?: File | null): Observable<ChatMessage> {
-    const payload = { receiverId, messageText };
+  sendMessage(
+    receiverId: number,
+    messageText: string,
+    attachment?: File | null,
+    replyToMessageId?: number | null,
+    reactionEmoji?: string | null
+  ): Observable<ChatMessage> {
+    const payload: {
+      receiverId: number;
+      messageText: string;
+      replyToMessageId?: number;
+      reactionEmoji?: string;
+    } = { receiverId, messageText };
+
+    if (replyToMessageId) {
+      payload.replyToMessageId = replyToMessageId;
+    }
+
+    if (reactionEmoji) {
+      payload.reactionEmoji = reactionEmoji;
+    }
+
     const form = new FormData();
     form.append('payload', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
     if (attachment) {
@@ -97,6 +118,27 @@ export class ChatService {
 
   editMessage(messageId: number, messageText: string): Observable<ChatMessage> {
     return this.http.patch<ChatMessage>(`${environment.apiUrl}/chat/messages/${messageId}`, { messageText });
+  }
+
+  listMessageReactions(messageId: number): Observable<ChatMessageReaction[]> {
+    return this.http.get<{ messageId: number; reactions: ChatMessageReaction[] }>(`${environment.apiUrl}/chat/messages/${messageId}/reactions`).pipe(
+      map((response) => response.reactions ?? [])
+    );
+  }
+
+  reactToMessage(messageId: number, emoji: string): Observable<ChatMessageReaction[]> {
+    return this.http.post<{ messageId: number; reactions: ChatMessageReaction[] }>(
+      `${environment.apiUrl}/chat/messages/${messageId}/reactions`,
+      { emoji }
+    ).pipe(map((response) => response.reactions ?? []));
+  }
+
+  removeReaction(messageId: number, emoji: string): Observable<ChatMessageReaction[]> {
+    return this.http.request<{ messageId: number; reactions: ChatMessageReaction[] }>(
+      'delete',
+      `${environment.apiUrl}/chat/messages/${messageId}/like`,
+      { body: { emoji } }
+    ).pipe(map((response) => response.reactions ?? []));
   }
 
   downloadAttachment(messageId: number): Observable<Blob> {
