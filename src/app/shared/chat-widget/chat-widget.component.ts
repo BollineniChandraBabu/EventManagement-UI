@@ -375,7 +375,8 @@ export class ChatWidgetComponent {
     this.attachmentPreviewName = message.attachmentFileName;
     this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
+        const normalizedBlob = this.normalizeAttachmentBlob(blob, message);
+        const url = URL.createObjectURL(normalizedBlob);
         this.clearAttachmentPreviewState(false);
         this.attachmentPreviewOpen = true;
         this.attachmentPreviewName = message.attachmentFileName ?? 'attachment';
@@ -413,7 +414,7 @@ export class ChatWidgetComponent {
     }
 
     this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((blob) => {
-      this.downloadBlob(blob, message.attachmentFileName || 'attachment');
+      this.downloadBlob(this.normalizeAttachmentBlob(blob, message), message.attachmentFileName || 'attachment');
     });
   }
 
@@ -653,6 +654,36 @@ export class ChatWidgetComponent {
     anchor.download = fileName;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  private normalizeAttachmentBlob(blob: Blob, message: ChatMessage): Blob {
+    const type = this.resolveAttachmentMimeType(message);
+    if (!type || blob.type === type) {
+      return blob;
+    }
+    return new Blob([blob], { type });
+  }
+
+  private resolveAttachmentMimeType(message: ChatMessage): string {
+    const contentType = (message.attachmentContentType || '').trim().toLowerCase();
+    if (contentType) {
+      return contentType;
+    }
+
+    const fileName = (message.attachmentFileName || '').toLowerCase();
+    if (fileName.endsWith('.pdf')) {
+      return 'application/pdf';
+    }
+    if (/\.(png)$/.test(fileName)) {
+      return 'image/png';
+    }
+    if (/\.(jpe?g)$/.test(fileName)) {
+      return 'image/jpeg';
+    }
+    if (fileName.endsWith('.webp')) {
+      return 'image/webp';
+    }
+    return 'application/octet-stream';
   }
 
   private clearAttachmentPreviewState(close = true): void {

@@ -194,11 +194,19 @@
 .seen-time { color: #2563eb; font-size: 0.66rem; margin-top: 0.1rem; }
 
 .message-actions { display: flex; gap: 0.2rem; padding-top: 0.2rem; min-width: 0; }
+.message-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: flex-start;
+  max-width: 210px;
+}
 .message-reaction-actions {
   display: flex;
   gap: 0.2rem;
-  flex-wrap: wrap;
-  max-width: 120px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 210px;
 }
 .message-reaction-actions button {
   border: 1px solid #d7e3ff;
