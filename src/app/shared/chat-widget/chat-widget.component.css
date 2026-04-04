@@ -281,7 +281,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  width: 100%;
+  width: auto;
 }
 
 .reply-context {
@@ -466,6 +466,25 @@
   .chat-panel-body { grid-template-columns: 1fr; }
   .chat-conversations.hidden-mobile { display: none; }
   .mobile-back { display: inline-flex; align-items: center; justify-content: center; }
+  .conversation-row p { max-width: calc(100vw - 220px); }
+  .chat-message { max-width: 100%; flex-direction: column; gap: 0.35rem; }
+  .chat-message.mine { align-items: flex-end; }
+  .message-tools {
+    position: static;
+    width: auto;
+    max-width: 100%;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .message-actions,
+  .message-reaction-actions { padding-top: 0; max-width: 100%; overflow: visible; }
+  .message-body { max-width: min(92vw, 100%); }
+  .attachment-chip { max-width: 100%; }
 }
 
 @media (min-width: 992px) {
