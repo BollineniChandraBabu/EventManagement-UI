@@ -65,7 +65,7 @@
           </div>
         </div>
 
-        <div class="chat-messages" #messageScroller (mouseleave)="hoveredMessageId = null">
+        <div class="chat-messages" #messageScroller (mouseleave)="hoveredMessageId = null" (click)="activeMessageToolsId = null">
           <ng-container *ngFor="let entry of timelineEntries">
             <div class="day-divider" *ngIf="entry.kind === 'day'">{{ entry.dayLabel }}</div>
             <div
@@ -76,9 +76,11 @@
               [attr.data-message-id]="message.messageId"
               (mouseenter)="hoveredMessageId = message.messageId"
               (mouseleave)="hoveredMessageId = null"
+              (click)="onMessageClick(message.messageId, $event)"
             >
             <div
               class="message-tools"
+              [class.visible]="isMessageToolsVisible(message.messageId)"
               (click)="$event.stopPropagation()"
             >
               <div class="message-tools-bar">

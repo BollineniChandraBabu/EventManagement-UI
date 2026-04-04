@@ -44,6 +44,7 @@ export class ChatWidgetComponent {
   composer = '';
   currentUserId: number | null = null;
   hoveredMessageId: number | null = null;
+  activeMessageToolsId: number | null = null;
   editingMessageId: number | null = null;
   editDraft = '';
   selectedAttachment: File | null = null;
@@ -179,12 +180,14 @@ export class ChatWidgetComponent {
   closeConversation(): void {
     this.activeConversation = null;
     this.messages = [];
+    this.activeMessageToolsId = null;
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
   }
 
   chooseConversation(conversation: ChatConversation): void {
     this.activeConversation = conversation;
+    this.activeMessageToolsId = null;
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
     this.chat.subscribeToConversation(conversation.conversationId);
@@ -214,6 +217,7 @@ export class ChatWidgetComponent {
 
     this.activeConversation = draftConversation;
     this.messages = [];
+    this.activeMessageToolsId = null;
     this.showNewChatPicker = false;
   }
 
@@ -373,6 +377,19 @@ export class ChatWidgetComponent {
 
   cancelReply(): void {
     this.replyingToMessage = null;
+  }
+
+  isMessageToolsVisible(messageId: number): boolean {
+    return this.hoveredMessageId === messageId || this.activeMessageToolsId === messageId;
+  }
+
+  onMessageClick(messageId: number, event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, input, textarea, a')) {
+      return;
+    }
+
+    this.activeMessageToolsId = this.activeMessageToolsId === messageId ? null : messageId;
   }
 
 

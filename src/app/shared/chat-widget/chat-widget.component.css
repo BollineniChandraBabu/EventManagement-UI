@@ -233,7 +233,8 @@
 }
 .chat-message:not(.mine) .message-tools { left: 0; right: auto; }
 .chat-message:hover .message-tools,
-.chat-message:focus-within .message-tools {
+.chat-message:focus-within .message-tools,
+.message-tools.visible {
   visibility: visible;
   opacity: 1;
   pointer-events: auto;
