@@ -74,9 +74,16 @@
               [class.mine]="message.mine"
               [class.highlighted]="highlightedMessageId === message.messageId"
               [attr.data-message-id]="message.messageId"
-              (mouseenter)="hoveredMessageId = message.messageId"
+              (mouseenter)="showMessageTools(message.messageId)"
+              (mouseleave)="hideMessageTools(message.messageId)"
             >
-            <div class="message-tools" [class.visible]="hoveredMessageId === message.messageId" (click)="$event.stopPropagation()">
+            <div
+              class="message-tools"
+              [class.visible]="hoveredMessageId === message.messageId"
+              (mouseenter)="showMessageTools(message.messageId)"
+              (mouseleave)="hideMessageTools(message.messageId)"
+              (click)="$event.stopPropagation()"
+            >
               <div class="message-tools-bar">
                 <button type="button" *ngFor="let emoji of quickReactions" (click)="$event.stopPropagation(); reactToMessage(message, emoji)">{{ emoji }}</button>
                 <span class="tool-divider"></span>
