@@ -31,7 +31,7 @@
             <input type="text" class="form-control form-control-sm" [(ngModel)]="newChatSearch" placeholder="Search users">
             <div class="new-chat-list">
               <button type="button" *ngFor="let user of filteredNewChatUsers" (click)="startConversation(user)">
-                <span>{{ user.name }}</span>
+                <span>{{ displayUserName(user) }}</span>
                 <small [class.online]="user.online">{{ user.online ? 'Active now' : 'Last seen ' + (user.lastSeenAt ? (user.lastSeenAt | date: 'short') : 'recently') }}</small>
               </button>
               <p *ngIf="!filteredNewChatUsers.length">No matching users. Try a different name/email.</p>
@@ -48,7 +48,7 @@
           <div>
             <strong>
               <span class="presence-dot" [class.online]="convo.otherUserOnline"></span>
-              {{ convo.otherUserName }}
+              {{ displayConversationName(convo) }}
             </strong>
             <p>{{ convo.lastMessage || 'Start chatting...' }}</p>
             <small class="convo-time" *ngIf="convo.lastMessageAt">Last message {{ formatMessageTime(convo.lastMessageAt) }}</small>
@@ -60,7 +60,7 @@
       <div class="chat-thread" *ngIf="activeConversation; else emptyState">
         <div class="thread-header">
           <div>
-            <h3>{{ activeConversation.otherUserName }}</h3>
+            <h3>{{ displayConversationName(activeConversation) }}</h3>
             <small>{{ getActiveConversationStatus() }}</small>
           </div>
         </div>
@@ -73,38 +73,18 @@
             (mouseenter)="hoveredMessageId = message.messageId"
             (mouseleave)="hoveredMessageId = null"
           >
-            <div class="message-body">
-              <ng-container *ngIf="editingMessageId !== message.messageId; else editBox">
-                <p *ngIf="message.messageText">{{ message.messageText }}</p>
-              </ng-container>
-              <ng-template #editBox>
-                <div class="edit-shell">
-                  <textarea rows="2" [(ngModel)]="editDraft"></textarea>
-                  <div class="edit-actions">
-                    <button type="button" class="btn btn-sm btn-light" (click)="cancelEdit()">Cancel</button>
-                    <button type="button" class="btn btn-sm btn-primary" (click)="saveEdit(message)">Save</button>
-                  </div>
-                </div>
-              </ng-template>
-
-              <button
-                class="attachment-chip"
-                type="button"
-                *ngIf="message.attachmentFileName"
-                (click)="downloadAttachment(message)"
-              >
-                <i class="fa-solid fa-paperclip"></i>
-                {{ message.attachmentFileName }}
-              </button>
-
-              <small>{{ message.sentAt | date: 'shortTime' }}</small>
-              <small class="seen-time" *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">Seen {{ formatMessageTime(message.seenAt) }}</small>
-            </div>
-
             <div
               class="message-actions"
-              *ngIf="hoveredMessageId === message.messageId && editingMessageId !== message.messageId && message.mine"
+              *ngIf="hoveredMessageId === message.messageId && editingMessageId !== message.messageId"
             >
+              <button
+                type="button"
+                class="action-btn"
+                (click)="startReply(message)"
+                title="Reply"
+              >
+                <i class="fa-solid fa-reply"></i>
+              </button>
               <button
                 type="button"
                 class="action-btn"
@@ -124,11 +104,58 @@
                 <i class="fa-solid fa-trash"></i>
               </button>
             </div>
+
+            <div class="message-body">
+              <div class="reply-context" *ngIf="message.replyToMessageId">
+                <i class="fa-solid fa-reply"></i>
+                <span>{{ message.replyToMessageText || ('Reply #' + message.replyToMessageId) }}</span>
+              </div>
+              <ng-container *ngIf="editingMessageId !== message.messageId; else editBox">
+                <p *ngIf="message.messageText">{{ message.messageText }}</p>
+                <p class="reaction-only" *ngIf="message.reactionEmoji">{{ message.reactionEmoji }}</p>
+              </ng-container>
+              <ng-template #editBox>
+                <div class="edit-shell">
+                  <textarea rows="2" [(ngModel)]="editDraft"></textarea>
+                  <div class="edit-actions">
+                    <button type="button" class="btn btn-sm btn-light" (click)="cancelEdit()">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="saveEdit(message)">Save</button>
+                  </div>
+                </div>
+              </ng-template>
+
+              <button
+                class="attachment-chip"
+                type="button"
+                *ngIf="message.attachmentFileName"
+                (click)="openAttachment(message)"
+              >
+                <i class="fa-solid fa-paperclip"></i>
+                {{ message.attachmentFileName }}
+              </button>
+
+              <small>{{ message.sentAt | date: 'shortTime' }}</small>
+              <small class="seen-time" *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">Seen {{ formatMessageTime(message.seenAt) }}</small>
+            </div>
           </div>
         </div>
 
         <div class="chat-composer-shell">
           <input #attachmentInput type="file" hidden (change)="onAttachmentSelected($event)">
+
+          <div class="replying-pill" *ngIf="replyingToMessage">
+            <i class="fa-solid fa-reply"></i>
+            <span>{{ replyingToMessage.messageText || replyingToMessage.reactionEmoji || ('Reply #' + replyingToMessage.messageId) }}</span>
+            <button type="button" (click)="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="quick-reactions" *ngIf="canSendToActiveUser">
+            <button type="button" *ngFor="let emoji of quickReactions" (click)="quickReply(emoji)">{{ emoji }}</button>
+          </div>
+
+          <div class="disabled-chat-note" *ngIf="!canSendToActiveUser">
+            This user is disabled. You can view old messages but cannot send new ones.
+          </div>
 
           <div class="selected-file-pill" *ngIf="selectedAttachment">
             <i class="fa-solid fa-file-lines"></i>
@@ -137,7 +164,7 @@
           </div>
 
           <div class="chat-composer">
-            <button type="button" class="attach-btn" (click)="triggerAttachment()" title="Attach file">
+            <button type="button" class="attach-btn" (click)="triggerAttachment()" title="Attach file" [disabled]="!canSendToActiveUser">
               <i class="fa-solid fa-paperclip"></i>
             </button>
             <textarea
@@ -146,6 +173,7 @@
               placeholder="Type a message..."
               (keydown.enter)="$event.preventDefault(); send()"
               (input)="onComposerInput()"
+              [disabled]="!canSendToActiveUser"
             ></textarea>
             <button type="button" (click)="send()" [disabled]="!canSend"><i class="fa-solid fa-paper-plane"></i></button>
           </div>
@@ -157,4 +185,26 @@
       </ng-template>
     </div>
   </section>
+
+  <div class="attachment-preview-modal" *ngIf="attachmentPreviewOpen" (click)="closeAttachmentPreview()">
+    <div class="attachment-preview-content" (click)="$event.stopPropagation()">
+      <header>
+        <strong>{{ attachmentPreviewName }}</strong>
+        <div class="attachment-preview-actions">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="downloadPreviewAttachment()">
+            <i class="fa-solid fa-download me-1"></i>Download
+          </button>
+          <button type="button" class="btn btn-sm btn-light" (click)="closeAttachmentPreview()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="attachment-preview-body">
+        <div *ngIf="attachmentPreviewLoading" class="preview-loading">Loading preview…</div>
+        <img *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'image' && attachmentPreviewUrl" [src]="attachmentPreviewUrl" [alt]="attachmentPreviewName">
+        <iframe *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'pdf' && attachmentPreviewSafeUrl" [src]="attachmentPreviewSafeUrl" title="PDF preview"></iframe>
+      </div>
+    </div>
+  </div>
 </div>

@@ -79,8 +79,28 @@ export class ChatService {
     );
   }
 
-  sendMessage(receiverId: number, messageText: string, attachment?: File | null): Observable<ChatMessage> {
-    const payload = { receiverId, messageText };
+  sendMessage(
+    receiverId: number,
+    messageText: string,
+    attachment?: File | null,
+    replyToMessageId?: number | null,
+    reactionEmoji?: string | null
+  ): Observable<ChatMessage> {
+    const payload: {
+      receiverId: number;
+      messageText: string;
+      replyToMessageId?: number;
+      reactionEmoji?: string;
+    } = { receiverId, messageText };
+
+    if (replyToMessageId) {
+      payload.replyToMessageId = replyToMessageId;
+    }
+
+    if (reactionEmoji) {
+      payload.reactionEmoji = reactionEmoji;
+    }
+
     const form = new FormData();
     form.append('payload', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
     if (attachment) {

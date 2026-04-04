@@ -4,6 +4,7 @@ export interface ChatUser {
   email: string;
   online: boolean;
   lastSeenAt: string | null;
+  active?: boolean;
 }
 
 export interface ChatConversation {
@@ -13,6 +14,7 @@ export interface ChatConversation {
   otherUserEmail: string;
   otherUserOnline: boolean;
   otherUserLastSeenAt: string | null;
+  otherUserActive?: boolean;
   lastMessage: string | null;
   lastMessageAt: string | null;
   unreadCount: number;
@@ -30,6 +32,9 @@ export interface ChatMessage {
   sentAt: string;
   seenAt: string | null;
   mine: boolean;
+  replyToMessageId?: number | null;
+  replyToMessageText?: string | null;
+  reactionEmoji?: string | null;
 }
 
 export interface ChatMessagePage {

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, ViewChild, inject } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin } from 'rxjs';
@@ -24,6 +25,7 @@ import { ChatService } from '../../core/services/chat.service';
 export class ChatWidgetComponent {
   private readonly chat = inject(ChatService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sanitizer = inject(DomSanitizer);
 
   @ViewChild('messageScroller') messageScroller?: ElementRef<HTMLDivElement>;
   @ViewChild('attachmentInput') attachmentInput?: ElementRef<HTMLInputElement>;
@@ -38,6 +40,14 @@ export class ChatWidgetComponent {
   editDraft = '';
   selectedAttachment: File | null = null;
   typingUserId: number | null = null;
+  replyingToMessage: ChatMessage | null = null;
+  readonly quickReactions = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+  attachmentPreviewUrl: string | null = null;
+  attachmentPreviewSafeUrl: SafeResourceUrl | null = null;
+  attachmentPreviewType: 'image' | 'pdf' | null = null;
+  attachmentPreviewName = '';
+  attachmentPreviewLoading = false;
+  attachmentPreviewOpen = false;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -55,6 +65,7 @@ export class ChatWidgetComponent {
       if (this.typingTimer) {
         clearTimeout(this.typingTimer);
       }
+      this.clearAttachmentPreviewState();
     });
 
     this.chat.currentUserId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
@@ -103,7 +114,11 @@ export class ChatWidgetComponent {
   }
 
   get canSend(): boolean {
-    return !!this.activeConversation && (!!this.composer.trim() || !!this.selectedAttachment) && !this.isSending;
+    return !!this.activeConversation && this.canSendToActiveUser && (!!this.composer.trim() || !!this.selectedAttachment) && !this.isSending;
+  }
+
+  get canSendToActiveUser(): boolean {
+    return !!this.activeConversation && this.activeConversation.otherUserActive !== false;
   }
 
   get filteredNewChatUsers(): ChatUser[] {
@@ -130,11 +145,13 @@ export class ChatWidgetComponent {
     this.activeConversation = null;
     this.messages = [];
     this.showNewChatPicker = false;
+    this.replyingToMessage = null;
   }
 
   chooseConversation(conversation: ChatConversation): void {
     this.activeConversation = conversation;
     this.showNewChatPicker = false;
+    this.replyingToMessage = null;
     this.chat.subscribeToConversation(conversation.conversationId);
     this.typingUserId = null;
     this.loadMessages(conversation.otherUserId);
@@ -166,14 +183,20 @@ export class ChatWidgetComponent {
 
   send(): void {
     const text = this.composer.trim();
-    if ((!text && !this.selectedAttachment) || !this.activeConversation || !this.currentUserId || this.isSending) {
+    if ((!text && !this.selectedAttachment) || !this.activeConversation || !this.currentUserId || this.isSending || !this.canSendToActiveUser) {
       return;
     }
 
     this.isSending = true;
     const receiverId = this.activeConversation.otherUserId;
 
-    this.chat.sendMessage(receiverId, text, this.selectedAttachment).pipe(
+    this.chat.sendMessage(
+      receiverId,
+      text,
+      this.selectedAttachment,
+      this.replyingToMessage?.messageId ?? null,
+      null
+    ).pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => (this.isSending = false))
 ).subscribe((message) => {
@@ -183,15 +206,40 @@ export class ChatWidgetComponent {
       this.scrollToBottom();
       this.composer = '';
       this.clearAttachment();
+      this.replyingToMessage = null;
       if (this.activeConversation && this.currentUserId) {
         this.chat.publishTyping(this.activeConversation.conversationId, this.currentUserId, false);
       }
     });
   }
 
+  quickReply(emoji: string): void {
+    if (!this.activeConversation || !this.currentUserId || !this.canSendToActiveUser || this.isSending) {
+      return;
+    }
+
+    this.isSending = true;
+    this.chat.sendMessage(
+      this.activeConversation.otherUserId,
+      '',
+      null,
+      this.replyingToMessage?.messageId ?? null,
+      emoji
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => (this.isSending = false))
+    ).subscribe((message) => {
+      this.mergeIncomingMessage(message);
+      this.upsertConversationFromMessage(message);
+      this.reloadConversationsOnly();
+      this.scrollToBottom();
+      this.replyingToMessage = null;
+    });
+  }
+
 
   onComposerInput(): void {
-    if (!this.activeConversation || !this.currentUserId) {
+    if (!this.activeConversation || !this.currentUserId || !this.canSendToActiveUser) {
       return;
     }
 
@@ -299,18 +347,78 @@ export class ChatWidgetComponent {
     }
   }
 
+  startReply(message: ChatMessage): void {
+    this.replyingToMessage = message;
+  }
+
+  cancelReply(): void {
+    this.replyingToMessage = null;
+  }
+
+  displayConversationName(conversation: ChatConversation): string {
+    return conversation.otherUserActive === false
+      ? `${conversation.otherUserName} (Disabled user)`
+      : conversation.otherUserName;
+  }
+
+  displayUserName(user: ChatUser): string {
+    return user.active === false ? `${user.name} (Disabled user)` : user.name;
+  }
+
+  openAttachment(message: ChatMessage): void {
+    if (!message.attachmentFileName) {
+      return;
+    }
+
+    if (!this.isPreviewSupported(message)) {
+      this.downloadAttachment(message);
+      return;
+    }
+
+    this.attachmentPreviewLoading = true;
+    this.attachmentPreviewOpen = true;
+    this.attachmentPreviewName = message.attachmentFileName;
+    this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        this.clearAttachmentPreviewState(false);
+        this.attachmentPreviewOpen = true;
+        this.attachmentPreviewName = message.attachmentFileName ?? 'attachment';
+        this.attachmentPreviewUrl = url;
+        this.attachmentPreviewSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        this.attachmentPreviewType = this.resolveAttachmentPreviewType(message);
+        this.attachmentPreviewLoading = false;
+      },
+      error: () => {
+        this.attachmentPreviewLoading = false;
+        this.attachmentPreviewOpen = false;
+        this.downloadAttachment(message);
+      }
+    });
+  }
+
+  closeAttachmentPreview(): void {
+    this.clearAttachmentPreviewState();
+  }
+
+  downloadPreviewAttachment(): void {
+    if (!this.attachmentPreviewUrl) {
+      return;
+    }
+
+    const anchor = document.createElement('a');
+    anchor.href = this.attachmentPreviewUrl;
+    anchor.download = this.attachmentPreviewName || 'attachment';
+    anchor.click();
+  }
+
   downloadAttachment(message: ChatMessage): void {
     if (!message.attachmentFileName) {
       return;
     }
 
     this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((blob) => {
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = message.attachmentFileName || 'attachment';
-      anchor.click();
-      URL.revokeObjectURL(url);
+      this.downloadBlob(blob, message.attachmentFileName || 'attachment');
     });
   }
 
@@ -510,5 +618,48 @@ export class ChatWidgetComponent {
         this.messageScroller.nativeElement.scrollTop = this.messageScroller.nativeElement.scrollHeight;
       }
     });
+  }
+
+  private resolveAttachmentPreviewType(message: ChatMessage): 'image' | 'pdf' | null {
+    const contentType = (message.attachmentContentType || '').toLowerCase();
+    const fileName = (message.attachmentFileName || '').toLowerCase();
+
+    if (contentType.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(fileName)) {
+      return 'image';
+    }
+
+    if (contentType === 'application/pdf' || fileName.endsWith('.pdf')) {
+      return 'pdf';
+    }
+
+    return null;
+  }
+
+  private isPreviewSupported(message: ChatMessage): boolean {
+    return this.resolveAttachmentPreviewType(message) !== null;
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private clearAttachmentPreviewState(close = true): void {
+    if (this.attachmentPreviewUrl) {
+      URL.revokeObjectURL(this.attachmentPreviewUrl);
+    }
+
+    this.attachmentPreviewUrl = null;
+    this.attachmentPreviewSafeUrl = null;
+    this.attachmentPreviewType = null;
+    this.attachmentPreviewLoading = false;
+    this.attachmentPreviewName = '';
+    if (close) {
+      this.attachmentPreviewOpen = false;
+    }
   }
 }
