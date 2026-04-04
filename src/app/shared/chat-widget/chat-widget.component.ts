@@ -426,6 +426,30 @@ export class ChatWidgetComponent {
     });
   }
 
+  handleQuickReaction(event: MouseEvent, message: ChatMessage, emoji: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.reactToMessage(message, emoji);
+  }
+
+  handleReplyAction(event: MouseEvent, message: ChatMessage): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.startReply(message);
+  }
+
+  handleEditAction(event: MouseEvent, message: ChatMessage): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.startEdit(message);
+  }
+
+  handleDeleteAction(event: MouseEvent, message: ChatMessage): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.deleteLatestIfEligible(message);
+  }
+
   reactionsForMessage(messageId: number): ChatMessageReaction[] {
     return this.messageReactions[messageId] ?? [];
   }

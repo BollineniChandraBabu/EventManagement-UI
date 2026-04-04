@@ -188,9 +188,14 @@
   gap: 0.25rem;
   align-items: flex-start;
   position: relative;
+  z-index: 1;
 }
 
 .chat-message.mine { margin-left: auto; }
+.chat-message:hover,
+.chat-message:focus-within {
+  z-index: 4;
+}
 .chat-message.highlighted .message-body {
   box-shadow: 0 0 0 2px #93c5fd, 0 6px 16px rgba(30, 41, 59, 0.12);
 }
@@ -224,7 +229,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.12s ease;
-  z-index: 2;
+  z-index: 12;
 }
 .chat-message:not(.mine) .message-tools { left: 0; right: auto; }
 .message-tools.visible {

@@ -85,16 +85,22 @@
               (click)="$event.stopPropagation()"
             >
               <div class="message-tools-bar">
-                <button type="button" *ngFor="let emoji of quickReactions" (click)="$event.stopPropagation(); reactToMessage(message, emoji)">{{ emoji }}</button>
+                <button
+                  type="button"
+                  *ngFor="let emoji of quickReactions"
+                  (mousedown)="handleQuickReaction($event, message, emoji)"
+                >
+                  {{ emoji }}
+                </button>
                 <span class="tool-divider"></span>
-                <button type="button" class="action-btn" (click)="$event.stopPropagation(); startReply(message)" title="Reply">
+                <button type="button" class="action-btn" (mousedown)="handleReplyAction($event, message)" title="Reply">
                   <i class="fa-solid fa-reply"></i>
                 </button>
                 <button
                   type="button"
                   class="action-btn"
                   *ngIf="canEdit(message) && editingMessageId !== message.messageId"
-                  (click)="$event.stopPropagation(); startEdit(message)"
+                  (mousedown)="handleEditAction($event, message)"
                   title="Edit"
                 >
                   <i class="fa-solid fa-pen"></i>
@@ -103,7 +109,7 @@
                   type="button"
                   class="action-btn danger"
                   *ngIf="canDelete(message) && editingMessageId !== message.messageId"
-                  (click)="$event.stopPropagation(); deleteLatestIfEligible(message)"
+                  (mousedown)="handleDeleteAction($event, message)"
                   title="Delete"
                 >
                   <i class="fa-solid fa-trash"></i>
