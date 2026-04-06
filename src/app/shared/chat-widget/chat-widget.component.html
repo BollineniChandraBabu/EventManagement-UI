@@ -132,7 +132,7 @@
               [class.swiping]="swipeMessageId === message.messageId"
               [attr.data-message-id]="message.messageId"
               (mouseenter)="onMessageMouseEnter(message.messageId)"
-              (mouseleave)="onMessageMouseLeave(message.messageId)"
+              (mouseleave)="onMessageMouseLeave($event, message.messageId)"
               (pointerdown)="onMessagePointerDown($event, message)"
               (pointermove)="onMessagePointerMove($event, message)"
               (pointerup)="onMessagePointerUp($event, message)"
@@ -148,6 +148,8 @@
                 <!-- Floating quick reactions -->
                 <div class="reactions-bar"
                   [class.show]="isMessageActive(message.messageId)"
+                  (mouseenter)="onFloatingUiEnter(message.messageId)"
+                  (mouseleave)="onFloatingUiLeave(message.messageId)"
                   (click)="$event.stopPropagation()">
                   <button type="button"
                     *ngFor="let emoji of quickReactions"
@@ -160,6 +162,8 @@
                 <!-- Action buttons -->
                 <div class="msg-actions"
                   [class.show]="isMessageActive(message.messageId)"
+                  (mouseenter)="onFloatingUiEnter(message.messageId)"
+                  (mouseleave)="onFloatingUiLeave(message.messageId)"
                   (click)="$event.stopPropagation()">
                   <button type="button" class="action-btn" (click)="startReply(message)" title="Reply">
                     <i class="fa-solid fa-reply"></i><span>Reply</span>

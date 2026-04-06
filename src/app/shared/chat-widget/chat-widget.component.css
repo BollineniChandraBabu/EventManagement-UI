@@ -470,6 +470,15 @@
   will-change: transform;
 }
 
+.msg-bubble-wrap::before {
+  content: '';
+  position: absolute;
+  top: -78px;
+  left: 0;
+  right: 0;
+  height: 78px;
+}
+
 .chat-message.mine .msg-bubble-wrap {
   align-items: flex-end;
 }

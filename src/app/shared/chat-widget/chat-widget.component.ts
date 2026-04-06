@@ -71,6 +71,7 @@ export class ChatWidgetComponent {
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
   private typingTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private messageUiHideTimer: ReturnType<typeof setTimeout> | null = null;
   private lastTapTimeByMessage = new Map<number, number>();
   private gestureStartX = 0;
   private gestureStartY = 0;
@@ -143,6 +144,7 @@ export class ChatWidgetComponent {
       if (this.typingTimer) clearTimeout(this.typingTimer);
       if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
       if (this.longPressTimer) clearTimeout(this.longPressTimer);
+      if (this.messageUiHideTimer) clearTimeout(this.messageUiHideTimer);
       this.clearAttachmentPreviewState();
     });
 
@@ -200,10 +202,23 @@ export class ChatWidgetComponent {
     this.activeMessageId = messageId;
   }
 
-  onMessageMouseLeave(messageId: number): void {
+  onMessageMouseLeave(event: MouseEvent, messageId: number): void {
     if (!this.prefersHover()) return;
-    if (this.hoveredMessageId === messageId) this.hoveredMessageId = null;
-    if (this.activeMessageId === messageId) this.activeMessageId = null;
+    const nextTarget = event.relatedTarget as HTMLElement | null;
+    if (nextTarget?.closest('.msg-actions, .reactions-bar')) return;
+    this.scheduleClearActiveMessage(messageId);
+  }
+
+  onFloatingUiEnter(messageId: number): void {
+    if (!this.prefersHover()) return;
+    this.cancelMessageUiHide();
+    this.hoveredMessageId = messageId;
+    this.activeMessageId = messageId;
+  }
+
+  onFloatingUiLeave(messageId: number): void {
+    if (!this.prefersHover()) return;
+    this.scheduleClearActiveMessage(messageId);
   }
 
   // ── Conversations ─────────────────────────────────────────────────────────
@@ -719,8 +734,24 @@ export class ChatWidgetComponent {
   }
 
   private clearActiveMessageState(): void {
+    this.cancelMessageUiHide();
     this.activeMessageId = null;
     this.hoveredMessageId = null;
+  }
+
+  private scheduleClearActiveMessage(messageId: number): void {
+    this.cancelMessageUiHide();
+    this.messageUiHideTimer = setTimeout(() => {
+      if (this.activeMessageId === messageId) this.activeMessageId = null;
+      if (this.hoveredMessageId === messageId) this.hoveredMessageId = null;
+    }, 220);
+  }
+
+  private cancelMessageUiHide(): void {
+    if (this.messageUiHideTimer) {
+      clearTimeout(this.messageUiHideTimer);
+      this.messageUiHideTimer = null;
+    }
   }
 
   private startLongPress(messageId: number): void {
