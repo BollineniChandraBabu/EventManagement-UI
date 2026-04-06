@@ -1,0 +1,101 @@
+<div class="chat-page">
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <h2>Chats</h2>
+      <input type="text" [(ngModel)]="searchText" placeholder="Search conversations" />
+      <select [ngModel]="newChatUserId" (ngModelChange)="onNewChatSelect($event)" name="newChatUser">
+        <option [ngValue]="null">Start new chat</option>
+        <option *ngFor="let user of filteredUsersForNewChat" [ngValue]="user.userId">{{ user.name }}</option>
+      </select>
+    </div>
+
+    <div class="conversation-list">
+      <button
+        type="button"
+        class="conversation-item"
+        *ngFor="let conversation of visibleConversations"
+        [class.active]="conversation.conversationId === selectedConversation?.conversationId"
+        (click)="openConversation(conversation)">
+        <div class="title-row">
+          <span class="name">{{ conversation.otherUserName }}</span>
+          <span class="time" *ngIf="conversation.lastMessageAt">{{ conversation.lastMessageAt | date:'shortTime' }}</span>
+        </div>
+        <div class="sub-row">
+          <span class="last-msg">{{ conversation.lastMessage || 'Attachment' }}</span>
+          <span class="badge" *ngIf="conversation.unreadCount > 0">{{ conversation.unreadCount }}</span>
+        </div>
+      </button>
+    </div>
+  </aside>
+
+  <section class="thread" *ngIf="selectedUser; else emptyState">
+    <header class="thread-head">
+      <div>
+        <h3>{{ selectedUser.name }}</h3>
+        <p>{{ statusLabel() }}</p>
+      </div>
+    </header>
+
+    <div class="messages">
+      <div
+        class="message"
+        *ngFor="let message of messages"
+        [class.mine]="message.mine"
+        (mouseenter)="hoveredMessageId = message.messageId"
+        (mouseleave)="hoveredMessageId = null">
+        <div class="bubble">
+          <ng-container *ngIf="editingMessageId !== message.messageId; else editBox">
+            <p *ngIf="message.messageText">{{ message.messageText }}</p>
+            <a *ngIf="message.attachmentFileName" class="attachment-link" [href]="attachmentDownloadUrl(message)" target="_blank" rel="noopener">
+              <i class="fa-solid fa-paperclip"></i>
+              <span>{{ message.attachmentFileName }}</span>
+            </a>
+            <div class="meta-row">
+              <small>{{ message.sentAt | date:'shortTime' }}</small>
+              <div class="message-actions" *ngIf="hoveredMessageId === message.messageId && canEditOrDelete(message)">
+                <button type="button" class="icon-btn" title="Edit" (click)="beginEdit(message)">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn danger"
+                  title="Delete"
+                  *ngIf="canDeleteMessage(message)"
+                  (click)="deleteMessage(message)">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-template #editBox>
+            <textarea [(ngModel)]="editDraft" rows="2"></textarea>
+            <div class="edit-actions">
+              <button type="button" (click)="saveEdit(message.messageId)">Save</button>
+              <button type="button" (click)="cancelEdit()">Cancel</button>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <form class="composer" (submit)="$event.preventDefault(); sendMessage(fileInput)">
+      <div class="input-shell">
+        <input type="text" [(ngModel)]="newMessageText" name="message" placeholder="Type a message..." [disabled]="sending" />
+        <label class="attach-btn" title="Attach file">
+          <i class="fa-solid fa-paperclip"></i>
+          <input #fileInput type="file" (change)="onAttachmentSelected($event)" />
+        </label>
+      </div>
+      <span class="file-pill" *ngIf="pendingAttachment">{{ pendingAttachment.name }}</span>
+      <button type="submit" class="send-btn" [disabled]="sending">Send</button>
+    </form>
+  </section>
+
+  <ng-template #emptyState>
+    <section class="thread empty">
+      <h3>Select a conversation</h3>
+      <p>Choose an existing chat or start a new one.</p>
+    </section>
+  </ng-template>
+</div>

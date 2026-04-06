@@ -195,3 +195,51 @@ export interface SchedulerTriggerResponse {
   message: string;
   triggeredAt: string;
 }
+
+export interface ChatUser {
+  userId: number;
+  name: string;
+  email: string;
+  online: boolean;
+  lastSeenAt?: string;
+}
+
+export interface ChatConversation {
+  conversationId: number;
+  otherUserId: number;
+  otherUserName: string;
+  otherUserEmail: string;
+  otherUserOnline: boolean;
+  otherUserLastSeenAt?: string;
+  lastMessage: string;
+  lastMessageAt?: string;
+  lastSeenMessageAt?: string;
+  unreadCount: number;
+}
+
+export interface ChatMessage {
+  messageId: number;
+  conversationId: number;
+  senderId: number;
+  receiverId: number;
+  messageText: string;
+  attachmentKey?: string;
+  attachmentFileName?: string;
+  attachmentContentType?: string;
+  sentAt: string;
+  seenAt?: string;
+  mine: boolean;
+}
+
+export interface ChatMessagePage {
+  items: ChatMessage[];
+  page: number;
+  size: number;
+  hasNext: boolean;
+}
+
+export interface DeleteMessageResponse {
+  messageId: number;
+  conversationId: number;
+  deletedAt: string;
+}
