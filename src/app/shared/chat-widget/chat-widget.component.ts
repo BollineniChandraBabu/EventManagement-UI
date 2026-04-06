@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,7 +28,8 @@ interface ChatTimelineEntry {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './chat-widget.component.html',
-  styleUrl: './chat-widget.component.css'
+  styleUrl: './chat-widget.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ChatWidgetComponent {
   private readonly chat = inject(ChatService);
@@ -44,10 +45,10 @@ export class ChatWidgetComponent {
   composer = '';
   currentUserId: number | null = null;
 
-  // Hover state for desktop — tracked per message
   hoveredMessageId: number | null = null;
-  // Selected state for mobile tap — separate so mobile always shows actions
-  selectedMessageId: number | null = null;
+  activeMessageId: number | null = null;
+  swipeMessageId: number | null = null;
+  swipeTranslateX = 0;
 
   editingMessageId: number | null = null;
   editDraft = '';
@@ -69,6 +70,14 @@ export class ChatWidgetComponent {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
   private typingTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastTapTimeByMessage = new Map<number, number>();
+  private gestureStartX = 0;
+  private gestureStartY = 0;
+  private gesturePointerId: number | null = null;
+  private gestureMessageId: number | null = null;
+  private isSwiping = false;
+  private cancelTap = false;
 
   showNewChatPicker = false;
   newChatSearch = '';
@@ -133,6 +142,7 @@ export class ChatWidgetComponent {
       this.stopHeartbeat();
       if (this.typingTimer) clearTimeout(this.typingTimer);
       if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
+      if (this.longPressTimer) clearTimeout(this.longPressTimer);
       this.clearAttachmentPreviewState();
     });
 
@@ -185,25 +195,15 @@ export class ChatWidgetComponent {
 
   // ── Hover / Tap handling — THE KEY FIX ──────────────────────────────────
   onMessageMouseEnter(messageId: number): void {
+    if (!this.prefersHover()) return;
     this.hoveredMessageId = messageId;
+    this.activeMessageId = messageId;
   }
 
   onMessageMouseLeave(messageId: number): void {
-    // Small delay to let click events on action buttons fire first
-    setTimeout(() => {
-      if (this.hoveredMessageId === messageId) {
-        this.hoveredMessageId = null;
-      }
-    }, 80);
-  }
-
-  // Mobile: tap to toggle action visibility
-  onMessageTap(messageId: number): void {
-    if (this.selectedMessageId === messageId) {
-      this.selectedMessageId = null;
-    } else {
-      this.selectedMessageId = messageId;
-    }
+    if (!this.prefersHover()) return;
+    if (this.hoveredMessageId === messageId) this.hoveredMessageId = null;
+    if (this.activeMessageId === messageId) this.activeMessageId = null;
   }
 
   // ── Conversations ─────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ export class ChatWidgetComponent {
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
     this.hoveredMessageId = null;
-    this.selectedMessageId = null;
+    this.activeMessageId = null;
   }
 
   chooseConversation(conversation: ChatConversation): void {
@@ -221,7 +221,7 @@ export class ChatWidgetComponent {
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
     this.hoveredMessageId = null;
-    this.selectedMessageId = null;
+    this.activeMessageId = null;
     this.chat.subscribeToConversation(conversation.conversationId);
     this.typingUserId = null;
     this.loadMessages(conversation.otherUserId);
@@ -298,7 +298,7 @@ export class ChatWidgetComponent {
   // ── Reply ─────────────────────────────────────────────────────────────────
   startReply(message: ChatMessage): void {
     this.replyingToMessage = message;
-    this.selectedMessageId = null;
+    this.clearActiveMessageState();
   }
 
   cancelReply(): void {
@@ -310,7 +310,7 @@ export class ChatWidgetComponent {
     if (!this.canEdit(message)) return;
     this.editingMessageId = message.messageId;
     this.editDraft = message.messageText ?? '';
-    this.selectedMessageId = null;
+    this.clearActiveMessageState();
   }
 
   cancelEdit(): void {
@@ -343,7 +343,7 @@ export class ChatWidgetComponent {
   // ── Delete ────────────────────────────────────────────────────────────────
   deleteLatestIfEligible(message: ChatMessage): void {
     if (!this.canDelete(message) || !this.activeConversation) return;
-    this.selectedMessageId = null;
+    this.clearActiveMessageState();
     this.chat.deleteLastSentMessage(this.activeConversation.otherUserId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((res) => {
@@ -363,10 +363,7 @@ export class ChatWidgetComponent {
 
   // ── Reactions ─────────────────────────────────────────────────────────────
   reactToMessage(message: ChatMessage, emoji: string): void {
-    this.selectedMessageId = null;
-    this.chat.reactToMessage(message.messageId, emoji).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
-      this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
-    });
+    this.toggleReaction(message, emoji);
   }
 
   removeReaction(message: ChatMessage, emoji: string): void {
@@ -377,6 +374,101 @@ export class ChatWidgetComponent {
 
   reactionsForMessage(messageId: number): ChatMessageReaction[] {
     return this.messageReactions[messageId] ?? [];
+  }
+
+  toggleReaction(message: ChatMessage, emoji: string): void {
+    this.clearActiveMessageState();
+    const mine = this.reactionsForMessage(message.messageId).find((reaction) => reaction.emoji === emoji && reaction.mine);
+    const request$ = mine
+      ? this.chat.removeReaction(message.messageId, emoji)
+      : this.chat.reactToMessage(message.messageId, emoji);
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+      this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+    });
+  }
+
+  isMessageActive(messageId: number): boolean {
+    return this.hoveredMessageId === messageId || this.activeMessageId === messageId;
+  }
+
+  onMessagePointerDown(event: PointerEvent, message: ChatMessage): void {
+    if (!event.isPrimary || this.shouldIgnoreGesture(event)) return;
+    this.gesturePointerId = event.pointerId;
+    this.gestureMessageId = message.messageId;
+    this.gestureStartX = event.clientX;
+    this.gestureStartY = event.clientY;
+    this.isSwiping = false;
+    this.cancelTap = false;
+    this.startLongPress(message.messageId);
+  }
+
+  onMessagePointerMove(event: PointerEvent, message: ChatMessage): void {
+    if (this.gesturePointerId !== event.pointerId || this.gestureMessageId !== message.messageId) return;
+    const dx = event.clientX - this.gestureStartX;
+    const dy = event.clientY - this.gestureStartY;
+    if (Math.abs(dy) > 12) {
+      this.cancelLongPress();
+      this.cancelTap = true;
+    }
+    if (dx > 8 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+      this.cancelLongPress();
+      this.isSwiping = true;
+      this.cancelTap = true;
+      this.swipeMessageId = message.messageId;
+      this.swipeTranslateX = Math.min(dx, 84);
+    } else if (dx < 0 && this.swipeMessageId === message.messageId) {
+      this.resetSwipe();
+    }
+  }
+
+  onMessagePointerUp(event: PointerEvent, message: ChatMessage): void {
+    if (this.gesturePointerId !== event.pointerId || this.gestureMessageId !== message.messageId) return;
+    this.cancelLongPress();
+    const dx = event.clientX - this.gestureStartX;
+    const dy = event.clientY - this.gestureStartY;
+
+    if (this.isSwiping) {
+      if (dx >= 56 && Math.abs(dy) < 28) {
+        this.startReply(message);
+      }
+      this.resetSwipe();
+      this.resetGestureState();
+      return;
+    }
+
+    if (!this.cancelTap && Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+      this.onMessageTap(message);
+    }
+    this.resetGestureState();
+  }
+
+  onMessagePointerCancel(): void {
+    this.cancelLongPress();
+    this.resetSwipe();
+    this.resetGestureState();
+  }
+
+  onMessageTap(message: ChatMessage): void {
+    const now = Date.now();
+    const lastTap = this.lastTapTimeByMessage.get(message.messageId) ?? 0;
+    if (now - lastTap < 280) {
+      this.lastTapTimeByMessage.set(message.messageId, 0);
+      this.toggleReaction(message, '❤️');
+      return;
+    }
+    this.lastTapTimeByMessage.set(message.messageId, now);
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentPointerDown(event: PointerEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.chat-message')) return;
+    this.clearActiveMessageState();
+  }
+
+  messageTransform(messageId: number): string | null {
+    if (this.swipeMessageId !== messageId) return null;
+    return `translateX(${this.swipeTranslateX}px)`;
   }
 
   // ── Jump to message ───────────────────────────────────────────────────────
@@ -620,6 +712,47 @@ export class ChatWidgetComponent {
 
   private stopHeartbeat(): void {
     if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
+  }
+
+  private prefersHover(): boolean {
+    return typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  }
+
+  private clearActiveMessageState(): void {
+    this.activeMessageId = null;
+    this.hoveredMessageId = null;
+  }
+
+  private startLongPress(messageId: number): void {
+    this.cancelLongPress();
+    this.longPressTimer = setTimeout(() => {
+      this.activeMessageId = messageId;
+      this.cancelTap = true;
+    }, 340);
+  }
+
+  private cancelLongPress(): void {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+  }
+
+  private resetSwipe(): void {
+    this.swipeMessageId = null;
+    this.swipeTranslateX = 0;
+  }
+
+  private resetGestureState(): void {
+    this.gesturePointerId = null;
+    this.gestureMessageId = null;
+    this.isSwiping = false;
+    this.cancelTap = false;
+  }
+
+  private shouldIgnoreGesture(event: PointerEvent): boolean {
+    const target = event.target as HTMLElement | null;
+    return !!target?.closest('button, textarea, input, a, .msg-actions, .msg-reactions');
   }
 
   // ── Scroll ────────────────────────────────────────────────────────────────
