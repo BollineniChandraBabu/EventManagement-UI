@@ -128,55 +128,57 @@
               *ngIf="entry.kind === 'message' && entry.message as message"
               [class.mine]="message.mine"
               [class.highlighted]="highlightedMessageId === message.messageId"
+              [class.active]="isMessageActive(message.messageId)"
+              [class.swiping]="swipeMessageId === message.messageId"
               [attr.data-message-id]="message.messageId"
               (mouseenter)="onMessageMouseEnter(message.messageId)"
-              (mouseleave)="onMessageMouseLeave(message.messageId)"
-              (click)="onMessageTap(message.messageId)"
+              (mouseleave)="onMessageMouseLeave($event, message.messageId)"
+              (pointerdown)="onMessagePointerDown($event, message)"
+              (pointermove)="onMessagePointerMove($event, message)"
+              (pointerup)="onMessagePointerUp($event, message)"
+              (pointercancel)="onMessagePointerCancel()"
             >
 
-              <!-- ══ ACTION TOOLBAR — flex sibling, never absolute ══
-                   For mine: appears LEFT of bubble (row-reverse)
-                   For theirs: appears RIGHT of bubble -->
-              <div class="msg-actions"
-                [class.show]="hoveredMessageId === message.messageId || selectedMessageId === message.messageId" (click)="$event.stopPropagation()">
+              <!-- ══ Message bubble ══ -->
+              <div class="msg-bubble-wrap" [style.transform]="messageTransform(message.messageId)">
+                <span class="swipe-reply-hint" [class.show]="swipeMessageId === message.messageId && swipeTranslateX > 18">
+                  <i class="fa-solid fa-reply"></i> Reply
+                </span>
 
-                <!-- Quick emoji reactions -->
-                <div class="reactions-bar">
+                <!-- Floating quick reactions -->
+                <div class="reactions-bar"
+                  [class.show]="isMessageActive(message.messageId)"
+                  (mouseenter)="onFloatingUiEnter(message.messageId)"
+                  (mouseleave)="onFloatingUiLeave(message.messageId)"
+                  (click)="$event.stopPropagation()">
                   <button type="button"
                     *ngFor="let emoji of quickReactions"
-                    (click)="reactToMessage(message, emoji)"
+                    (click)="toggleReaction(message, emoji)"
                     [title]="emoji">
                     {{ emoji }}
                   </button>
                 </div>
 
                 <!-- Action buttons -->
-                <div class="action-btns">
-                  <!-- Reply -->
+                <div class="msg-actions"
+                  [class.show]="isMessageActive(message.messageId)"
+                  (mouseenter)="onFloatingUiEnter(message.messageId)"
+                  (mouseleave)="onFloatingUiLeave(message.messageId)"
+                  (click)="$event.stopPropagation()">
                   <button type="button" class="action-btn" (click)="startReply(message)" title="Reply">
-                    <i class="fa-solid fa-reply"></i>
+                    <i class="fa-solid fa-reply"></i><span>Reply</span>
                   </button>
-
-                  <span class="action-btn-divider" *ngIf="canEdit(message) || canDelete(message)"></span>
-
-                  <!-- Edit -->
                   <button type="button" class="action-btn"
                     *ngIf="canEdit(message) && editingMessageId !== message.messageId"
                     (click)="startEdit(message)" title="Edit">
-                    <i class="fa-solid fa-pen"></i>
+                    <i class="fa-solid fa-pen"></i><span>Edit</span>
                   </button>
-
-                  <!-- Delete -->
                   <button type="button" class="action-btn danger"
                     *ngIf="canDelete(message) && editingMessageId !== message.messageId"
                     (click)="deleteLatestIfEligible(message)" title="Delete">
-                    <i class="fa-solid fa-trash"></i>
+                    <i class="fa-solid fa-trash"></i><span>Delete</span>
                   </button>
                 </div>
-              </div><!-- end .msg-actions -->
-
-              <!-- ══ Message bubble ══ -->
-              <div class="msg-bubble-wrap">
 
                 <!-- Reply preview -->
                 <button class="reply-context-btn" type="button"
