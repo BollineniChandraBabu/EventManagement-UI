@@ -43,14 +43,21 @@ export class ChatWidgetComponent {
   isSending = false;
   composer = '';
   currentUserId: number | null = null;
+
+  // Hover state for desktop — tracked per message
   hoveredMessageId: number | null = null;
+  // Selected state for mobile tap — separate so mobile always shows actions
+  selectedMessageId: number | null = null;
+
   editingMessageId: number | null = null;
   editDraft = '';
   selectedAttachment: File | null = null;
   typingUserId: number | null = null;
   replyingToMessage: ChatMessage | null = null;
+
   readonly quickReactions = ['❤️', '😂', '😮', '😢', '😡', '👍'];
   messageReactions: Record<number, ChatMessageReaction[]> = {};
+
   attachmentPreviewUrl: string | null = null;
   attachmentPreviewSafeUrl: SafeResourceUrl | null = null;
   attachmentPreviewType: 'image' | 'pdf' | null = null;
@@ -58,8 +65,10 @@ export class ChatWidgetComponent {
   attachmentPreviewLoading = false;
   attachmentPreviewOpen = false;
   highlightedMessageId: number | null = null;
+
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
+  private typingTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
 
   showNewChatPicker = false;
   newChatSearch = '';
@@ -69,6 +78,7 @@ export class ChatWidgetComponent {
   activeConversation: ChatConversation | null = null;
   messages: ChatMessage[] = [];
 
+  // ── Timeline ──────────────────────────────────────────────────────────────
   get timelineEntries(): ChatTimelineEntry[] {
     const timeline: ChatTimelineEntry[] = [];
     let previousDayKey: string | null = null;
@@ -76,71 +86,18 @@ export class ChatWidgetComponent {
     this.messages.forEach((message) => {
       const dayKey = this.dayKey(message.sentAt);
       if (dayKey && dayKey !== previousDayKey) {
-        timeline.push({
-          kind: 'day',
-          dayKey,
-          dayLabel: this.formatDayLabel(message.sentAt)
-        });
+        timeline.push({ kind: 'day', dayKey, dayLabel: this.formatDayLabel(message.sentAt) });
         previousDayKey = dayKey;
       }
-
-      timeline.push({
-        kind: 'message',
-        message
-      });
+      timeline.push({ kind: 'message', message });
     });
 
     return timeline;
   }
 
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.stopHeartbeat();
-      if (this.typingTimer) {
-        clearTimeout(this.typingTimer);
-      }
-      this.clearAttachmentPreviewState();
-    });
-
-    this.chat.currentUserId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
-      this.currentUserId = id;
-    });
-
-    this.chat.socketEvents$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
-      if ('type' in event && (event.type === 'SEEN' || event.type === 'TYPING')) {
-        this.applySeenOrTypingEvent(event);
-        return;
-      }
-
-      if ('type' in event && event.type === 'PRESENCE') {
-        this.applyPresenceEvent(event);
-        return;
-      }
-
-      if ('type' in event && event.type === 'MESSAGE_DELETED') {
-        this.applyDeleteEvent(event);
-        return;
-      }
-
-      if ('type' in event && event.type === 'MESSAGE_EDITED') {
-        this.applyEditEvent(event);
-        return;
-      }
-
-      if (!('messageId' in event)) {
-        return;
-      }
-
-      this.upsertConversationFromMessage(event);
-      if (this.activeConversation?.conversationId === event.conversationId) {
-        this.mergeIncomingMessage(event);
-        this.scrollToBottom();
-      }
-    });
-  }
-
+  // ── Computed ──────────────────────────────────────────────────────────────
   get unreadCount(): number {
-    return this.conversations.reduce((sum, conversation) => sum + (conversation.unreadCount || 0), 0);
+    return this.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
   }
 
   get mobileConversationView(): boolean {
@@ -148,7 +105,10 @@ export class ChatWidgetComponent {
   }
 
   get canSend(): boolean {
-    return !!this.activeConversation && this.canSendToActiveUser && (!!this.composer.trim() || !!this.selectedAttachment) && !this.isSending;
+    return !!this.activeConversation &&
+      this.canSendToActiveUser &&
+      (!!this.composer.trim() || !!this.selectedAttachment) &&
+      !this.isSending;
   }
 
   get canSendToActiveUser(): boolean {
@@ -157,49 +117,123 @@ export class ChatWidgetComponent {
 
   get filteredNewChatUsers(): ChatUser[] {
     const query = this.newChatSearch.trim().toLowerCase();
-
     return this.users
-      .filter((user) => user.active !== false)
-      .filter((user) => !query || user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query))
+      .filter((u) => u.active !== false)
+      .filter((u) => !query || u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query))
       .slice(0, 8);
   }
 
+  isTyping(): boolean {
+    return !!this.typingUserId && this.typingUserId === this.activeConversation?.otherUserId;
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopHeartbeat();
+      if (this.typingTimer) clearTimeout(this.typingTimer);
+      if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
+      this.clearAttachmentPreviewState();
+    });
+
+    this.chat.currentUserId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
+      this.currentUserId = id;
+    });
+
+    this.chat.socketEvents$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
+      if ('type' in event) {
+        if (event.type === 'SEEN' || event.type === 'TYPING') {
+          this.applySeenOrTypingEvent(event as ChatSeenOrTypingEvent);
+          return;
+        }
+        if (event.type === 'PRESENCE') {
+          this.applyPresenceEvent(event as ChatPresenceEvent);
+          return;
+        }
+        if (event.type === 'MESSAGE_DELETED') {
+          this.applyDeleteEvent(event as ChatDeleteEvent);
+          return;
+        }
+        if (event.type === 'MESSAGE_EDITED') {
+          this.applyEditEvent(event as ChatEditEvent);
+          return;
+        }
+      }
+
+      if (!('messageId' in event)) return;
+
+      const msg = event as ChatMessage;
+      this.upsertConversationFromMessage(msg);
+      if (this.activeConversation?.conversationId === msg.conversationId) {
+        this.mergeIncomingMessage(msg);
+        this.scrollToBottom();
+      }
+    });
+  }
+
+  // ── Toggle / Open ─────────────────────────────────────────────────────────
   toggle(): void {
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       this.bootstrapChat();
-      return;
+    } else {
+      this.chat.publishPresence(this.currentUserId ?? 0, false);
+      this.chat.markOffline().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+      this.stopHeartbeat();
     }
-
-    this.chat.publishPresence(this.currentUserId ?? 0, false);
-    this.chat.markOffline().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-    this.stopHeartbeat();
   }
 
+  // ── Hover / Tap handling — THE KEY FIX ──────────────────────────────────
+  onMessageMouseEnter(messageId: number): void {
+    this.hoveredMessageId = messageId;
+  }
+
+  onMessageMouseLeave(messageId: number): void {
+    // Small delay to let click events on action buttons fire first
+    setTimeout(() => {
+      if (this.hoveredMessageId === messageId) {
+        this.hoveredMessageId = null;
+      }
+    }, 80);
+  }
+
+  // Mobile: tap to toggle action visibility
+  onMessageTap(messageId: number): void {
+    if (this.selectedMessageId === messageId) {
+      this.selectedMessageId = null;
+    } else {
+      this.selectedMessageId = messageId;
+    }
+  }
+
+  // ── Conversations ─────────────────────────────────────────────────────────
   closeConversation(): void {
     this.activeConversation = null;
     this.messages = [];
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
+    this.hoveredMessageId = null;
+    this.selectedMessageId = null;
   }
 
   chooseConversation(conversation: ChatConversation): void {
     this.activeConversation = conversation;
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
+    this.hoveredMessageId = null;
+    this.selectedMessageId = null;
     this.chat.subscribeToConversation(conversation.conversationId);
     this.typingUserId = null;
     this.loadMessages(conversation.otherUserId);
   }
 
   startConversation(user: ChatUser): void {
-    const existing = this.conversations.find((item) => item.otherUserId === user.userId);
+    const existing = this.conversations.find((c) => c.otherUserId === user.userId);
     if (existing) {
       this.chooseConversation(existing);
       return;
     }
-
-    const draftConversation: ChatConversation = {
+    const draft: ChatConversation = {
       conversationId: Date.now() * -1,
       otherUserId: user.userId,
       otherUserName: user.name,
@@ -211,33 +245,25 @@ export class ChatWidgetComponent {
       lastMessageAt: null,
       unreadCount: 0
     };
-
-    this.activeConversation = draftConversation;
+    this.activeConversation = draft;
     this.messages = [];
     this.showNewChatPicker = false;
   }
 
+  // ── Send ──────────────────────────────────────────────────────────────────
   send(): void {
     const text = this.composer.trim();
-    if ((!text && !this.selectedAttachment) || !this.activeConversation || !this.currentUserId || this.isSending || !this.canSendToActiveUser) {
-      return;
-    }
+    if ((!text && !this.selectedAttachment) || !this.activeConversation || !this.currentUserId || this.isSending || !this.canSendToActiveUser) return;
 
     this.isSending = true;
     const receiverId = this.activeConversation.otherUserId;
 
     this.chat.sendMessage(
-      receiverId,
-      text,
-      this.selectedAttachment,
-      this.replyingToMessage?.messageId ?? null,
-      null
-    ).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => (this.isSending = false))
-).subscribe((message) => {
-      this.mergeIncomingMessage(message);
-      this.upsertConversationFromMessage(message);
+      receiverId, text, this.selectedAttachment,
+      this.replyingToMessage?.messageId ?? null, null
+    ).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.isSending = false))).subscribe((msg) => {
+      this.mergeIncomingMessage(msg);
+      this.upsertConversationFromMessage(msg);
       this.reloadConversationsOnly();
       this.scrollToBottom();
       this.composer = '';
@@ -249,85 +275,42 @@ export class ChatWidgetComponent {
     });
   }
 
+  // Enter = send (Shift+Enter = new line)
+  onEnterKey(event: Event): void {
+      let e = event as KeyboardEvent;
+    if (!e.shiftKey) {
+      e.preventDefault();
+      this.send();
+    }
+  }
+
   onComposerInput(): void {
-    if (!this.activeConversation || !this.currentUserId || !this.canSendToActiveUser) {
-      return;
-    }
-
+    if (!this.activeConversation || !this.currentUserId || !this.canSendToActiveUser) return;
     this.chat.publishTyping(this.activeConversation.conversationId, this.currentUserId, true);
-    if (this.typingTimer) {
-      clearTimeout(this.typingTimer);
-    }
-
+    if (this.typingTimer) clearTimeout(this.typingTimer);
     this.typingTimer = setTimeout(() => {
       if (this.activeConversation && this.currentUserId) {
         this.chat.publishTyping(this.activeConversation.conversationId, this.currentUserId, false);
       }
-    }, 900);
+    }, 1500);
   }
 
-
-  formatMessageTime(value: string | null): string {
-    if (!value) {
-      return '';
-    }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return '';
-    }
-
-    return date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  // ── Reply ─────────────────────────────────────────────────────────────────
+  startReply(message: ChatMessage): void {
+    this.replyingToMessage = message;
+    this.selectedMessageId = null;
   }
 
-  formatMessageDisplayTime(value: string): string {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return '';
-    }
-
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-    const isToday = now.toDateString() === date.toDateString();
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    }
-
-    if (diffDays < 7) {
-      return `${date.toLocaleDateString([], { weekday: 'long' })} ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
-    }
-
-    return date.toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  cancelReply(): void {
+    this.replyingToMessage = null;
   }
 
-  getActiveConversationStatus(): string {
-    if (!this.activeConversation) {
-      return '';
-    }
-
-    if (this.typingUserId && this.typingUserId === this.activeConversation.otherUserId) {
-      return 'Typing…';
-    }
-
-    if (this.activeConversation.otherUserOnline) {
-      return 'Active now';
-    }
-
-    if (this.activeConversation.otherUserLastSeenAt) {
-      return `Last seen ${this.formatLastSeen(this.activeConversation.otherUserLastSeenAt)}`;
-    }
-
-    return 'Offline';
-  }
-
+  // ── Edit ──────────────────────────────────────────────────────────────────
   startEdit(message: ChatMessage): void {
-    if (!this.canEdit(message)) {
-      return;
-    }
-
+    if (!this.canEdit(message)) return;
     this.editingMessageId = message.messageId;
     this.editDraft = message.messageText ?? '';
+    this.selectedMessageId = null;
   }
 
   cancelEdit(): void {
@@ -336,68 +319,51 @@ export class ChatWidgetComponent {
   }
 
   saveEdit(message: ChatMessage): void {
-    const nextText = this.editDraft.trim();
-    if (!nextText || nextText === (message.messageText ?? '').trim()) {
-      this.cancelEdit();
-      return;
-    }
-
-    this.chat.editMessage(message.messageId, nextText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((updated) => {
-      this.messages = this.messages.map((item) => (item.messageId === updated.messageId ? updated : item));
+    const next = this.editDraft.trim();
+    if (!next || next === (message.messageText ?? '').trim()) { this.cancelEdit(); return; }
+    this.chat.editMessage(message.messageId, next).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((updated) => {
+      this.messages = this.messages.map((m) => m.messageId === updated.messageId ? updated : m);
       this.reloadConversationsOnly();
       this.cancelEdit();
     });
   }
 
-  deleteLatestIfEligible(message: ChatMessage): void {
-    if (!this.canDelete(message) || !this.activeConversation) {
-      return;
+    onEditEnter(event: Event, message: any) {
+        const e = event as KeyboardEvent;
+        if (e.ctrlKey) {
+            e.preventDefault();
+            this.saveEdit(message);
+        }
     }
 
+  canEdit(message: ChatMessage): boolean {
+    return this.isWithinEditWindow(message) && message.mine;
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────────────
+  deleteLatestIfEligible(message: ChatMessage): void {
+    if (!this.canDelete(message) || !this.activeConversation) return;
+    this.selectedMessageId = null;
     this.chat.deleteLastSentMessage(this.activeConversation.otherUserId)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        this.messages = this.messages.filter((item) => item.messageId !== response.messageId);
+      .subscribe((res) => {
+        this.messages = this.messages.filter((m) => m.messageId !== res.messageId);
         this.reloadConversationsOnly();
       });
   }
 
-  triggerAttachment(): void {
-    this.attachmentInput?.nativeElement.click();
+  canDelete(message: ChatMessage): boolean {
+    return this.isWithinEditWindow(message) && message.mine && this.isLatestMineMessage(message.messageId);
   }
 
-  onAttachmentSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    this.selectedAttachment = file;
+  isWithinEditWindow(message: ChatMessage): boolean {
+    const sent = new Date(message.sentAt).getTime();
+    return !Number.isNaN(sent) && Date.now() - sent <= 15 * 60 * 1000;
   }
 
-  clearAttachment(): void {
-    this.selectedAttachment = null;
-    if (this.attachmentInput) {
-      this.attachmentInput.nativeElement.value = '';
-    }
-  }
-
-  startReply(message: ChatMessage): void {
-    this.replyingToMessage = message;
-  }
-
-  cancelReply(): void {
-    this.replyingToMessage = null;
-  }
-
-  displayConversationName(conversation: ChatConversation): string {
-    return conversation.otherUserActive === false
-      ? `${conversation.otherUserName} (Disabled user)`
-      : conversation.otherUserName;
-  }
-
-  displayUserName(user: ChatUser): string {
-    return user.name;
-  }
-
+  // ── Reactions ─────────────────────────────────────────────────────────────
   reactToMessage(message: ChatMessage, emoji: string): void {
+    this.selectedMessageId = null;
     this.chat.reactToMessage(message.messageId, emoji).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
       this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
     });
@@ -413,42 +379,39 @@ export class ChatWidgetComponent {
     return this.messageReactions[messageId] ?? [];
   }
 
+  // ── Jump to message ───────────────────────────────────────────────────────
   jumpToMessage(messageId: number | null | undefined): void {
-    if (!messageId) {
-      return;
-    }
-
-    const target = this.messageScroller?.nativeElement.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
-    if (!target) {
-      return;
-    }
-
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!messageId) return;
+    const el = this.messageScroller?.nativeElement.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     this.highlightedMessageId = messageId;
-    setTimeout(() => {
-      if (this.highlightedMessageId === messageId) {
-        this.highlightedMessageId = null;
-      }
-    }, 1500);
+    setTimeout(() => { if (this.highlightedMessageId === messageId) this.highlightedMessageId = null; }, 1800);
+  }
+
+  // ── Attachment ────────────────────────────────────────────────────────────
+  triggerAttachment(): void { this.attachmentInput?.nativeElement.click(); }
+
+  onAttachmentSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    this.selectedAttachment = file;
+  }
+
+  clearAttachment(): void {
+    this.selectedAttachment = null;
+    if (this.attachmentInput) this.attachmentInput.nativeElement.value = '';
   }
 
   openAttachment(message: ChatMessage): void {
-    if (!message.attachmentFileName) {
-      return;
-    }
-
-    if (!this.isPreviewSupported(message)) {
-      this.downloadAttachment(message);
-      return;
-    }
-
+    if (!message.attachmentFileName) return;
+    if (!this.isPreviewSupported(message)) { this.downloadAttachment(message); return; }
     this.attachmentPreviewLoading = true;
     this.attachmentPreviewOpen = true;
     this.attachmentPreviewName = message.attachmentFileName;
     this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
-        const normalizedBlob = this.normalizeAttachmentBlob(blob, message);
-        const url = URL.createObjectURL(normalizedBlob);
+        const normalized = this.normalizeAttachmentBlob(blob, message);
+        const url = URL.createObjectURL(normalized);
         this.clearAttachmentPreviewState(false);
         this.attachmentPreviewOpen = true;
         this.attachmentPreviewName = message.attachmentFileName ?? 'attachment';
@@ -457,89 +420,107 @@ export class ChatWidgetComponent {
         this.attachmentPreviewType = this.resolveAttachmentPreviewType(message);
         this.attachmentPreviewLoading = false;
       },
-      error: () => {
-        this.attachmentPreviewLoading = false;
-        this.attachmentPreviewOpen = false;
-        this.downloadAttachment(message);
-      }
+      error: () => { this.attachmentPreviewLoading = false; this.attachmentPreviewOpen = false; this.downloadAttachment(message); }
     });
   }
 
-  closeAttachmentPreview(): void {
-    this.clearAttachmentPreviewState();
-  }
+  closeAttachmentPreview(): void { this.clearAttachmentPreviewState(); }
 
   downloadPreviewAttachment(): void {
-    if (!this.attachmentPreviewUrl) {
-      return;
-    }
-
-    const anchor = document.createElement('a');
-    anchor.href = this.attachmentPreviewUrl;
-    anchor.download = this.attachmentPreviewName || 'attachment';
-    anchor.click();
+    if (!this.attachmentPreviewUrl) return;
+    const a = document.createElement('a');
+    a.href = this.attachmentPreviewUrl;
+    a.download = this.attachmentPreviewName || 'attachment';
+    a.click();
   }
 
   downloadAttachment(message: ChatMessage): void {
-    if (!message.attachmentFileName) {
-      return;
-    }
-
+    if (!message.attachmentFileName) return;
     this.chat.downloadAttachment(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((blob) => {
       this.downloadBlob(this.normalizeAttachmentBlob(blob, message), message.attachmentFileName || 'attachment');
     });
   }
 
+  // ── Display helpers ───────────────────────────────────────────────────────
+  displayConversationName(conversation: ChatConversation): string {
+    return conversation.otherUserActive === false
+      ? `${conversation.otherUserName} (Disabled)`
+      : conversation.otherUserName;
+  }
 
-  private mergeIncomingMessage(message: ChatMessage): void {
-    const index = this.messages.findIndex((item) => item.messageId === message.messageId);
-    if (index >= 0) {
-      const updated = [...this.messages];
-      updated[index] = message;
-      this.messages = updated;
-      return;
+  displayUserName(user: ChatUser): string { return user.name; }
+
+  getActiveConversationStatus(): string {
+    if (!this.activeConversation) return '';
+    if (this.activeConversation.otherUserOnline) return 'Active now';
+    if (this.activeConversation.otherUserLastSeenAt) {
+      return `Last seen ${this.formatLastSeen(this.activeConversation.otherUserLastSeenAt)}`;
     }
-
-    this.messages = [...this.messages, message];
+    return 'Offline';
   }
 
-  canEdit(message: ChatMessage): boolean {
-    return this.isWithinEditWindow(message) && message.mine;
+  formatMessageTime(value: string | null): string {
+    if (!value) return '';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
-  canDelete(message: ChatMessage): boolean {
-    return this.isWithinEditWindow(message) && message.mine && this.isLatestMineMessage(message.messageId);
+  formatMessageDisplayTime(value: string): string {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    const isToday = now.toDateString() === d.toDateString();
+    if (isToday) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
+    if (diff < 7) return `${d.toLocaleDateString([], { weekday: 'short' })} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
-  isWithinEditWindow(message: ChatMessage): boolean {
-    const sentAt = new Date(message.sentAt).getTime();
-    if (Number.isNaN(sentAt)) {
-      return false;
-    }
-
-    return Date.now() - sentAt <= 15 * 60 * 1000;
-  }
-
-  private isLatestMineMessage(messageId: number): boolean {
-    for (let index = this.messages.length - 1; index >= 0; index--) {
-      if (this.messages[index].mine) {
-        return this.messages[index].messageId === messageId;
+  // ── Private: socket event handlers ───────────────────────────────────────
+  private applySeenOrTypingEvent(event: ChatSeenOrTypingEvent): void {
+    if (event.type === 'TYPING') {
+      if (event.conversationId !== this.activeConversation?.conversationId) return;
+      if (event.typing) {
+        this.typingUserId = event.userId ?? null;
+        if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
+        this.typingTimeoutTimer = setTimeout(() => { this.typingUserId = null; }, 4000);
+      } else {
+        this.typingUserId = null;
+        if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
       }
     }
-    return false;
   }
 
+  private applyPresenceEvent(event: ChatPresenceEvent): void {
+    this.users = this.users.map((u) => u.userId === event.userId ? { ...u, online: event.online, lastSeenAt: event.lastSeenAt } : u);
+    this.conversations = this.conversations.map((c) => c.otherUserId === event.userId ? { ...c, otherUserOnline: event.online, otherUserLastSeenAt: event.lastSeenAt } : c);
+    if (this.activeConversation?.otherUserId === event.userId) {
+      this.activeConversation = { ...this.activeConversation, otherUserOnline: event.online, otherUserLastSeenAt: event.lastSeenAt };
+    }
+  }
+
+  private applyDeleteEvent(event: ChatDeleteEvent): void {
+    if (this.activeConversation?.conversationId === event.conversationId) {
+      this.messages = this.messages.filter((m) => m.messageId !== event.messageId);
+    }
+    this.reloadConversationsOnly();
+  }
+
+  private applyEditEvent(event: ChatEditEvent): void {
+    if (this.activeConversation?.conversationId === event.message.conversationId) {
+      this.messages = this.messages.map((m) => m.messageId === event.message.messageId ? event.message : m);
+    }
+    this.reloadConversationsOnly();
+  }
+
+  // ── Private: data loading ─────────────────────────────────────────────────
   private bootstrapChat(): void {
     this.isLoading = true;
-    this.chat.ensureCurrentUser().pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => (this.isLoading = false))
-    ).subscribe(() => {
+    this.chat.ensureCurrentUser().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.isLoading = false))).subscribe(() => {
       this.chat.connectSocket();
       this.chat.subscribePresence();
-      if (this.currentUserId) {
-        this.chat.publishPresence(this.currentUserId, true);
-      }
+      if (this.currentUserId) this.chat.publishPresence(this.currentUserId, true);
       this.chat.heartbeat().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
       this.startHeartbeat();
       this.reloadLists();
@@ -548,44 +529,33 @@ export class ChatWidgetComponent {
 
   private reloadLists(): void {
     this.reloadConversationsOnly();
-    forkJoin({
-      all: this.chat.listUsers(),
-      active: this.chat.listActiveUsers()
-    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ all, active }) => {
-      const activeMap = new Map(active.map((item) => [item.userId, item]));
-      this.users = all.map((user) => {
-        const activeState = activeMap.get(user.userId);
-        return activeState
-          ? { ...user, online: activeState.online, lastSeenAt: activeState.lastSeenAt }
-          : user;
+    forkJoin({ all: this.chat.listUsers(), active: this.chat.listActiveUsers() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ all, active }) => {
+        const activeMap = new Map(active.map((u) => [u.userId, u]));
+        this.users = all.map((u) => {
+          const a = activeMap.get(u.userId);
+          return a ? { ...u, online: a.online, lastSeenAt: a.lastSeenAt } : u;
+        });
+        this.applyActiveFlagsToConversations();
       });
-      this.applyActiveFlagsToConversations();
-    });
   }
 
   private reloadConversationsOnly(): void {
     this.chat.listConversations().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((items) => {
-      const userMap = new Map(this.users.map((user) => [user.userId, user.active]));
-      this.conversations = items.map((conversation) => ({
-        ...conversation,
-        otherUserActive: conversation.otherUserActive ?? userMap.get(conversation.otherUserId) ?? true
-      }));
-      if (items.length && !this.activeConversation) {
-        this.chooseConversation(this.conversations[0]);
-      }
-
+      const userMap = new Map(this.users.map((u) => [u.userId, u.active]));
+      this.conversations = items.map((c) => ({ ...c, otherUserActive: c.otherUserActive ?? userMap.get(c.otherUserId) ?? true }));
+      if (items.length && !this.activeConversation) this.chooseConversation(this.conversations[0]);
       if (this.activeConversation) {
-        const matched = this.conversations.find((item) => item.conversationId === this.activeConversation?.conversationId);
-        if (matched) {
-          this.activeConversation = matched;
-        }
+        const matched = this.conversations.find((c) => c.conversationId === this.activeConversation?.conversationId);
+        if (matched) this.activeConversation = matched;
       }
     });
   }
 
   private loadMessages(otherUserId: number): void {
-    this.chat.conversationMessages(otherUserId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
-      this.messages = [...response.items].reverse();
+    this.chat.conversationMessages(otherUserId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((res) => {
+      this.messages = [...res.items].reverse();
       this.loadReactionsForMessages(this.messages);
       this.markConversationRead(otherUserId);
       this.scrollToBottom();
@@ -593,91 +563,54 @@ export class ChatWidgetComponent {
   }
 
   private markConversationRead(otherUserId: number): void {
-    this.conversations = this.conversations.map((item) => item.otherUserId === otherUserId ? { ...item, unreadCount: 0 } : item);
-
+    this.conversations = this.conversations.map((c) => c.otherUserId === otherUserId ? { ...c, unreadCount: 0 } : c);
     if (this.activeConversation?.conversationId && this.currentUserId) {
       this.chat.publishSeen(this.activeConversation.conversationId, this.currentUserId, otherUserId);
     }
   }
 
-  private upsertConversationFromMessage(message: ChatMessage): void {
-    const existing = this.conversations.find((item) => item.conversationId === message.conversationId);
+  private mergeIncomingMessage(message: ChatMessage): void {
+    const idx = this.messages.findIndex((m) => m.messageId === message.messageId);
+    if (idx >= 0) {
+      const updated = [...this.messages];
+      updated[idx] = message;
+      this.messages = updated;
+    } else {
+      this.messages = [...this.messages, message];
+    }
+  }
 
+  private upsertConversationFromMessage(message: ChatMessage): void {
+    const existing = this.conversations.find((c) => c.conversationId === message.conversationId);
     if (existing) {
-      const shouldIncreaseUnread = !message.mine && this.activeConversation?.conversationId !== message.conversationId;
-      this.conversations = this.conversations.map((item) => item.conversationId === message.conversationId ? {
-        ...item,
+      const shouldIncrement = !message.mine && this.activeConversation?.conversationId !== message.conversationId;
+      this.conversations = this.conversations.map((c) => c.conversationId === message.conversationId ? {
+        ...c,
         lastMessage: message.messageText || (message.attachmentFileName ? `📎 ${message.attachmentFileName}` : ''),
         lastMessageAt: message.sentAt,
-        unreadCount: shouldIncreaseUnread ? item.unreadCount + 1 : item.unreadCount
-      } : item);
-      return;
-    }
-
-    this.reloadConversationsOnly();
-  }
-
-  private applySeenOrTypingEvent(event: ChatSeenOrTypingEvent): void {
-    if (event.type === 'TYPING') {
-      if (event.conversationId !== this.activeConversation?.conversationId) {
-        return;
-      }
-
-      this.typingUserId = event.typing ? (event.userId ?? null) : null;
-      return;
-    }
-
-    // Do not optimistically stamp seenAt client-side.
-    // Backend may still report null, and synthetic timestamps cause flicker/wrong seen labels.
-  }
-
-  private applyPresenceEvent(event: ChatPresenceEvent): void {
-    this.users = this.users.map((item) => item.userId === event.userId ? {
-      ...item,
-      online: event.online,
-      lastSeenAt: event.lastSeenAt
-    } : item);
-
-    this.conversations = this.conversations.map((item) => item.otherUserId === event.userId ? {
-      ...item,
-      otherUserOnline: event.online,
-      otherUserLastSeenAt: event.lastSeenAt
-    } : item);
-
-    if (this.activeConversation?.otherUserId === event.userId) {
-      this.activeConversation = {
-        ...this.activeConversation,
-        otherUserOnline: event.online,
-        otherUserLastSeenAt: event.lastSeenAt
-      };
+        unreadCount: shouldIncrement ? c.unreadCount + 1 : c.unreadCount
+      } : c);
+    } else {
+      this.reloadConversationsOnly();
     }
   }
 
-  private formatLastSeen(value: string): string {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return 'recently';
+  private applyActiveFlagsToConversations(): void {
+    const activeByUser = new Map(this.users.map((u) => [u.userId, u.active !== false]));
+    this.conversations = this.conversations.map((c) => ({ ...c, otherUserActive: activeByUser.get(c.otherUserId) ?? c.otherUserActive ?? true }));
+    if (this.activeConversation) {
+      this.activeConversation = { ...this.activeConversation, otherUserActive: activeByUser.get(this.activeConversation.otherUserId) ?? this.activeConversation.otherUserActive ?? true };
     }
-
-    return date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
   }
 
-  private applyDeleteEvent(event: ChatDeleteEvent): void {
-    if (this.activeConversation?.conversationId === event.conversationId) {
-      this.messages = this.messages.filter((message) => message.messageId !== event.messageId);
+  private isLatestMineMessage(messageId: number): boolean {
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      if (this.messages[i].mine) return this.messages[i].messageId === messageId;
     }
-
-    this.reloadConversationsOnly();
+    return false;
   }
 
-  private applyEditEvent(event: ChatEditEvent): void {
-    if (this.activeConversation?.conversationId === event.message.conversationId) {
-      this.messages = this.messages.map((item) => item.messageId === event.message.messageId ? event.message : item);
-    }
-
-    this.reloadConversationsOnly();
-  }
-
+  // ── Heartbeat ─────────────────────────────────────────────────────────────
   private startHeartbeat(): void {
     this.stopHeartbeat();
     this.heartbeatTimer = setInterval(() => {
@@ -686,57 +619,51 @@ export class ChatWidgetComponent {
   }
 
   private stopHeartbeat(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
+    if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
   }
 
+  // ── Scroll ────────────────────────────────────────────────────────────────
   private scrollToBottom(): void {
     setTimeout(() => {
       if (this.messageScroller) {
         this.messageScroller.nativeElement.scrollTop = this.messageScroller.nativeElement.scrollHeight;
       }
-    });
+    }, 50);
   }
 
+  // ── Day helpers ───────────────────────────────────────────────────────────
   private dayKey(value: string): string | null {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return null;
-    }
-
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return null;
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
   }
 
   private formatDayLabel(value: string): string {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return '';
-    }
-
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-    if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: 'long' });
-    }
-
-    return date.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    const diff = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    if (diff < 7) return d.toLocaleDateString([], { weekday: 'long' });
+    return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   }
 
+  private formatLastSeen(value: string): string {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return 'recently';
+    const diff = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (diff < 1) return 'just now';
+    if (diff < 60) return `${diff}m ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+    return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  // ── Attachment helpers ────────────────────────────────────────────────────
   private resolveAttachmentPreviewType(message: ChatMessage): 'image' | 'pdf' | null {
-    const contentType = (message.attachmentContentType || '').toLowerCase();
-    const fileName = (message.attachmentFileName || '').toLowerCase();
-
-    if (contentType.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(fileName)) {
-      return 'image';
-    }
-
-    if (contentType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      return 'pdf';
-    }
-
+    const ct = (message.attachmentContentType || '').toLowerCase();
+    const fn = (message.attachmentFileName || '').toLowerCase();
+    if (ct.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(fn)) return 'image';
+    if (ct === 'application/pdf' || fn.endsWith('.pdf')) return 'pdf';
     return null;
   }
 
@@ -746,78 +673,56 @@ export class ChatWidgetComponent {
 
   private downloadBlob(blob: Blob, fileName: string): void {
     const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = fileName;
-    anchor.click();
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName; a.click();
     URL.revokeObjectURL(url);
   }
 
   private normalizeAttachmentBlob(blob: Blob, message: ChatMessage): Blob {
     const type = this.resolveAttachmentMimeType(message);
-    if (!type || blob.type === type) {
-      return blob;
-    }
+    if (!type || blob.type === type) return blob;
     return new Blob([blob], { type });
   }
 
   private resolveAttachmentMimeType(message: ChatMessage): string {
-    const contentType = (message.attachmentContentType || '').trim().toLowerCase();
-    if (contentType) {
-      return contentType;
-    }
-
-    const fileName = (message.attachmentFileName || '').toLowerCase();
-    if (fileName.endsWith('.pdf')) {
-      return 'application/pdf';
-    }
-    if (/\.(png)$/.test(fileName)) {
-      return 'image/png';
-    }
-    if (/\.(jpe?g)$/.test(fileName)) {
-      return 'image/jpeg';
-    }
-    if (fileName.endsWith('.webp')) {
-      return 'image/webp';
-    }
+    const ct = (message.attachmentContentType || '').trim().toLowerCase();
+    if (ct) return ct;
+    const fn = (message.attachmentFileName || '').toLowerCase();
+    if (fn.endsWith('.pdf')) return 'application/pdf';
+    if (/\.png$/.test(fn)) return 'image/png';
+    if (/\.jpe?g$/.test(fn)) return 'image/jpeg';
+    if (fn.endsWith('.webp')) return 'image/webp';
     return 'application/octet-stream';
   }
 
   private clearAttachmentPreviewState(close = true): void {
-    if (this.attachmentPreviewUrl) {
-      URL.revokeObjectURL(this.attachmentPreviewUrl);
-    }
-
+    if (this.attachmentPreviewUrl) URL.revokeObjectURL(this.attachmentPreviewUrl);
     this.attachmentPreviewUrl = null;
     this.attachmentPreviewSafeUrl = null;
     this.attachmentPreviewType = null;
     this.attachmentPreviewLoading = false;
     this.attachmentPreviewName = '';
-    if (close) {
-      this.attachmentPreviewOpen = false;
-    }
+    if (close) this.attachmentPreviewOpen = false;
   }
 
   private loadReactionsForMessages(messages: ChatMessage[]): void {
-    messages.forEach((message) => {
-      this.chat.listMessageReactions(message.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
-        this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
+    messages.forEach((m) => {
+      this.chat.listMessageReactions(m.messageId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reactions) => {
+        this.messageReactions = { ...this.messageReactions, [m.messageId]: reactions };
       });
     });
   }
 
-  private applyActiveFlagsToConversations(): void {
-    const activeByUser = new Map(this.users.map((user) => [user.userId, user.active !== false]));
-    this.conversations = this.conversations.map((conversation) => ({
-      ...conversation,
-      otherUserActive: activeByUser.get(conversation.otherUserId) ?? conversation.otherUserActive ?? true
-    }));
-
-    if (this.activeConversation) {
-      this.activeConversation = {
-        ...this.activeConversation,
-        otherUserActive: activeByUser.get(this.activeConversation.otherUserId) ?? this.activeConversation.otherUserActive ?? true
-      };
-    }
+  // Tells Angular to track messages by their unique ID rather than their array reference
+  trackByTimelineEntry(index: number, entry: ChatTimelineEntry): string | number {
+    return entry.kind === 'message' && entry.message
+        ? `msg-${entry.message.messageId}`
+        : `day-${entry.dayKey}`;
   }
+
+  // Tells Angular to track reactions by their emoji character
+  trackByReaction(index: number, reaction: ChatMessageReaction): string {
+    return reaction.emoji;
+  }
+
 }
