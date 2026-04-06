@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,8 +28,7 @@ interface ChatTimelineEntry {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './chat-widget.component.html',
-  styleUrl: './chat-widget.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './chat-widget.component.css'
 })
 export class ChatWidgetComponent {
   private readonly chat = inject(ChatService);
