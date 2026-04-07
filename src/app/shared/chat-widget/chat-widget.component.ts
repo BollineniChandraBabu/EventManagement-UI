@@ -211,6 +211,7 @@ export class ChatWidgetComponent {
       const msg = event as ChatMessage;
       this.upsertConversationFromMessage(msg);
       if (this.activeConversation?.conversationId === msg.conversationId) {
+        this.loadReactionsForMessages([msg]);
         this.mergeIncomingMessage(msg);
         if (this.isNearBottom) {
           this.scrollToBottom();
@@ -412,6 +413,10 @@ export class ChatWidgetComponent {
   // ── Edit ──────────────────────────────────────────────────────────────────
   startEdit(message: ChatMessage): void {
     if (!this.canEdit(message)) return;
+    // Close reply if editing to avoid UI clutter
+    if (this.replyingToMessage?.messageId === message.messageId) {
+      this.replyingToMessage = null;
+    }
     this.editingMessageId = message.messageId;
     this.editDraft = message.messageText ?? '';
     this.clearActiveMessageState();
@@ -468,18 +473,22 @@ export class ChatWidgetComponent {
   canDelete(message: ChatMessage): boolean {
     return (
         this.isWithinEditWindow(message) &&
-        message.mine &&
-        this.isLatestMineMessage(message.messageId)
+        message.mine
     );
   }
 
   isWithinEditWindow(message: ChatMessage): boolean {
     const sent = new Date(message.sentAt).getTime();
-    return !Number.isNaN(sent) && Date.now() - sent <= 15 * 60 * 1000;
+    // Extend window to 24 hours for better UX
+    return !Number.isNaN(sent) && (Date.now() - sent) <= (24 * 60 * 60 * 1000);
   }
 
   // ── Reactions ─────────────────────────────────────────────────────────────
   reactToMessage(message: ChatMessage, emoji: string): void {
+    // If we are currently editing this message, cancel edit to show the reaction
+    if (this.editingMessageId === message.messageId) {
+      this.cancelEdit();
+    }
     this.toggleReaction(message, emoji);
   }
 
@@ -537,12 +546,12 @@ export class ChatWidgetComponent {
       this.cancelLongPress();
       this.cancelTap = true;
     }
-    if (dx > 8 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+    if (dx > 10 && Math.abs(dx) > Math.abs(dy)) {
       this.cancelLongPress();
       this.isSwiping = true;
       this.cancelTap = true;
       this.swipeMessageId = message.messageId;
-      this.swipeTranslateX = Math.min(dx, 84);
+      this.swipeTranslateX = Math.min(dx, 70);
     } else if (dx < 0 && this.swipeMessageId === message.messageId) {
       this.resetSwipe();
     }
@@ -558,7 +567,7 @@ export class ChatWidgetComponent {
     const dy = event.clientY - this.gestureStartY;
 
     if (this.isSwiping) {
-      if (dx >= 56 && Math.abs(dy) < 28) {
+      if (dx >= 50) {
         this.startReply(message);
         this.vibrateLight();
       }
@@ -582,11 +591,13 @@ export class ChatWidgetComponent {
   onMessageTap(message: ChatMessage): void {
     const now = Date.now();
     const lastTap = this.lastTapTimeByMessage.get(message.messageId) ?? 0;
-    if (now - lastTap < 280) {
+    // Double tap detected
+    if (lastTap > 0 && now - lastTap < 300) {
       this.lastTapTimeByMessage.set(message.messageId, 0);
       this.toggleReaction(message, '❤️');
       return;
     }
+    
     this.lastTapTimeByMessage.set(message.messageId, now);
     // On non-hover devices, single tap opens action toolbar
     if (!this.prefersHover()) {
@@ -1056,7 +1067,7 @@ export class ChatWidgetComponent {
 
   private shouldIgnoreGesture(event: PointerEvent): boolean {
     const target = event.target as HTMLElement | null;
-    return !!target?.closest('button, textarea, input, a, .msg-actions, .msg-reactions');
+    return !!target?.closest('button, textarea, input, a, .msg-actions, .reactions-bar, .msg-reactions');
   }
 
   // ── Scroll ────────────────────────────────────────────────────────────────

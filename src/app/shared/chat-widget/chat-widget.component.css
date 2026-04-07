@@ -93,14 +93,14 @@
 
 /* ── Main Panel ── */
 .chat-panel {
-  position: fixed;
-  bottom: 0;
+  position: absolute;
+  bottom: 75px; /* Positions the panel above the FAB launcher */
   right: 0;
-  width: 420px;
-  height: 680px;
-  max-height: calc(100dvh - 20px);
+  width: 480px;
+  height: min(680px, calc(100dvh - 140px));
+  max-height: calc(100dvh - 100px);
   background: var(--cw-panel-bg);
-  border-radius: 20px 20px 0 0;
+  border-radius: 16px;
   box-shadow: var(--cw-shadow-lg);
   overflow: hidden;
   display: flex;
@@ -182,12 +182,13 @@
 .chat-panel-body {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 240px 1fr;
+  display: flex; /* Flex is more reliable for dynamic resizing than Grid here */
 }
 
 /* ── Conversations Sidebar ── */
 .chat-conversations {
+  width: 260px;
+  flex-shrink: 0;
   background: var(--cw-sidebar-bg);
   border-right: 1px solid var(--cw-border);
   display: flex;
@@ -461,6 +462,8 @@
 
 /* ── Thread Pane ── */
 .chat-thread {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -652,27 +655,26 @@
 .swipe-reply-hint {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%) scale(0.8);
+  transform: translateY(-50%) scale(0.5);
   opacity: 0;
-  color: var(--cw-meta);
-  background: rgba(255,255,255,.9);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0,0,0,.08);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  color: var(--cw-accent-dk);
+  background: var(--cw-mine-bubble);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
   pointer-events: none;
-  transition: opacity 0.16s ease, transform 0.16s ease;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   white-space: nowrap;
   z-index: 4;
 }
 
-.chat-message:not(.mine) .swipe-reply-hint { right: -76px; }
-.chat-message.mine .swipe-reply-hint { left: -76px; }
+.chat-message:not(.mine) .swipe-reply-hint { left: -40px; }
+.chat-message.mine .swipe-reply-hint { left: -40px; }
 
 .swipe-reply-hint.show { opacity: 1; transform: translateY(-50%) scale(1); }
 
@@ -1315,6 +1317,17 @@
   .chat-message.mine .msg-bubble { border-radius: var(--cw-radius) !important; }
 
   .msg-actions { pointer-events: auto; }
+}
+
+/* ── Small Laptops / Low Resolution Fix ── */
+@media (min-width: 992px) and (max-height: 850px) {
+  .chat-panel {
+    width: 380px; /* Slightly narrower to prevent horizontal crowding */
+    height: calc(100dvh - 140px);
+  }
+  .chat-conversations {
+    width: 200px; /* Reduce sidebar width on smaller screens */
+  }
 }
 
 @media (min-width: 992px) {
