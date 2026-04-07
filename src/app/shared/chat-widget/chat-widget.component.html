@@ -1,346 +1,386 @@
 <div class="chat-widget" [class.open]="isOpen">
 
-  <!-- ── Launcher pill ── -->
-  <button class="chat-launcher" type="button" (click)="toggle()" aria-label="Toggle messages">
-    <span class="chat-icon-wrap">
-      <i class="fa-regular fa-message"></i>
-      <span class="chat-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    <!-- ── FAB Launcher ── -->
+    <button class="chat-launcher" type="button" (click)="toggle()" aria-label="Toggle messages">
+        <span class="chat-badge" *ngIf="!isOpen && unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        <span class="fab-icon">
+      <i class="fa-solid" [class.fa-message]="!isOpen" [class.fa-xmark]="isOpen"></i>
     </span>
-    <span class="chat-launcher-title">Messages</span>
-    <span class="chat-avatar"><i class="fa-solid fa-user"></i></span>
-  </button>
+    </button>
 
-  <!-- ── Main panel ── -->
-  <section class="chat-panel" *ngIf="isOpen">
+    <!-- ── Main Panel ── -->
+    <section class="chat-panel" *ngIf="isOpen">
 
-    <!-- Header -->
-    <header class="chat-panel-header">
-      <button type="button" class="mobile-back" *ngIf="mobileConversationView" (click)="closeConversation()">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
-      <div class="chat-title-wrap">
-        <h2>Messages</h2>
-        <small>Real-time chat</small>
-      </div>
-      <button type="button" class="chat-close" (click)="toggle()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </header>
-
-    <!-- Body: sidebar + thread -->
-    <div class="chat-panel-body">
-
-      <!-- ── Conversations sidebar ── -->
-      <aside class="chat-conversations" [class.hidden-mobile]="mobileConversationView">
-        <div class="pane-header">Conversations</div>
-
-        <!-- New chat -->
-        <div class="new-chat-box">
-          <button type="button" class="btn btn-sm btn-primary w-100"
-            (click)="showNewChatPicker = !showNewChatPicker">
-            <i class="fa-solid fa-plus me-1"></i>New chat
-          </button>
-
-          <div class="new-chat-picker" *ngIf="showNewChatPicker">
-            <input type="text" class="form-control form-control-sm" [(ngModel)]="newChatSearch"
-              placeholder="Search users…">
-            <div class="new-chat-list">
-              <button type="button" *ngFor="let user of filteredNewChatUsers"
-                (click)="startConversation(user)">
-                <span>{{ displayUserName(user) }}</span>
-                <small [class.online]="user.online">
-                  {{ user.online ? 'Active now' : 'Offline' }}
-                </small>
-              </button>
-              <p *ngIf="!filteredNewChatUsers.length">No users found.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Conversation list -->
-        <div class="convo-list">
-          <button type="button" class="conversation-row"
-            *ngFor="let convo of conversations"
-            [class.active]="activeConversation?.conversationId === convo.conversationId"
-            (click)="chooseConversation(convo)">
-            <div class="convo-avatar">
-              {{ (convo.otherUserName || '?').charAt(0).toUpperCase() }}
-              <span class="presence-ring" [class.online]="convo.otherUserOnline"></span>
-            </div>
-            <div class="convo-info">
-              <div class="convo-name">
-                {{ displayConversationName(convo) }}
-              </div>
-              <div class="convo-preview">
-                {{ convo.lastMessage || 'Start chatting…' }}
-              </div>
-            </div>
-            <div class="convo-meta">
-              <span class="convo-time" *ngIf="convo.lastMessageAt">
-                {{ formatMessageTime(convo.lastMessageAt) }}
-              </span>
-              <span class="mini-badge" *ngIf="convo.unreadCount > 0">
-                {{ convo.unreadCount > 99 ? '99+' : convo.unreadCount }}
-              </span>
-            </div>
-          </button>
-        </div>
-      </aside>
-
-      <!-- ── Thread ── -->
-      <div class="chat-thread" *ngIf="activeConversation; else emptyState">
-
-        <!-- Thread header -->
-        <div class="thread-header">
-          <div class="thread-avatar">
-            {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
-            <span class="presence-ring" [class.online]="activeConversation.otherUserOnline"></span>
-          </div>
-          <div class="thread-info">
-            <h3>{{ displayConversationName(activeConversation) }}</h3>
-            <div class="thread-status" [class.online]="activeConversation.otherUserOnline && !isTyping()">
-              <ng-container *ngIf="isTyping()">
-                <div class="typing-indicator">
-                  <span></span><span></span><span></span>
+        <!-- Panel Header (shown only on desktop when no convo / mobile sidebar) -->
+        <header class="chat-panel-header" *ngIf="!activeConversation || !mobileConversationView">
+            <div class="header-avatar-wrap">
+                <div class="header-avatar">
+                    <i class="fa-solid fa-comments" style="font-size:.9rem;"></i>
                 </div>
-                typing…
-              </ng-container>
-              <ng-container *ngIf="!isTyping()">
-                <i class="fa-solid fa-circle" style="font-size:7px;"></i>
-                {{ getActiveConversationStatus() }}
-              </ng-container>
             </div>
-          </div>
-        </div>
-
-        <!-- Messages -->
-        <div class="chat-messages" #messageScroller>
-          <ng-container *ngFor="let entry of timelineEntries; trackBy: trackByTimelineEntry">
-
-            <!-- Day divider -->
-            <div class="day-divider" *ngIf="entry.kind === 'day'">
-              <span>{{ entry.dayLabel }}</span>
+            <div class="header-title">
+                <h2>Messages</h2>
+                <small><i class="fa-solid fa-circle" style="font-size:7px;color:#25d366;"></i> Chat</small>
             </div>
-
-            <!-- Message row — actions are FLEX SIBLINGS of the bubble (no absolute positioning) -->
-            <div
-              class="chat-message"
-              *ngIf="entry.kind === 'message' && entry.message as message"
-              [class.mine]="message.mine"
-              [class.highlighted]="highlightedMessageId === message.messageId"
-              [class.active]="isMessageActive(message.messageId)"
-              [class.swiping]="swipeMessageId === message.messageId"
-              [attr.data-message-id]="message.messageId"
-              (mouseenter)="onMessageMouseEnter(message.messageId)"
-              (mouseleave)="onMessageMouseLeave($event, message.messageId)"
-              (pointerdown)="onMessagePointerDown($event, message)"
-              (pointermove)="onMessagePointerMove($event, message)"
-              (pointerup)="onMessagePointerUp($event, message)"
-              (pointercancel)="onMessagePointerCancel()"
-            >
-
-              <!-- ══ Message bubble ══ -->
-              <div class="msg-bubble-wrap" [style.transform]="messageTransform(message.messageId)">
-                <span class="swipe-reply-hint" [class.show]="swipeMessageId === message.messageId && swipeTranslateX > 18">
-                  <i class="fa-solid fa-reply"></i> Reply
-                </span>
-
-                <!-- Floating quick reactions -->
-                <div class="reactions-bar"
-                  [class.show]="isMessageActive(message.messageId)"
-                  (mouseenter)="onFloatingUiEnter(message.messageId)"
-                  (mouseleave)="onFloatingUiLeave(message.messageId)"
-                  (click)="$event.stopPropagation()">
-                  <button type="button"
-                    *ngFor="let emoji of quickReactions"
-                    (click)="toggleReaction(message, emoji)"
-                    [title]="emoji">
-                    {{ emoji }}
-                  </button>
-                </div>
-
-                <!-- Action buttons -->
-                <div class="msg-actions"
-                  [class.show]="isMessageActive(message.messageId)"
-                  (mouseenter)="onFloatingUiEnter(message.messageId)"
-                  (mouseleave)="onFloatingUiLeave(message.messageId)"
-                  (click)="$event.stopPropagation()">
-                  <button type="button" class="action-btn" (click)="startReply(message)" title="Reply">
-                    <i class="fa-solid fa-reply"></i><span>Reply</span>
-                  </button>
-                  <button type="button" class="action-btn"
-                    *ngIf="canEdit(message) && editingMessageId !== message.messageId"
-                    (click)="startEdit(message)" title="Edit">
-                    <i class="fa-solid fa-pen"></i><span>Edit</span>
-                  </button>
-                  <button type="button" class="action-btn danger"
-                    *ngIf="canDelete(message) && editingMessageId !== message.messageId"
-                    (click)="deleteLatestIfEligible(message)" title="Delete">
-                    <i class="fa-solid fa-trash"></i><span>Delete</span>
-                  </button>
-                </div>
-
-                <!-- Reply preview -->
-                <button class="reply-context-btn" type="button"
-                  *ngIf="message.replyToMessageId"
-                  (click)="jumpToMessage(message.replyToMessageId); $event.stopPropagation()">
-                  <i class="fa-solid fa-reply" style="font-size:10px; flex-shrink:0;"></i>
-                  <span>{{ message.replyToMessageText || ('Reply #' + message.replyToMessageId) }}</span>
+            <div class="header-actions">
+                <button type="button" class="icon-btn" (click)="showNewChatPicker = !showNewChatPicker" title="New chat">
+                    <i class="fa-solid fa-pen-to-square"></i>
                 </button>
+                <button type="button" class="icon-btn" (click)="toggle()" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </header>
 
-                <div class="msg-bubble">
+        <!-- ── Body ── -->
+        <div class="chat-panel-body">
 
-                  <!-- Edit mode -->
-                  <ng-container *ngIf="editingMessageId === message.messageId; else messageContent">
-                    <div class="edit-shell" (click)="$event.stopPropagation()">
-                      <textarea rows="2" [(ngModel)]="editDraft" (keydown.escape)="cancelEdit()"
-                        (keydown.enter)="onEditEnter($event, message)"></textarea>
-                      <div class="edit-actions">
-                        <button type="button" class="edit-cancel" (click)="cancelEdit()">Cancel</button>
-                        <button type="button" class="edit-save" (click)="saveEdit(message)">Save</button>
-                      </div>
+            <!-- ── Conversations Sidebar ── -->
+            <aside class="chat-conversations" [class.hidden-mobile]="mobileConversationView">
+
+                <!-- Search bar -->
+                <div class="search-bar">
+                    <div class="search-input-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" placeholder="Search or start new chat…" [(ngModel)]="newChatSearch" />
                     </div>
-                  </ng-container>
+                </div>
 
-                  <!-- Normal content -->
-                  <ng-template #messageContent>
-                    <p class="msg-text" *ngIf="message.messageText">{{ message.messageText }}</p>
-                    <p class="msg-reaction-only" *ngIf="!message.messageText && message.reactionEmoji">
-                      {{ message.reactionEmoji }}
-                    </p>
-
-                    <!-- Attachment -->
-                    <button class="attachment-chip" type="button"
-                      *ngIf="message.attachmentFileName"
-                      (click)="openAttachment(message); $event.stopPropagation()">
-                      <i class="fa-solid fa-paperclip" style="font-size:11px;"></i>
-                      {{ message.attachmentFileName }}
+                <!-- New chat section -->
+                <div class="new-chat-section">
+                    <button type="button" class="new-chat-btn" (click)="showNewChatPicker = !showNewChatPicker">
+                        <i class="fa-solid" [class.fa-plus]="!showNewChatPicker" [class.fa-chevron-up]="showNewChatPicker"></i>
+                        New conversation
                     </button>
 
-                    <!-- Time + ticks -->
-                    <div class="msg-meta">
-                      <span class="msg-time">{{ formatMessageDisplayTime(message.sentAt) }}</span>
-                      <span class="msg-ticks" *ngIf="message.mine" [class.seen]="!!message.seenAt">
-                        <i class="fa-solid fa-check-double" *ngIf="message.seenAt"></i>
-                        <i class="fa-solid fa-check" *ngIf="!message.seenAt"></i>
-                      </span>
+                    <div class="new-chat-picker" *ngIf="showNewChatPicker">
+                        <div class="new-chat-list">
+                            <button type="button" class="new-chat-user-btn"
+                                    *ngFor="let user of filteredNewChatUsers"
+                                    (click)="startConversation(user)">
+                                <div class="mini-avatar">{{ (user.name || '?').charAt(0).toUpperCase() }}</div>
+                                <div class="new-chat-user-info">
+                                    <div class="new-chat-user-name">{{ user.name }}</div>
+                                </div>
+                                <span class="online-dot" *ngIf="user.online" title="Online"></span>
+                            </button>
+                            <p style="margin:.5rem;font-size:.78rem;color:#667781;" *ngIf="!filteredNewChatUsers.length">No users found.</p>
+                        </div>
                     </div>
-                  </ng-template>
+                </div>
 
-                </div><!-- end .msg-bubble -->
+                <!-- Conversation list -->
+                <div class="convo-list">
+                    <div class="convo-list-label">Recent</div>
+                    <button type="button" class="conversation-row"
+                            *ngFor="let convo of conversations"
+                            [class.active]="activeConversation?.conversationId === convo.conversationId"
+                            (click)="chooseConversation(convo)">
+                        <div class="convo-avatar-wrap">
+                            <div class="convo-avatar" [class.online]="convo.otherUserOnline">
+                                {{ (convo.otherUserName || '?').charAt(0).toUpperCase() }}
+                            </div>
+                            <span class="presence-dot" [class.online]="convo.otherUserOnline"></span>
+                        </div>
+                        <div class="convo-info">
+                            <div class="convo-name-row">
+                                <span class="convo-name">{{ displayConversationName(convo) }}</span>
+                                <span class="convo-time" [class.has-unread]="convo.unreadCount > 0" *ngIf="convo.lastMessageAt">
+                  {{ formatMessageTime(convo.lastMessageAt) }}
+                </span>
+                            </div>
+                            <div class="convo-preview-row">
+                <span class="convo-preview">
+                  <i class="fa-solid fa-check-double" style="font-size:.65rem;flex-shrink:0;"
+                     *ngIf="convo.lastMessage && convo.unreadCount === 0"></i>
+                    {{ convo.lastMessage || 'Tap to chat…' }}
+                </span>
+                                <span class="unread-badge" *ngIf="convo.unreadCount > 0">
+                  {{ convo.unreadCount > 99 ? '99+' : convo.unreadCount }}
+                </span>
+                            </div>
+                        </div>
+                    </button>
 
-                <!-- Reaction pills below bubble -->
-                <div class="msg-reactions" *ngIf="reactionsForMessage(message.messageId).length">
+                    <!-- Empty conversations -->
+                    <div *ngIf="!conversations.length" style="padding:1.5rem 1rem;text-align:center;">
+                        <i class="fa-regular fa-comments" style="font-size:1.8rem;color:#d1d7db;"></i>
+                        <p style="font-size:.78rem;color:#667781;margin:.5rem 0 0;">No conversations yet</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ── Thread Pane ── -->
+            <div class="chat-thread" [class.hidden-mobile]="!mobileConversationView" *ngIf="activeConversation; else emptyState">
+
+                <!-- Thread header -->
+                <div class="thread-header">
+                    <button type="button" class="icon-btn mobile-back" (click)="closeConversation()">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+
+                    <div class="thread-avatar-wrap">
+                        <div class="thread-avatar" [class.online]="activeConversation.otherUserOnline">
+                            {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
+                        </div>
+                        <span class="thread-presence-dot" [class.online]="activeConversation.otherUserOnline"></span>
+                    </div>
+
+                    <div class="thread-info">
+                        <h3>{{ displayConversationName(activeConversation) }}</h3>
+                        <div class="thread-status" [class.online]="activeConversation.otherUserOnline && !isTyping()">
+                            <ng-container *ngIf="isTyping()">
+                                <div class="typing-bubble">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                typing…
+                            </ng-container>
+                            <ng-container *ngIf="!isTyping()">
+                                {{ getActiveConversationStatus() }}
+                            </ng-container>
+                        </div>
+                    </div>
+
+                    <div class="header-actions">
+                        <button type="button" class="icon-btn" (click)="toggle()" title="Close">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages area -->
+                <div class="chat-messages" #messageScroller>
+
+                    <ng-container *ngFor="let entry of timelineEntries; trackBy: trackByTimelineEntry">
+
+                        <!-- Day divider -->
+                        <div class="day-divider" *ngIf="entry.kind === 'day'">
+                            <span>{{ entry.dayLabel }}</span>
+                        </div>
+
+                        <!-- Message -->
+                        <div
+                                class="chat-message"
+                                *ngIf="entry.kind === 'message' && entry.message as message"
+                                [class.mine]="message.mine"
+                                [class.show-avatar]="shouldShowAvatar(message)"
+                                [class.highlighted]="highlightedMessageId === message.messageId"
+                                [class.active]="isMessageActive(message.messageId)"
+                                [attr.data-message-id]="message.messageId"
+                                (mouseenter)="onMessageMouseEnter(message.messageId)"
+                                (mouseleave)="onMessageMouseLeave($event, message.messageId)"
+                                (pointerdown)="onMessagePointerDown($event, message)"
+                                (pointermove)="onMessagePointerMove($event, message)"
+                                (pointerup)="onMessagePointerUp($event, message)"
+                                (pointercancel)="onMessagePointerCancel()"
+                        >
+                            <!-- Sender avatar (for received messages, last in group) -->
+                            <div class="msg-sender-avatar">
+                                {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
+                            </div>
+
+                            <div class="msg-bubble-wrap" [style.transform]="messageTransform(message.messageId)">
+
+                                <!-- Swipe-to-reply hint -->
+                                <span class="swipe-reply-hint" [class.show]="swipeMessageId === message.messageId && swipeTranslateX > 18">
+                  <i class="fa-solid fa-reply" style="font-size:10px;"></i> Reply
+                </span>
+
+                                <!-- Quick reactions bar -->
+                                <div class="reactions-bar"
+                                     [class.show]="isMessageActive(message.messageId)"
+                                     (mouseenter)="onFloatingUiEnter(message.messageId)"
+                                     (mouseleave)="onFloatingUiLeave(message.messageId)"
+                                     (click)="$event.stopPropagation()">
+                                    <button type="button" *ngFor="let emoji of quickReactions"
+                                            (click)="toggleReaction(message, emoji)" [title]="emoji">{{ emoji }}</button>
+                                </div>
+
+                                <!-- Action buttons -->
+                                <div class="msg-actions"
+                                     [class.show]="isMessageActive(message.messageId)"
+                                     (mouseenter)="onFloatingUiEnter(message.messageId)"
+                                     (mouseleave)="onFloatingUiLeave(message.messageId)"
+                                     (click)="$event.stopPropagation()">
+                                    <button type="button" class="action-btn" (click)="startReply(message)">
+                                        <i class="fa-solid fa-reply"></i> Reply
+                                    </button>
+                                    <button type="button" class="action-btn"
+                                            *ngIf="canEdit(message) && editingMessageId !== message.messageId"
+                                            (click)="startEdit(message)">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </button>
+                                    <button type="button" class="action-btn danger"
+                                            *ngIf="canDelete(message) && editingMessageId !== message.messageId"
+                                            (click)="deleteLatestIfEligible(message)">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Reply preview -->
+                                <button class="reply-context-btn" type="button"
+                                        *ngIf="message.replyToMessageId"
+                                        (click)="jumpToMessage(message.replyToMessageId); $event.stopPropagation()">
+                                    <i class="fa-solid fa-reply" style="font-size:10px;flex-shrink:0;"></i>
+                                    <span>{{ message.replyToMessageText || ('Reply #' + message.replyToMessageId) }}</span>
+                                </button>
+
+                                <!-- Bubble -->
+                                <div class="msg-bubble" [class.emoji-only]="isEmojiOnly(message)">
+
+                                    <ng-container *ngIf="editingMessageId === message.messageId; else msgContent">
+                                        <div class="edit-shell" (click)="$event.stopPropagation()">
+                      <textarea rows="2" [(ngModel)]="editDraft"
+                                (keydown.escape)="cancelEdit()"
+                                (keydown.enter)="onEditEnter($event, message)"></textarea>
+                                            <div class="edit-actions">
+                                                <button type="button" class="edit-cancel" (click)="cancelEdit()">Cancel</button>
+                                                <button type="button" class="edit-save" (click)="saveEdit(message)">Save</button>
+                                            </div>
+                                        </div>
+                                    </ng-container>
+
+                                    <ng-template #msgContent>
+                                        <p class="msg-text" *ngIf="message.messageText && !isEmojiOnly(message)">{{ message.messageText }}</p>
+                                        <p class="msg-emoji-only" *ngIf="isEmojiOnly(message)">{{ message.messageText || message.reactionEmoji }}</p>
+
+                                        <!-- Attachment -->
+                                        <button class="attachment-chip" type="button"
+                                                *ngIf="message.attachmentFileName"
+                                                (click)="openAttachment(message); $event.stopPropagation()">
+                                            <i class="fa-solid fa-paperclip"></i>
+                                            {{ message.attachmentFileName }}
+                                        </button>
+
+                                        <!-- Time + ticks -->
+                                        <div class="msg-meta">
+                                            <span class="msg-time">{{ formatMessageDisplayTime(message.sentAt) }}</span>
+                                            <span class="msg-ticks"
+                                                  *ngIf="message.mine"
+                                                  [class.seen]="!!message.seenAt"
+                                                  [class.delivered]="!message.seenAt">
+                        <i class="fa-solid fa-check-double" *ngIf="message.seenAt"></i>
+                        <i class="fa-solid fa-check-double" *ngIf="!message.seenAt"></i>
+                      </span>
+                                        </div>
+                                    </ng-template>
+                                </div><!-- end .msg-bubble -->
+
+                                <!-- Reaction pills -->
+                                <div class="msg-reactions" *ngIf="reactionsForMessage(message.messageId).length">
                   <span class="reaction-pill"
-                    *ngFor="let reaction of reactionsForMessage(message.messageId); trackBy: trackByReaction"
-                    [class.mine]="reaction.mine"
-                    (click)="reaction.mine ? removeReaction(message, reaction.emoji) : reactToMessage(message, reaction.emoji); $event.stopPropagation()">
-                    {{ reaction.emoji }} {{ reaction.count }}
-                    <button class="reaction-pill-remove" type="button" *ngIf="reaction.mine" title="Remove">
+                        *ngFor="let reaction of reactionsForMessage(message.messageId); trackBy: trackByReaction"
+                        [class.mine]="reaction.mine"
+                        (click)="reaction.mine ? removeReaction(message, reaction.emoji) : reactToMessage(message, reaction.emoji); $event.stopPropagation()">
+                    {{ reaction.emoji }}
+                      <span style="font-size:.7rem;font-weight:700;">{{ reaction.count }}</span>
+                    <button class="reaction-remove-btn" type="button" *ngIf="reaction.mine" title="Remove">
                       <i class="fa-solid fa-xmark"></i>
                     </button>
                   </span>
+                                </div>
+
+                                <!-- Seen timestamp on hover -->
+                                <div class="seen-time"
+                                     *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">
+                                    Seen {{ formatMessageTime(message.seenAt) }}
+                                </div>
+
+                            </div><!-- end .msg-bubble-wrap -->
+                        </div><!-- end .chat-message -->
+
+                    </ng-container>
+                </div><!-- end .chat-messages -->
+
+                <!-- ── Composer ── -->
+                <div class="chat-composer-shell">
+                    <input #attachmentInput type="file" hidden (change)="onAttachmentSelected($event)">
+
+                    <!-- Pills row -->
+                    <div class="composer-pills" *ngIf="replyingToMessage || selectedAttachment || !canSendToActiveUser">
+                        <div class="disabled-chat-note" *ngIf="!canSendToActiveUser">
+                            <i class="fa-solid fa-lock"></i> This user is disabled — read only.
+                        </div>
+                        <div class="replying-pill" *ngIf="replyingToMessage">
+                            <i class="fa-solid fa-reply" style="font-size:11px;flex-shrink:0;"></i>
+                            <span>{{ replyingToMessage.messageText || replyingToMessage.reactionEmoji || ('Msg #' + replyingToMessage.messageId) }}</span>
+                            <button type="button" (click)="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="selected-file-pill" *ngIf="selectedAttachment">
+                            <i class="fa-solid fa-file" style="font-size:11px;flex-shrink:0;"></i>
+                            <span>{{ selectedAttachment.name }}</span>
+                            <button type="button" (click)="clearAttachment()"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Input row -->
+                    <div class="composer-row">
+                        <div class="composer-input-wrap">
+                            <button type="button" class="composer-attach-btn"
+                                    (click)="triggerAttachment()"
+                                    [disabled]="!canSendToActiveUser"
+                                    title="Attach file">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </button>
+                            <textarea
+                                    class="composer-textarea"
+                                    [(ngModel)]="composer"
+                                    rows="1"
+                                    placeholder="Type a message"
+                                    (keydown.enter)="onEnterKey($event)"
+                                    (input)="onComposerInput()"
+                                    [disabled]="!canSendToActiveUser"
+                            ></textarea>
+                        </div>
+                        <button type="button" class="composer-send-btn"
+                                (click)="send()"
+                                [disabled]="!canSend"
+                                title="Send">
+                            <i class="fa-solid fa-paper-plane" style="transform:rotate(-10deg);"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Seen label on hover -->
-                <div class="seen-time"
-                  *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">
-                  Seen {{ formatMessageTime(message.seenAt) }}
+            </div><!-- end .chat-thread -->
+
+            <!-- Empty state -->
+            <ng-template #emptyState>
+                <div class="chat-empty" [class.hidden-mobile]="!mobileConversationView" style="display:flex;">
+                    <div class="empty-icon">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <h4>Your Messages</h4>
+                    <p>Select a conversation or start a new one</p>
                 </div>
+            </ng-template>
 
-              </div><!-- end .msg-bubble-wrap -->
+        </div><!-- end .chat-panel-body -->
+    </section>
 
-            </div><!-- end .chat-message -->
-
-          </ng-container>
-        </div><!-- end .chat-messages -->
-
-        <!-- ── Composer ── -->
-        <div class="chat-composer-shell">
-          <input #attachmentInput type="file" hidden (change)="onAttachmentSelected($event)">
-
-          <!-- Pills row -->
-          <div class="composer-pills" *ngIf="replyingToMessage || selectedAttachment || !canSendToActiveUser">
-            <div class="disabled-chat-note" *ngIf="!canSendToActiveUser">
-              <i class="fa-solid fa-lock me-1"></i>This user is disabled — messages are read-only.
+    <!-- ── Attachment preview modal ── -->
+    <div class="attachment-preview-modal" *ngIf="attachmentPreviewOpen" (click)="closeAttachmentPreview()">
+        <div class="attachment-preview-content" (click)="$event.stopPropagation()">
+            <header>
+                <strong>{{ attachmentPreviewName }}</strong>
+                <div class="attachment-preview-actions">
+                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="downloadPreviewAttachment()">
+                        <i class="fa-solid fa-download me-1"></i>Download
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light" (click)="closeAttachmentPreview()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </header>
+            <div class="attachment-preview-body">
+                <div *ngIf="attachmentPreviewLoading" style="color:#667781;font-size:.9rem;display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading…
+                </div>
+                <img *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'image' && attachmentPreviewUrl"
+                     [src]="attachmentPreviewUrl" [alt]="attachmentPreviewName">
+                <iframe *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'pdf' && attachmentPreviewSafeUrl"
+                        [src]="attachmentPreviewSafeUrl" title="PDF preview"></iframe>
             </div>
-            <div class="replying-pill" *ngIf="replyingToMessage">
-              <i class="fa-solid fa-reply" style="font-size:11px;flex-shrink:0;"></i>
-              <span>{{ replyingToMessage.messageText || replyingToMessage.reactionEmoji || ('Msg #' + replyingToMessage.messageId) }}</span>
-              <button type="button" (click)="cancelReply()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="selected-file-pill" *ngIf="selectedAttachment">
-              <i class="fa-solid fa-file-lines" style="font-size:11px;flex-shrink:0;"></i>
-              <span>{{ selectedAttachment.name }}</span>
-              <button type="button" (click)="clearAttachment()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-          </div>
-
-          <!-- Input row -->
-          <div class="chat-composer">
-            <button type="button" class="composer-attach-btn"
-              (click)="triggerAttachment()"
-              [disabled]="!canSendToActiveUser"
-              title="Attach file">
-              <i class="fa-solid fa-paperclip"></i>
-            </button>
-
-            <textarea
-              class="composer-textarea"
-              [(ngModel)]="composer"
-              rows="1"
-              placeholder="Type a message…"
-              (keydown.enter)="onEnterKey($event)"
-              (input)="onComposerInput()"
-              [disabled]="!canSendToActiveUser"
-            ></textarea>
-
-            <button type="button" class="composer-send-btn"
-              (click)="send()"
-              [disabled]="!canSend"
-              title="Send">
-              <i class="fa-solid fa-paper-plane"></i>
-            </button>
-          </div>
         </div>
-
-      </div><!-- end .chat-thread -->
-
-      <!-- Empty state when no conversation selected -->
-      <ng-template #emptyState>
-        <div class="chat-empty">
-          <i class="fa-regular fa-comments"></i>
-          <span>Select a conversation to start chatting</span>
-        </div>
-      </ng-template>
-
-    </div><!-- end .chat-panel-body -->
-  </section>
-
-  <!-- ── Attachment preview modal ── -->
-  <div class="attachment-preview-modal" *ngIf="attachmentPreviewOpen" (click)="closeAttachmentPreview()">
-    <div class="attachment-preview-content" (click)="$event.stopPropagation()">
-      <header>
-        <strong>{{ attachmentPreviewName }}</strong>
-        <div class="attachment-preview-actions">
-          <button type="button" class="btn btn-sm btn-outline-primary" (click)="downloadPreviewAttachment()">
-            <i class="fa-solid fa-download me-1"></i>Download
-          </button>
-          <button type="button" class="btn btn-sm btn-light" (click)="closeAttachmentPreview()">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      </header>
-      <div class="attachment-preview-body">
-        <div *ngIf="attachmentPreviewLoading" class="preview-loading">
-          <i class="fa-solid fa-spinner fa-spin me-2"></i>Loading…
-        </div>
-        <img *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'image' && attachmentPreviewUrl"
-          [src]="attachmentPreviewUrl" [alt]="attachmentPreviewName">
-        <iframe *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'pdf' && attachmentPreviewSafeUrl"
-          [src]="attachmentPreviewSafeUrl" title="PDF preview"></iframe>
-      </div>
     </div>
-  </div>
 
 </div>
