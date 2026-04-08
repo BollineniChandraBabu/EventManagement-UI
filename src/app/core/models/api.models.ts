@@ -60,6 +60,10 @@ export interface SaveUserPayload {
   isBirthdayEnabled?: boolean;
 }
 
+export interface UserStatusUpdateRequest {
+  active: boolean;
+}
+
 export interface RelationshipSeed {
   id: number;
   category?: string;

@@ -25,7 +25,7 @@ import {
   SchedulerTriggerResponse,
   RelationshipSeed,
   WishSettingsPayload,
-  PollinationsBalanceResponse
+  PollinationsBalanceResponse, UserStatusUpdateRequest
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -106,8 +106,8 @@ export class ApiService {
     );
   }
 
-  deactivateUser(id: number) {
-    return this.http.post(`${environment.apiUrl}/users/${id}/deactivate`, {});
+  deactivateUser(id: number, userStatusUpdateRequest: UserStatusUpdateRequest) {
+    return this.http.patch(`${environment.apiUrl}/users/${id}/status`, userStatusUpdateRequest);
   }
 
   relationshipSeeds(

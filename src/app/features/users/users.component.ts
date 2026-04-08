@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-import { AppUser } from '../../core/models/api.models';
+import {AppUser, UserStatusUpdateRequest} from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 import { ImpersonationService } from '../../core/services/impersonation.service';
@@ -61,11 +61,15 @@ export class UsersComponent {
     return this.viewUsers.length === 0 ? 0 : this.startRow + this.viewUsers.length - 1;
   }
 
-  deactivate(id: number): void {
+  deactivate(id: number, status: boolean): void {
     this.deactivatingIds.add(id);
-    this.api.deactivateUser(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    let payload={
+      active:status
+    }
+    this.api.deactivateUser(id,payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.toast.success('User deactivated successfully.');
+        let statusMsg= status? 'activated':'deactivated';
+        this.toast.success('User ' +statusMsg +' successfully.');
         this.deactivatingIds.delete(id);
         this.loadUsers();
       },
