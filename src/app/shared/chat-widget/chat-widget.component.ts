@@ -7,6 +7,7 @@ import {
   ViewChild,
   inject,
   NgZone,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -31,10 +32,7 @@ interface ChatTimelineEntry {
   message?: ChatMessage;
 }
 
-/** Pixel threshold from bottom before we show the scroll-to-bottom button */
 const SCROLL_THRESHOLD = 120;
-
-/** Image MIME types / extensions we can preview inline */
 const IMAGE_MIME_PREFIXES = ['image/'];
 const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i;
 
@@ -50,6 +48,7 @@ export class ChatWidgetComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly ngZone = inject(NgZone);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('messageScroller') messageScroller?: ElementRef<HTMLDivElement>;
   @ViewChild('attachmentInput') attachmentInput?: ElementRef<HTMLInputElement>;
@@ -61,8 +60,10 @@ export class ChatWidgetComponent {
   composer = '';
   currentUserId: number | null = null;
 
+  // FIX: separate hover (desktop) and active (tap/touch) IDs
   hoveredMessageId: number | null = null;
   activeMessageId: number | null = null;
+
   swipeMessageId: number | null = null;
   swipeTranslateX = 0;
 
@@ -84,12 +85,12 @@ export class ChatWidgetComponent {
   attachmentPreviewOpen = false;
   highlightedMessageId: number | null = null;
 
-  // Scroll tracking
+  // Scroll
   showScrollButton = false;
   newMessagesWhileScrolled = 0;
   private isNearBottom = true;
 
-  // New chat picker
+  // New chat
   showNewChatPicker = false;
   newChatSearch = '';
 
@@ -106,20 +107,22 @@ export class ChatWidgetComponent {
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
   private messageUiHideTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Gesture tracking
+  // FIX: per-message double-tap tracking
   private lastTapTimeByMessage = new Map<number, number>();
+
+  // Gesture tracking
   private gestureStartX = 0;
   private gestureStartY = 0;
   private gesturePointerId: number | null = null;
   private gestureMessageId: number | null = null;
   private isSwiping = false;
   private cancelTap = false;
+  private isHoverDevice = false;
 
   // ── Timeline ──────────────────────────────────────────────────────────────
   get timelineEntries(): ChatTimelineEntry[] {
     const timeline: ChatTimelineEntry[] = [];
     let previousDayKey: string | null = null;
-
     this.messages.forEach((message) => {
       const dayKey = this.dayKey(message.sentAt);
       if (dayKey && dayKey !== previousDayKey) {
@@ -128,7 +131,6 @@ export class ChatWidgetComponent {
       }
       timeline.push({ kind: 'message', message });
     });
-
     return timeline;
   }
 
@@ -173,12 +175,15 @@ export class ChatWidgetComponent {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   constructor() {
+    // Detect hover capability once
+    this.isHoverDevice = this.prefersHover();
+
     this.destroyRef.onDestroy(() => {
       this.stopHeartbeat();
-      if (this.typingTimer) clearTimeout(this.typingTimer);
-      if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
-      if (this.longPressTimer) clearTimeout(this.longPressTimer);
-      if (this.messageUiHideTimer) clearTimeout(this.messageUiHideTimer);
+      [
+        this.typingTimer, this.typingTimeoutTimer,
+        this.longPressTimer, this.messageUiHideTimer
+      ].forEach(t => { if (t) clearTimeout(t); });
       this.clearAttachmentPreviewState();
     });
 
@@ -216,72 +221,74 @@ export class ChatWidgetComponent {
         if (this.isNearBottom) {
           this.scrollToBottom();
         } else if (!msg.mine) {
-          // New message arrived while user has scrolled up
           this.newMessagesWhileScrolled++;
         }
       }
     });
   }
 
-  // ── Toggle / Open ─────────────────────────────────────────────────────────
+  // ── Toggle ────────────────────────────────────────────────────────────────
   toggle(): void {
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       this.bootstrapChat();
     } else {
+      this.clearActiveMessageState();
       this.chat.publishPresence(this.currentUserId ?? 0, false);
       this.chat.markOffline().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
       this.stopHeartbeat();
     }
   }
 
-  // ── Scroll tracking ───────────────────────────────────────────────────────
+  // ── Scroll ────────────────────────────────────────────────────────────────
   onMessagesScroll(event: Event): void {
     const el = event.target as HTMLDivElement;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    this.isNearBottom = distanceFromBottom < SCROLL_THRESHOLD;
-
-    if (this.isNearBottom) {
-      this.showScrollButton = false;
-      this.newMessagesWhileScrolled = 0;
-    } else {
-      this.showScrollButton = true;
-    }
+    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.isNearBottom = distFromBottom < SCROLL_THRESHOLD;
+    this.showScrollButton = !this.isNearBottom;
+    if (this.isNearBottom) this.newMessagesWhileScrolled = 0;
   }
 
   scrollToBottomSmooth(): void {
     this.showScrollButton = false;
     this.newMessagesWhileScrolled = 0;
-    const el = this.messageScroller?.nativeElement;
-    if (el) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-    }
+    this.messageScroller?.nativeElement.scrollTo({ top: 999999, behavior: 'smooth' });
   }
 
-  // ── Hover / Tap handling ──────────────────────────────────────────────────
+  // ── Hover / Active state management ──────────────────────────────────────
+  /**
+   * FIX: isMessageActive now drives the CSS class .msg-ui-active on the parent
+   * .chat-message element, which raises its z-index above siblings so floating
+   * reactions/actions don't get clipped.
+   */
+  isMessageActive(messageId: number): boolean {
+    return this.hoveredMessageId === messageId || this.activeMessageId === messageId;
+  }
+
   onMessageMouseEnter(messageId: number): void {
-    if (!this.prefersHover()) return;
+    if (!this.isHoverDevice) return;
+    this.cancelMessageUiHide();
     this.hoveredMessageId = messageId;
-    this.activeMessageId = messageId;
+    // Do NOT set activeMessageId here — hover device uses hoveredMessageId only
   }
 
   onMessageMouseLeave(event: MouseEvent, messageId: number): void {
-    if (!this.prefersHover()) return;
+    if (!this.isHoverDevice) return;
     const nextTarget = event.relatedTarget as HTMLElement | null;
+    // If mouse is moving into the floating UI, don't dismiss
     if (nextTarget?.closest('.msg-actions, .reactions-bar')) return;
-    this.scheduleClearActiveMessage(messageId);
+    this.scheduleClearHoveredMessage(messageId);
   }
 
   onFloatingUiEnter(messageId: number): void {
-    if (!this.prefersHover()) return;
+    if (!this.isHoverDevice) return;
     this.cancelMessageUiHide();
     this.hoveredMessageId = messageId;
-    this.activeMessageId = messageId;
   }
 
   onFloatingUiLeave(messageId: number): void {
-    if (!this.prefersHover()) return;
-    this.scheduleClearActiveMessage(messageId);
+    if (!this.isHoverDevice) return;
+    this.scheduleClearHoveredMessage(messageId);
   }
 
   // ── Conversations ─────────────────────────────────────────────────────────
@@ -290,8 +297,7 @@ export class ChatWidgetComponent {
     this.messages = [];
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
-    this.hoveredMessageId = null;
-    this.activeMessageId = null;
+    this.clearActiveMessageState();
     this.showScrollButton = false;
     this.newMessagesWhileScrolled = 0;
   }
@@ -300,8 +306,7 @@ export class ChatWidgetComponent {
     this.activeConversation = conversation;
     this.showNewChatPicker = false;
     this.replyingToMessage = null;
-    this.hoveredMessageId = null;
-    this.activeMessageId = null;
+    this.clearActiveMessageState();
     this.showScrollButton = false;
     this.newMessagesWhileScrolled = 0;
     this.chat.subscribeToConversation(conversation.conversationId);
@@ -311,10 +316,7 @@ export class ChatWidgetComponent {
 
   startConversation(user: ChatUser): void {
     const existing = this.conversations.find((c) => c.otherUserId === user.userId);
-    if (existing) {
-      this.chooseConversation(existing);
-      return;
-    }
+    if (existing) { this.chooseConversation(existing); return; }
     const draft: ChatConversation = {
       conversationId: Date.now() * -1,
       otherUserId: user.userId,
@@ -335,29 +337,16 @@ export class ChatWidgetComponent {
   // ── Send ──────────────────────────────────────────────────────────────────
   send(): void {
     const text = this.composer.trim();
-    if (
-        (!text && !this.selectedAttachment) ||
-        !this.activeConversation ||
-        !this.currentUserId ||
-        this.isSending ||
-        !this.canSendToActiveUser
-    ) return;
+    if ((!text && !this.selectedAttachment) || !this.activeConversation ||
+        !this.currentUserId || this.isSending || !this.canSendToActiveUser) return;
 
     this.isSending = true;
     const receiverId = this.activeConversation.otherUserId;
 
     this.chat
-        .sendMessage(
-            receiverId,
-            text,
-            this.selectedAttachment,
-            this.replyingToMessage?.messageId ?? null,
-            null
-        )
-        .pipe(
-            takeUntilDestroyed(this.destroyRef),
-            finalize(() => (this.isSending = false))
-        )
+        .sendMessage(receiverId, text, this.selectedAttachment,
+            this.replyingToMessage?.messageId ?? null, null)
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.isSending = false)))
         .subscribe((msg) => {
           this.mergeIncomingMessage(msg);
           this.upsertConversationFromMessage(msg);
@@ -367,22 +356,14 @@ export class ChatWidgetComponent {
           this.clearAttachment();
           this.replyingToMessage = null;
           if (this.activeConversation && this.currentUserId) {
-            this.chat.publishTyping(
-                this.activeConversation.conversationId,
-                this.currentUserId,
-                false
-            );
+            this.chat.publishTyping(this.activeConversation.conversationId, this.currentUserId, false);
           }
         });
   }
 
-  /** Enter = send; Shift+Enter = newline */
   onEnterKey(event: Event): void {
     const e = event as KeyboardEvent;
-    if (!e.shiftKey) {
-      e.preventDefault();
-      this.send();
-    }
+    if (!e.shiftKey) { e.preventDefault(); this.send(); }
   }
 
   onComposerInput(): void {
@@ -391,55 +372,36 @@ export class ChatWidgetComponent {
     if (this.typingTimer) clearTimeout(this.typingTimer);
     this.typingTimer = setTimeout(() => {
       if (this.activeConversation && this.currentUserId) {
-        this.chat.publishTyping(
-            this.activeConversation.conversationId,
-            this.currentUserId,
-            false
-        );
+        this.chat.publishTyping(this.activeConversation.conversationId, this.currentUserId, false);
       }
     }, 1500);
   }
 
-  // ── Reply ─────────────────────────────────────────────────────────────────
+  // ── Reply / Edit / Delete ─────────────────────────────────────────────────
   startReply(message: ChatMessage): void {
     this.replyingToMessage = message;
     this.clearActiveMessageState();
   }
 
-  cancelReply(): void {
-    this.replyingToMessage = null;
-  }
+  cancelReply(): void { this.replyingToMessage = null; }
 
-  // ── Edit ──────────────────────────────────────────────────────────────────
   startEdit(message: ChatMessage): void {
     if (!this.canEdit(message)) return;
-    // Close reply if editing to avoid UI clutter
-    if (this.replyingToMessage?.messageId === message.messageId) {
-      this.replyingToMessage = null;
-    }
+    if (this.replyingToMessage?.messageId === message.messageId) this.replyingToMessage = null;
     this.editingMessageId = message.messageId;
     this.editDraft = message.messageText ?? '';
     this.clearActiveMessageState();
   }
 
-  cancelEdit(): void {
-    this.editingMessageId = null;
-    this.editDraft = '';
-  }
+  cancelEdit(): void { this.editingMessageId = null; this.editDraft = ''; }
 
   saveEdit(message: ChatMessage): void {
     const next = this.editDraft.trim();
-    if (!next || next === (message.messageText ?? '').trim()) {
-      this.cancelEdit();
-      return;
-    }
-    this.chat
-        .editMessage(message.messageId, next)
+    if (!next || next === (message.messageText ?? '').trim()) { this.cancelEdit(); return; }
+    this.chat.editMessage(message.messageId, next)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((updated) => {
-          this.messages = this.messages.map((m) =>
-              m.messageId === updated.messageId ? updated : m
-          );
+          this.messages = this.messages.map((m) => m.messageId === updated.messageId ? updated : m);
           this.reloadConversationsOnly();
           this.cancelEdit();
         });
@@ -447,22 +409,15 @@ export class ChatWidgetComponent {
 
   onEditEnter(event: Event, message: ChatMessage): void {
     const e = event as KeyboardEvent;
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      this.saveEdit(message);
-    }
+    if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.saveEdit(message); }
   }
 
-  canEdit(message: ChatMessage): boolean {
-    return this.isWithinEditWindow(message) && message.mine;
-  }
+  canEdit(message: ChatMessage): boolean { return this.isWithinEditWindow(message) && message.mine; }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
   deleteLatestIfEligible(message: ChatMessage): void {
     if (!this.canDelete(message) || !this.activeConversation) return;
     this.clearActiveMessageState();
-    this.chat
-        .deleteLastSentMessage(this.activeConversation.otherUserId)
+    this.chat.deleteLastSentMessage(this.activeConversation.otherUserId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((res) => {
           this.messages = this.messages.filter((m) => m.messageId !== res.messageId);
@@ -471,30 +426,22 @@ export class ChatWidgetComponent {
   }
 
   canDelete(message: ChatMessage): boolean {
-    return (
-        this.isWithinEditWindow(message) &&
-        message.mine
-    );
+    return this.isWithinEditWindow(message) && message.mine;
   }
 
   isWithinEditWindow(message: ChatMessage): boolean {
     const sent = new Date(message.sentAt).getTime();
-    // Extend window to 24 hours for better UX
     return !Number.isNaN(sent) && (Date.now() - sent) <= (24 * 60 * 60 * 1000);
   }
 
   // ── Reactions ─────────────────────────────────────────────────────────────
   reactToMessage(message: ChatMessage, emoji: string): void {
-    // If we are currently editing this message, cancel edit to show the reaction
-    if (this.editingMessageId === message.messageId) {
-      this.cancelEdit();
-    }
+    if (this.editingMessageId === message.messageId) this.cancelEdit();
     this.toggleReaction(message, emoji);
   }
 
   removeReaction(message: ChatMessage, emoji: string): void {
-    this.chat
-        .removeReaction(message.messageId, emoji)
+    this.chat.removeReaction(message.messageId, emoji)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((reactions) => {
           this.messageReactions = { ...this.messageReactions, [message.messageId]: reactions };
@@ -508,9 +455,7 @@ export class ChatWidgetComponent {
   toggleReaction(message: ChatMessage, emoji: string): void {
     this.clearActiveMessageState();
     this.vibrateLight();
-    const mine = this.reactionsForMessage(message.messageId).find(
-        (r) => r.emoji === emoji && r.mine
-    );
+    const mine = this.reactionsForMessage(message.messageId).find(r => r.emoji === emoji && r.mine);
     const request$ = mine
         ? this.chat.removeReaction(message.messageId, emoji)
         : this.chat.reactToMessage(message.messageId, emoji);
@@ -519,11 +464,14 @@ export class ChatWidgetComponent {
     });
   }
 
-  isMessageActive(messageId: number): boolean {
-    return this.hoveredMessageId === messageId || this.activeMessageId === messageId;
-  }
-
   // ── Pointer / Gesture handling ─────────────────────────────────────────────
+  /**
+   * FIX: The key problem was that clicking emoji buttons on one message
+   * could register as a tap on a nearby message due to z-index overlap.
+   * Solution: `shouldIgnoreGesture` correctly stops gesture handling for
+   * interactive child elements. The parent `.chat-message` now gets
+   * `z-index: 50` via `.msg-ui-active` so its floating UI sits above siblings.
+   */
   onMessagePointerDown(event: PointerEvent, message: ChatMessage): void {
     if (!event.isPrimary || this.shouldIgnoreGesture(event)) return;
     this.gesturePointerId = event.pointerId;
@@ -536,47 +484,43 @@ export class ChatWidgetComponent {
   }
 
   onMessagePointerMove(event: PointerEvent, message: ChatMessage): void {
-    if (
-        this.gesturePointerId !== event.pointerId ||
-        this.gestureMessageId !== message.messageId
-    ) return;
+    if (this.gesturePointerId !== event.pointerId ||
+        this.gestureMessageId !== message.messageId) return;
     const dx = event.clientX - this.gestureStartX;
     const dy = event.clientY - this.gestureStartY;
-    if (Math.abs(dy) > 12) {
+
+    if (Math.abs(dy) > 14) {
       this.cancelLongPress();
       this.cancelTap = true;
     }
-    if (dx > 10 && Math.abs(dx) > Math.abs(dy)) {
+
+    if (dx > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       this.cancelLongPress();
       this.isSwiping = true;
       this.cancelTap = true;
       this.swipeMessageId = message.messageId;
       this.swipeTranslateX = Math.min(dx, 70);
-    } else if (dx < 0 && this.swipeMessageId === message.messageId) {
+    } else if (dx < -5 && this.swipeMessageId === message.messageId) {
       this.resetSwipe();
     }
   }
 
   onMessagePointerUp(event: PointerEvent, message: ChatMessage): void {
-    if (
-        this.gesturePointerId !== event.pointerId ||
-        this.gestureMessageId !== message.messageId
-    ) return;
+    if (this.gesturePointerId !== event.pointerId ||
+        this.gestureMessageId !== message.messageId) return;
     this.cancelLongPress();
+
     const dx = event.clientX - this.gestureStartX;
     const dy = event.clientY - this.gestureStartY;
 
     if (this.isSwiping) {
-      if (dx >= 50) {
-        this.startReply(message);
-        this.vibrateLight();
-      }
+      if (dx >= 50) { this.startReply(message); this.vibrateLight(); }
       this.resetSwipe();
       this.resetGestureState();
       return;
     }
 
-    if (!this.cancelTap && Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+    if (!this.cancelTap && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
       this.onMessageTap(message);
     }
     this.resetGestureState();
@@ -588,28 +532,45 @@ export class ChatWidgetComponent {
     this.resetGestureState();
   }
 
+  /**
+   * FIX: Double-tap uses the exact message object passed in, not a lookup.
+   * Single-tap activates the toolbar for non-hover devices.
+   */
   onMessageTap(message: ChatMessage): void {
     const now = Date.now();
     const lastTap = this.lastTapTimeByMessage.get(message.messageId) ?? 0;
-    // Double tap detected
-    if (lastTap > 0 && now - lastTap < 300) {
+
+    if (lastTap > 0 && now - lastTap < 350) {
       this.lastTapTimeByMessage.set(message.messageId, 0);
       this.toggleReaction(message, '❤️');
       return;
     }
-    
+
     this.lastTapTimeByMessage.set(message.messageId, now);
-    // On non-hover devices, single tap opens action toolbar
-    if (!this.prefersHover()) {
-      this.activeMessageId = message.messageId;
+
+    if (!this.isHoverDevice) {
+      if (this.activeMessageId === message.messageId) {
+        // Second tap on same message dismisses
+        this.clearActiveMessageState();
+      } else {
+        this.activeMessageId = message.messageId;
+      }
     }
   }
 
   @HostListener('document:pointerdown', ['$event'])
   onDocumentPointerDown(event: PointerEvent): void {
     const target = event.target as HTMLElement | null;
-    if (target?.closest('.chat-message')) return;
+    if (!target) return;
+    // Don't dismiss if clicking inside the chat widget
+    if (target.closest('.chat-message, .msg-actions, .reactions-bar, .msg-reactions')) return;
     this.clearActiveMessageState();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.clearActiveMessageState();
+    this.cancelEdit();
   }
 
   messageTransform(messageId: number): string | null {
@@ -626,15 +587,11 @@ export class ChatWidgetComponent {
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     this.highlightedMessageId = messageId;
-    setTimeout(() => {
-      if (this.highlightedMessageId === messageId) this.highlightedMessageId = null;
-    }, 1800);
+    setTimeout(() => { if (this.highlightedMessageId === messageId) this.highlightedMessageId = null; }, 1800);
   }
 
   // ── Attachment ────────────────────────────────────────────────────────────
-  triggerAttachment(): void {
-    this.attachmentInput?.nativeElement.click();
-  }
+  triggerAttachment(): void { this.attachmentInput?.nativeElement.click(); }
 
   onAttachmentSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
@@ -648,15 +605,11 @@ export class ChatWidgetComponent {
 
   openAttachment(message: ChatMessage): void {
     if (!message.attachmentFileName) return;
-    if (!this.isPreviewSupported(message)) {
-      this.downloadAttachment(message);
-      return;
-    }
+    if (!this.isPreviewSupported(message)) { this.downloadAttachment(message); return; }
     this.attachmentPreviewLoading = true;
     this.attachmentPreviewOpen = true;
     this.attachmentPreviewName = message.attachmentFileName;
-    this.chat
-        .downloadAttachment(message.messageId)
+    this.chat.downloadAttachment(message.messageId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (blob) => {
@@ -666,8 +619,7 @@ export class ChatWidgetComponent {
             this.attachmentPreviewOpen = true;
             this.attachmentPreviewName = message.attachmentFileName ?? 'attachment';
             this.attachmentPreviewUrl = url;
-            this.attachmentPreviewSafeUrl =
-                this.sanitizer.bypassSecurityTrustResourceUrl(url);
+            this.attachmentPreviewSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
             this.attachmentPreviewType = this.resolveAttachmentPreviewType(message);
             this.attachmentPreviewLoading = false;
           },
@@ -679,9 +631,7 @@ export class ChatWidgetComponent {
         });
   }
 
-  closeAttachmentPreview(): void {
-    this.clearAttachmentPreviewState();
-  }
+  closeAttachmentPreview(): void { this.clearAttachmentPreviewState(); }
 
   downloadPreviewAttachment(): void {
     if (!this.attachmentPreviewUrl) return;
@@ -693,8 +643,7 @@ export class ChatWidgetComponent {
 
   downloadAttachment(message: ChatMessage): void {
     if (!message.attachmentFileName) return;
-    this.chat
-        .downloadAttachment(message.messageId)
+    this.chat.downloadAttachment(message.messageId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((blob) => {
           this.downloadBlob(
@@ -704,47 +653,11 @@ export class ChatWidgetComponent {
         });
   }
 
-  // ── Image helpers ─────────────────────────────────────────────────────────
-  /**
-   * Returns true if this message's attachment can be rendered as an inline image.
-   */
-  isImageAttachment(message: ChatMessage): boolean {
-    if (!message.attachmentFileName) return false;
-    const ct = (message.attachmentContentType || '').toLowerCase();
-    const fn = message.attachmentFileName.toLowerCase();
-    return (
-        IMAGE_MIME_PREFIXES.some((p) => ct.startsWith(p)) || IMAGE_EXTENSIONS.test(fn)
-    );
-  }
-
-  /**
-   * Returns a URL for inline image thumbnails.
-   * If a thumb endpoint exists (e.g. /api/chat/attachments/:id/thumb),
-   * use that — otherwise fall back to the full download endpoint.
-   */
-  getAttachmentThumbUrl(message: ChatMessage): string {
-    // TODO: replace with your real thumb endpoint if available
-    // e.g. return `/api/chat/attachments/${message.messageId}/thumb`;
-    // return this.chat.getAttachmentUrl
-    //     ? this.chat.getAttachmentUrl(message.messageId)
-    //     : `/api/chat/attachments/${message.messageId}`;
-    return `/api/chat/attachments/${message.messageId}`;
-  }
-
-  onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none'; // hide broken image icon
-  }
-
   // ── Display helpers ───────────────────────────────────────────────────────
   displayConversationName(conversation: ChatConversation): string {
     return conversation.otherUserActive === false
         ? `${conversation.otherUserName} (Disabled)`
         : conversation.otherUserName;
-  }
-
-  displayUserName(user: ChatUser): string {
-    return user.name;
   }
 
   getActiveConversationStatus(): string {
@@ -760,12 +673,7 @@ export class ChatWidgetComponent {
     if (!value) return '';
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString([], {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
   formatMessageDisplayTime(value: string): string {
@@ -782,27 +690,49 @@ export class ChatWidgetComponent {
     return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
-  // ── TrackBy helpers ───────────────────────────────────────────────────────
+  // ── TrackBy ───────────────────────────────────────────────────────────────
   trackByTimelineEntry(_: number, entry: ChatTimelineEntry): string | number {
     return entry.kind === 'message' && entry.message
         ? `msg-${entry.message.messageId}`
         : `day-${entry.dayKey}`;
   }
 
-  trackByReaction(_: number, reaction: ChatMessageReaction): string {
-    return reaction.emoji;
+  trackByReaction(_: number, reaction: ChatMessageReaction): string { return reaction.emoji; }
+
+  // ── Avatar / Emoji helpers ────────────────────────────────────────────────
+  shouldShowAvatar(message: ChatMessage): boolean {
+    const idx = this.messages.findIndex(m => m.messageId === message.messageId);
+    if (idx === -1) return false;
+    const next = this.messages[idx + 1];
+    return !next || next.mine !== message.mine;
   }
 
-  // ── Private: socket event handlers ───────────────────────────────────────
+  isEmojiOnly(message: ChatMessage): boolean {
+    const text = (message.messageText || '').trim();
+    if (!text || message.attachmentFileName) return false;
+    const emojiRegex = /^(\p{Emoji_Presentation}|\p{Extended_Pictographic}){1,3}$/u;
+    return emojiRegex.test(text);
+  }
+
+  isImageAttachment(message: ChatMessage): boolean {
+    if (!message.attachmentFileName) return false;
+    const ct = (message.attachmentContentType || '').toLowerCase();
+    const fn = message.attachmentFileName.toLowerCase();
+    return IMAGE_MIME_PREFIXES.some(p => ct.startsWith(p)) || IMAGE_EXTENSIONS.test(fn);
+  }
+
+  onImageError(event: Event): void {
+    (event.target as HTMLImageElement).style.display = 'none';
+  }
+
+  // ── Private: socket events ────────────────────────────────────────────────
   private applySeenOrTypingEvent(event: ChatSeenOrTypingEvent): void {
     if (event.type === 'TYPING') {
       if (event.conversationId !== this.activeConversation?.conversationId) return;
       if (event.typing) {
         this.typingUserId = event.userId ?? null;
         if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
-        this.typingTimeoutTimer = setTimeout(() => {
-          this.typingUserId = null;
-        }, 4000);
+        this.typingTimeoutTimer = setTimeout(() => { this.typingUserId = null; }, 4000);
       } else {
         this.typingUserId = null;
         if (this.typingTimeoutTimer) clearTimeout(this.typingTimeoutTimer);
@@ -811,12 +741,10 @@ export class ChatWidgetComponent {
   }
 
   private applyPresenceEvent(event: ChatPresenceEvent): void {
-    this.users = this.users.map((u) =>
-        u.userId === event.userId
-            ? { ...u, online: event.online, lastSeenAt: event.lastSeenAt }
-            : u
+    this.users = this.users.map(u =>
+        u.userId === event.userId ? { ...u, online: event.online, lastSeenAt: event.lastSeenAt } : u
     );
-    this.conversations = this.conversations.map((c) =>
+    this.conversations = this.conversations.map(c =>
         c.otherUserId === event.userId
             ? { ...c, otherUserOnline: event.online, otherUserLastSeenAt: event.lastSeenAt }
             : c
@@ -832,14 +760,14 @@ export class ChatWidgetComponent {
 
   private applyDeleteEvent(event: ChatDeleteEvent): void {
     if (this.activeConversation?.conversationId === event.conversationId) {
-      this.messages = this.messages.filter((m) => m.messageId !== event.messageId);
+      this.messages = this.messages.filter(m => m.messageId !== event.messageId);
     }
     this.reloadConversationsOnly();
   }
 
   private applyEditEvent(event: ChatEditEvent): void {
     if (this.activeConversation?.conversationId === event.message.conversationId) {
-      this.messages = this.messages.map((m) =>
+      this.messages = this.messages.map(m =>
           m.messageId === event.message.messageId ? event.message : m
       );
     }
@@ -849,12 +777,8 @@ export class ChatWidgetComponent {
   // ── Private: data loading ─────────────────────────────────────────────────
   private bootstrapChat(): void {
     this.isLoading = true;
-    this.chat
-        .ensureCurrentUser()
-        .pipe(
-            takeUntilDestroyed(this.destroyRef),
-            finalize(() => (this.isLoading = false))
-        )
+    this.chat.ensureCurrentUser()
+        .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => (this.isLoading = false)))
         .subscribe(() => {
           this.chat.connectSocket();
           this.chat.subscribePresence();
@@ -870,8 +794,8 @@ export class ChatWidgetComponent {
     forkJoin({ all: this.chat.listUsers(), active: this.chat.listActiveUsers() })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(({ all, active }) => {
-          const activeMap = new Map(active.map((u) => [u.userId, u]));
-          this.users = all.map((u) => {
+          const activeMap = new Map(active.map(u => [u.userId, u]));
+          this.users = all.map(u => {
             const a = activeMap.get(u.userId);
             return a ? { ...u, online: a.online, lastSeenAt: a.lastSeenAt } : u;
           });
@@ -880,12 +804,11 @@ export class ChatWidgetComponent {
   }
 
   private reloadConversationsOnly(): void {
-    this.chat
-        .listConversations()
+    this.chat.listConversations()
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((items) => {
-          const userMap = new Map(this.users.map((u) => [u.userId, u.active]));
-          this.conversations = items.map((c) => ({
+          const userMap = new Map(this.users.map(u => [u.userId, u.active]));
+          this.conversations = items.map(c => ({
             ...c,
             otherUserActive: c.otherUserActive ?? userMap.get(c.otherUserId) ?? true,
           }));
@@ -894,7 +817,7 @@ export class ChatWidgetComponent {
           }
           if (this.activeConversation) {
             const matched = this.conversations.find(
-                (c) => c.conversationId === this.activeConversation?.conversationId
+                c => c.conversationId === this.activeConversation?.conversationId
             );
             if (matched) this.activeConversation = matched;
           }
@@ -902,8 +825,7 @@ export class ChatWidgetComponent {
   }
 
   private loadMessages(otherUserId: number): void {
-    this.chat
-        .conversationMessages(otherUserId)
+    this.chat.conversationMessages(otherUserId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((res) => {
           this.messages = [...res.items].reverse();
@@ -914,7 +836,7 @@ export class ChatWidgetComponent {
   }
 
   private markConversationRead(otherUserId: number): void {
-    this.conversations = this.conversations.map((c) =>
+    this.conversations = this.conversations.map(c =>
         c.otherUserId === otherUserId ? { ...c, unreadCount: 0 } : c
     );
     if (this.activeConversation?.conversationId && this.currentUserId) {
@@ -927,7 +849,7 @@ export class ChatWidgetComponent {
   }
 
   private mergeIncomingMessage(message: ChatMessage): void {
-    const idx = this.messages.findIndex((m) => m.messageId === message.messageId);
+    const idx = this.messages.findIndex(m => m.messageId === message.messageId);
     if (idx >= 0) {
       const updated = [...this.messages];
       updated[idx] = message;
@@ -938,19 +860,15 @@ export class ChatWidgetComponent {
   }
 
   private upsertConversationFromMessage(message: ChatMessage): void {
-    const existing = this.conversations.find(
-        (c) => c.conversationId === message.conversationId
-    );
+    const existing = this.conversations.find(c => c.conversationId === message.conversationId);
     if (existing) {
-      const shouldIncrement =
-          !message.mine &&
+      const shouldIncrement = !message.mine &&
           this.activeConversation?.conversationId !== message.conversationId;
-      this.conversations = this.conversations.map((c) =>
+      this.conversations = this.conversations.map(c =>
           c.conversationId === message.conversationId
               ? {
                 ...c,
-                lastMessage:
-                    message.messageText ||
+                lastMessage: message.messageText ||
                     (message.attachmentFileName ? `📎 ${message.attachmentFileName}` : ''),
                 lastMessageAt: message.sentAt,
                 unreadCount: shouldIncrement ? c.unreadCount + 1 : c.unreadCount,
@@ -963,8 +881,8 @@ export class ChatWidgetComponent {
   }
 
   private applyActiveFlagsToConversations(): void {
-    const activeByUser = new Map(this.users.map((u) => [u.userId, u.active !== false]));
-    this.conversations = this.conversations.map((c) => ({
+    const activeByUser = new Map(this.users.map(u => [u.userId, u.active !== false]));
+    this.conversations = this.conversations.map(c => ({
       ...c,
       otherUserActive: activeByUser.get(c.otherUserId) ?? c.otherUserActive ?? true,
     }));
@@ -973,17 +891,9 @@ export class ChatWidgetComponent {
         ...this.activeConversation,
         otherUserActive:
             activeByUser.get(this.activeConversation.otherUserId) ??
-            this.activeConversation.otherUserActive ??
-            true,
+            this.activeConversation.otherUserActive ?? true,
       };
     }
-  }
-
-  private isLatestMineMessage(messageId: number): boolean {
-    for (let i = this.messages.length - 1; i >= 0; i--) {
-      if (this.messages[i].mine) return this.messages[i].messageId === messageId;
-    }
-    return false;
   }
 
   // ── Heartbeat ─────────────────────────────────────────────────────────────
@@ -995,25 +905,32 @@ export class ChatWidgetComponent {
   }
 
   private stopHeartbeat(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
+    if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
   }
 
-  // ── Utility helpers ───────────────────────────────────────────────────────
+  // ── Gesture helpers ───────────────────────────────────────────────────────
   private prefersHover(): boolean {
-    return (
-        typeof window !== 'undefined' &&
-        window.matchMedia('(hover: hover) and (pointer: fine)').matches
-    );
+    return typeof window !== 'undefined' &&
+        window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   }
 
-  /** Trigger a light haptic on supported mobile browsers */
   private vibrateLight(): void {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate(8);
-    }
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(8);
+  }
+
+  /**
+   * FIX: Comprehensive list of elements that should NOT trigger gesture logic.
+   * This prevents emoji reaction buttons from registering as taps on the message.
+   */
+  private shouldIgnoreGesture(event: PointerEvent): boolean {
+    const target = event.target as HTMLElement | null;
+    if (!target) return true;
+    return !!target.closest(
+        'button, textarea, input, a, ' +
+        '.msg-actions, .reactions-bar, .msg-reactions, ' +
+        '.reaction-pill, .attachment-chip, .reply-context-btn, ' +
+        '.edit-shell, .swipe-reply-hint'
+    );
   }
 
   private clearActiveMessageState(): void {
@@ -1022,19 +939,15 @@ export class ChatWidgetComponent {
     this.hoveredMessageId = null;
   }
 
-  private scheduleClearActiveMessage(messageId: number): void {
+  private scheduleClearHoveredMessage(messageId: number): void {
     this.cancelMessageUiHide();
     this.messageUiHideTimer = setTimeout(() => {
-      if (this.activeMessageId === messageId) this.activeMessageId = null;
       if (this.hoveredMessageId === messageId) this.hoveredMessageId = null;
-    }, 220);
+    }, 250);
   }
 
   private cancelMessageUiHide(): void {
-    if (this.messageUiHideTimer) {
-      clearTimeout(this.messageUiHideTimer);
-      this.messageUiHideTimer = null;
-    }
+    if (this.messageUiHideTimer) { clearTimeout(this.messageUiHideTimer); this.messageUiHideTimer = null; }
   }
 
   private startLongPress(messageId: number): void {
@@ -1043,20 +956,14 @@ export class ChatWidgetComponent {
       this.activeMessageId = messageId;
       this.cancelTap = true;
       this.vibrateLight();
-    }, 340);
+    }, 350);
   }
 
   private cancelLongPress(): void {
-    if (this.longPressTimer) {
-      clearTimeout(this.longPressTimer);
-      this.longPressTimer = null;
-    }
+    if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
   }
 
-  private resetSwipe(): void {
-    this.swipeMessageId = null;
-    this.swipeTranslateX = 0;
-  }
+  private resetSwipe(): void { this.swipeMessageId = null; this.swipeTranslateX = 0; }
 
   private resetGestureState(): void {
     this.gesturePointerId = null;
@@ -1065,12 +972,6 @@ export class ChatWidgetComponent {
     this.cancelTap = false;
   }
 
-  private shouldIgnoreGesture(event: PointerEvent): boolean {
-    const target = event.target as HTMLElement | null;
-    return !!target?.closest('button, textarea, input, a, .msg-actions, .reactions-bar, .msg-reactions');
-  }
-
-  // ── Scroll ────────────────────────────────────────────────────────────────
   private scrollToBottom(): void {
     setTimeout(() => {
       const el = this.messageScroller?.nativeElement;
@@ -1080,7 +981,7 @@ export class ChatWidgetComponent {
         this.showScrollButton = false;
         this.newMessagesWhileScrolled = 0;
       }
-    }, 50);
+    }, 60);
   }
 
   // ── Day helpers ───────────────────────────────────────────────────────────
@@ -1114,11 +1015,7 @@ export class ChatWidgetComponent {
   private resolveAttachmentPreviewType(message: ChatMessage): 'image' | 'pdf' | null {
     const ct = (message.attachmentContentType || '').toLowerCase();
     const fn = (message.attachmentFileName || '').toLowerCase();
-    if (
-        IMAGE_MIME_PREFIXES.some((p) => ct.startsWith(p)) ||
-        IMAGE_EXTENSIONS.test(fn)
-    )
-      return 'image';
+    if (IMAGE_MIME_PREFIXES.some(p => ct.startsWith(p)) || IMAGE_EXTENSIONS.test(fn)) return 'image';
     if (ct === 'application/pdf' || fn.endsWith('.pdf')) return 'pdf';
     return null;
   }
@@ -1130,9 +1027,7 @@ export class ChatWidgetComponent {
   private downloadBlob(blob: Blob, fileName: string): void {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
+    a.href = url; a.download = fileName; a.click();
     URL.revokeObjectURL(url);
   }
 
@@ -1166,32 +1061,11 @@ export class ChatWidgetComponent {
 
   private loadReactionsForMessages(messages: ChatMessage[]): void {
     messages.forEach((m) => {
-      this.chat
-          .listMessageReactions(m.messageId)
+      this.chat.listMessageReactions(m.messageId)
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((reactions) => {
             this.messageReactions = { ...this.messageReactions, [m.messageId]: reactions };
           });
     });
-  }
-
-  shouldShowAvatar(message: ChatMessage): boolean {
-    const idx = this.messages.findIndex(m => m.messageId === message.messageId);
-    if (idx === -1) return false;
-    const next = this.messages[idx + 1];
-    // Show avatar if next message is from a different sender or doesn't exist
-    return !next || next.mine !== message.mine;
-  }
-
-  /**
-   * Returns true when the message text is purely emoji character(s) (1-3 emoji).
-   * These get a larger, bubbleless display like WhatsApp/Instagram.
-   */
-  isEmojiOnly(message: ChatMessage): boolean {
-    const text = (message.messageText || '').trim();
-    if (!text || message.attachmentFileName) return false;
-    // Match 1-3 emoji code points only
-    const emojiRegex = /^(\p{Emoji_Presentation}|\p{Extended_Pictographic}){1,3}$/u;
-    return emojiRegex.test(text);
   }
 }

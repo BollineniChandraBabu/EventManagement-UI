@@ -11,7 +11,7 @@
     <!-- ── Main Panel ── -->
     <section class="chat-panel" *ngIf="isOpen">
 
-        <!-- Panel Header (shown only on desktop when no convo / mobile sidebar) -->
+        <!-- Panel Header (desktop sidebar / mobile before conversation) -->
         <header class="chat-panel-header" *ngIf="!activeConversation || !mobileConversationView">
             <div class="header-avatar-wrap">
                 <div class="header-avatar">
@@ -38,7 +38,6 @@
             <!-- ── Conversations Sidebar ── -->
             <aside class="chat-conversations" [class.hidden-mobile]="mobileConversationView">
 
-                <!-- Search bar -->
                 <div class="search-bar">
                     <div class="search-input-wrap">
                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -46,7 +45,6 @@
                     </div>
                 </div>
 
-                <!-- New chat section -->
                 <div class="new-chat-section">
                     <button type="button" class="new-chat-btn" (click)="showNewChatPicker = !showNewChatPicker">
                         <i class="fa-solid" [class.fa-plus]="!showNewChatPicker" [class.fa-chevron-up]="showNewChatPicker"></i>
@@ -62,14 +60,13 @@
                                 <div class="new-chat-user-info">
                                     <div class="new-chat-user-name">{{ user.name }}</div>
                                 </div>
-                                <span class="online-dot" *ngIf="user.online" title="Online"></span>
+                                <span class="online-dot" *ngIf="user.online"></span>
                             </button>
-                            <p style="margin:.5rem;font-size:.78rem;color:#667781;" *ngIf="!filteredNewChatUsers.length">No users found.</p>
+                            <p style="margin:.5rem;font-size:.75rem;color:#667781;" *ngIf="!filteredNewChatUsers.length">No users found.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Conversation list -->
                 <div class="convo-list">
                     <div class="convo-list-label">Recent</div>
                     <button type="button" class="conversation-row"
@@ -91,7 +88,7 @@
                             </div>
                             <div class="convo-preview-row">
                 <span class="convo-preview">
-                  <i class="fa-solid fa-check-double" style="font-size:.65rem;flex-shrink:0;"
+                  <i class="fa-solid fa-check-double" style="font-size:.6rem;flex-shrink:0;"
                      *ngIf="convo.lastMessage && convo.unreadCount === 0"></i>
                     {{ convo.lastMessage || 'Tap to chat…' }}
                 </span>
@@ -102,10 +99,9 @@
                         </div>
                     </button>
 
-                    <!-- Empty conversations -->
-                    <div *ngIf="!conversations.length" style="padding:1.5rem 1rem;text-align:center;">
+                    <div *ngIf="!conversations.length" style="padding:1.5rem 0.75rem;text-align:center;">
                         <i class="fa-regular fa-comments" style="font-size:1.8rem;color:#d1d7db;"></i>
-                        <p style="font-size:.78rem;color:#667781;margin:.5rem 0 0;">No conversations yet</p>
+                        <p style="font-size:.75rem;color:#667781;margin:.5rem 0 0;">No conversations yet</p>
                     </div>
                 </div>
             </aside>
@@ -130,9 +126,7 @@
                         <h3>{{ displayConversationName(activeConversation) }}</h3>
                         <div class="thread-status" [class.online]="activeConversation.otherUserOnline && !isTyping()">
                             <ng-container *ngIf="isTyping()">
-                                <div class="typing-bubble">
-                                    <span></span><span></span><span></span>
-                                </div>
+                                <div class="typing-bubble"><span></span><span></span><span></span></div>
                                 typing…
                             </ng-container>
                             <ng-container *ngIf="!isTyping()">
@@ -149,7 +143,7 @@
                 </div>
 
                 <!-- Messages area -->
-                <div class="chat-messages" #messageScroller>
+                <div class="chat-messages" #messageScroller (scroll)="onMessagesScroll($event)">
 
                     <ng-container *ngFor="let entry of timelineEntries; trackBy: trackByTimelineEntry">
 
@@ -165,7 +159,7 @@
                                 [class.mine]="message.mine"
                                 [class.show-avatar]="shouldShowAvatar(message)"
                                 [class.highlighted]="highlightedMessageId === message.messageId"
-                                [class.active]="isMessageActive(message.messageId)"
+                                [class.msg-ui-active]="isMessageActive(message.messageId)"
                                 [attr.data-message-id]="message.messageId"
                                 (mouseenter)="onMessageMouseEnter(message.messageId)"
                                 (mouseleave)="onMessageMouseLeave($event, message.messageId)"
@@ -174,7 +168,7 @@
                                 (pointerup)="onMessagePointerUp($event, message)"
                                 (pointercancel)="onMessagePointerCancel()"
                         >
-                            <!-- Sender avatar (for received messages, last in group) -->
+                            <!-- Sender avatar (received, last in group) -->
                             <div class="msg-sender-avatar">
                                 {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
                             </div>
@@ -182,18 +176,21 @@
                             <div class="msg-bubble-wrap" [style.transform]="messageTransform(message.messageId)">
 
                                 <!-- Swipe-to-reply hint -->
-                                <span class="swipe-reply-hint" [class.show]="swipeMessageId === message.messageId && swipeTranslateX > 30">
-                                    <i class="fa-solid fa-reply"></i>
+                                <span class="swipe-reply-hint"
+                                      [class.show]="swipeMessageId === message.messageId && swipeTranslateX > 30">
+                  <i class="fa-solid fa-reply"></i>
                 </span>
 
-                                <!-- Quick reactions bar -->
+                                <!-- Quick reactions bar — only rendered for active message -->
                                 <div class="reactions-bar"
                                      [class.show]="isMessageActive(message.messageId)"
                                      (mouseenter)="onFloatingUiEnter(message.messageId)"
                                      (mouseleave)="onFloatingUiLeave(message.messageId)"
                                      (click)="$event.stopPropagation()">
-                                    <button type="button" *ngFor="let emoji of quickReactions"
-                                            (click)="toggleReaction(message, emoji)" [title]="emoji">{{ emoji }}</button>
+                                    <button type="button"
+                                            *ngFor="let emoji of quickReactions"
+                                            (click)="toggleReaction(message, emoji)"
+                                            [title]="emoji">{{ emoji }}</button>
                                 </div>
 
                                 <!-- Action buttons -->
@@ -244,7 +241,6 @@
                                         <p class="msg-text" *ngIf="message.messageText && !isEmojiOnly(message)">{{ message.messageText }}</p>
                                         <p class="msg-emoji-only" *ngIf="isEmojiOnly(message)">{{ message.messageText || message.reactionEmoji }}</p>
 
-                                        <!-- Attachment -->
                                         <button class="attachment-chip" type="button"
                                                 *ngIf="message.attachmentFileName"
                                                 (click)="openAttachment(message); $event.stopPropagation()">
@@ -252,15 +248,13 @@
                                             {{ message.attachmentFileName }}
                                         </button>
 
-                                        <!-- Time + ticks -->
                                         <div class="msg-meta">
                                             <span class="msg-time">{{ formatMessageDisplayTime(message.sentAt) }}</span>
                                             <span class="msg-ticks"
                                                   *ngIf="message.mine"
                                                   [class.seen]="!!message.seenAt"
                                                   [class.delivered]="!message.seenAt">
-                        <i class="fa-solid fa-check-double" *ngIf="message.seenAt"></i>
-                        <i class="fa-solid fa-check-double" *ngIf="!message.seenAt"></i>
+                        <i class="fa-solid fa-check-double"></i>
                       </span>
                                         </div>
                                     </ng-template>
@@ -271,16 +265,19 @@
                   <span class="reaction-pill"
                         *ngFor="let reaction of reactionsForMessage(message.messageId); trackBy: trackByReaction"
                         [class.mine]="reaction.mine"
-                        (click)="reaction.mine ? removeReaction(message, reaction.emoji) : reactToMessage(message, reaction.emoji); $event.stopPropagation()">
+                        (click)="reaction.mine
+                          ? removeReaction(message, reaction.emoji)
+                          : reactToMessage(message, reaction.emoji);
+                          $event.stopPropagation()">
                     {{ reaction.emoji }}
-                      <span style="font-size:.7rem;font-weight:700;">{{ reaction.count }}</span>
-                    <button class="reaction-remove-btn" type="button" *ngIf="reaction.mine" title="Remove">
+                      <span style="font-size:.68rem;font-weight:700;">{{ reaction.count }}</span>
+                    <button class="reaction-remove-btn" type="button" *ngIf="reaction.mine">
                       <i class="fa-solid fa-xmark"></i>
                     </button>
                   </span>
                                 </div>
 
-                                <!-- Seen timestamp on hover -->
+                                <!-- Seen timestamp -->
                                 <div class="seen-time"
                                      *ngIf="hoveredMessageId === message.messageId && message.mine && message.seenAt">
                                     Seen {{ formatMessageTime(message.seenAt) }}
@@ -292,11 +289,20 @@
                     </ng-container>
                 </div><!-- end .chat-messages -->
 
+                <!-- Scroll to bottom button -->
+                <button class="scroll-to-bottom" type="button"
+                        *ngIf="showScrollButton"
+                        (click)="scrollToBottomSmooth()">
+                    <i class="fa-solid fa-chevron-down"></i>
+                    <span class="new-msg-count" *ngIf="newMessagesWhileScrolled > 0">
+            {{ newMessagesWhileScrolled }}
+          </span>
+                </button>
+
                 <!-- ── Composer ── -->
                 <div class="chat-composer-shell">
                     <input #attachmentInput type="file" hidden (change)="onAttachmentSelected($event)">
 
-                    <!-- Pills row -->
                     <div class="composer-pills" *ngIf="replyingToMessage || selectedAttachment || !canSendToActiveUser">
                         <div class="disabled-chat-note" *ngIf="!canSendToActiveUser">
                             <i class="fa-solid fa-lock"></i> This user is disabled — read only.
@@ -313,7 +319,6 @@
                         </div>
                     </div>
 
-                    <!-- Input row -->
                     <div class="composer-row">
                         <div class="composer-input-wrap">
                             <button type="button" class="composer-attach-btn"
@@ -346,9 +351,7 @@
             <!-- Empty state -->
             <ng-template #emptyState>
                 <div class="chat-empty" [class.hidden-mobile]="!mobileConversationView" style="display:flex;">
-                    <div class="empty-icon">
-                        <i class="fa-solid fa-comments"></i>
-                    </div>
+                    <div class="empty-icon"><i class="fa-solid fa-comments"></i></div>
                     <h4>Your Messages</h4>
                     <p>Select a conversation or start a new one</p>
                 </div>
