@@ -6,7 +6,8 @@ import { AuthService } from '../services/auth.service';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const token = auth.getAccessToken();
-  const clone = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  const skipAuthHeader = req.url.startsWith('https://ipinfo.io/');
+  const clone = !skipAuthHeader && token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
   return next(clone).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -17,7 +18,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (error.status === 401) {
         return auth.refreshToken().pipe(
-          switchMap((res) => next(req.clone({ setHeaders: { Authorization: `Bearer ${res.accessToken}` } }))),
+          switchMap((res) =>
+            next(
+              skipAuthHeader
+                ? req
+                : req.clone({
+                    setHeaders: { Authorization: `Bearer ${res.accessToken}` },
+                  })
+            )
+          ),
           catchError(() => {
             auth.logout();
             return throwError(() => error);
