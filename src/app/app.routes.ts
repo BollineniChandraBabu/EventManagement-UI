@@ -22,15 +22,17 @@ import { RelationshipSeedsComponent } from './features/relationship-seeds/relati
 import { EventTypeSeedsComponent } from './features/event-type-seeds/event-type-seeds.component';
 import { EventTypeSeedEditorComponent } from './features/event-type-seeds/event-type-seed-editor.component';
 import { FestivalWishMappingsComponent } from './features/festival-wish-mappings/festival-wish-mappings.component';
+import { locationAccessGuard } from './core/guards/location-access.guard';
+import { RestrictedRegionComponent } from './features/restricted-region/restricted-region.component';
 
 export const routes: Routes = [
-  { path: '', canActivate: [resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
-  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
-  { path: 'otp-login', component: OtpLoginComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'password-reset', canActivate: [resetLinkGuard], component: ResetPasswordComponent },
-  { path: '', canActivate: [authGuard], children: [
+  { path: '', canActivate: [locationAccessGuard, resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
+  { path: 'login', component: LoginComponent, canActivate: [locationAccessGuard, guestGuard] },
+  { path: 'otp-login', component: OtpLoginComponent, canActivate: [locationAccessGuard] },
+  { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [locationAccessGuard] },
+  { path: 'reset-password', component: ResetPasswordComponent, canActivate: [locationAccessGuard] },
+  { path: 'password-reset', canActivate: [locationAccessGuard, resetLinkGuard], component: ResetPasswordComponent },
+  { path: '', canActivate: [locationAccessGuard, authGuard], canActivateChild: [locationAccessGuard], children: [
     { path: 'dashboard', component: DashboardComponent },
     { path: 'account', component: AccountManagementComponent },
     { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
@@ -53,5 +55,6 @@ export const routes: Routes = [
     { path: 'festival-wish-mappings', component: FestivalWishMappingsComponent, canActivate: [adminGuard] },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]},
+  { path: 'restricted-region', component: RestrictedRegionComponent },
   { path: '**', redirectTo: 'dashboard' }
 ];
