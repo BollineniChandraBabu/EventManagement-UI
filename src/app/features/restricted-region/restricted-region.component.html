@@ -1,0 +1,97 @@
+<div class="bg-orb orb-one" aria-hidden="true"></div>
+<div class="bg-orb orb-two" aria-hidden="true"></div>
+
+<main class="card" role="main" aria-labelledby="restricted-title">
+  <svg
+    class="hero-art"
+    viewBox="0 0 760 430"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-label="Access denied illustration with warning, lock and monitor"
+  >
+    <path
+      class="plane-path"
+      d="M80 72 C 240 10, 460 26, 640 90 C 680 105, 700 120, 715 146"
+      fill="none"
+      stroke="#7d79e6"
+      stroke-width="2.5"
+      stroke-linecap="round"
+    />
+    <g class="paper-plane">
+      <path d="M594 42 L625 52 L602 64 L609 52 Z" fill="#8ec5ff" />
+    </g>
+    <g class="monitor-float">
+      <rect x="138" y="94" width="470" height="265" rx="16" fill="#eaf2ff" stroke="#9bc6f0" stroke-width="7" />
+      <rect x="182" y="132" width="186" height="84" rx="8" fill="#dfe3f7" />
+      <rect x="382" y="132" width="80" height="58" rx="8" fill="#dfe3f7" />
+      <rect x="472" y="132" width="100" height="58" rx="8" fill="#dfe3f7" />
+      <rect x="382" y="204" width="190" height="12" rx="6" fill="#d9e0f8" />
+      <rect x="182" y="229" width="390" height="68" rx="10" fill="#dce4f8" />
+      <rect x="330" y="358" width="90" height="22" rx="9" fill="#9bc6f0" />
+      <path d="M294 380 H454 C 444 410, 304 410, 294 380 Z" fill="#8db9e8" />
+    </g>
+    <g class="lock-glow">
+      <circle cx="372" cy="243" r="76" fill="url(#lockGrad)" />
+      <path d="M344 249 H400 V287 H344 Z" fill="#fff" rx="8" />
+      <path
+        d="M353 247 V228 C353 216 362 208 372 208 C382 208 391 216 391 228 V247"
+        stroke="#fff"
+        stroke-width="9"
+        stroke-linecap="round"
+      />
+      <circle cx="372" cy="268" r="8.5" fill="#b93e9c" />
+    </g>
+    <g class="warning-bob">
+      <path d="M580 106 L638 206 H522 Z" fill="#ffffff" stroke="#d957bb" stroke-width="8" stroke-linejoin="round" />
+      <rect x="575" y="141" width="10" height="36" rx="4" fill="#d957bb" />
+      <circle cx="580" cy="189" r="6" fill="#d957bb" />
+    </g>
+    <g class="person-worry">
+      <circle cx="655" cy="268" r="17" fill="#ffd6c4" />
+      <path d="M636 296 C640 273 670 273 675 295 V351 H636 Z" fill="#ef4da8" />
+      <path d="M648 285 L633 258 M664 284 L680 257" stroke="#ef4da8" stroke-width="10" stroke-linecap="round" />
+      <path d="M638 351 L626 406 M671 351 L694 406" stroke="#4852b8" stroke-width="14" stroke-linecap="round" />
+    </g>
+    <rect x="112" y="224" width="70" height="86" rx="20" fill="url(#goldGrad)" />
+    <path d="M127 224 V208 C127 194 138 185 148 185 C160 185 170 194 170 208 V224" stroke="#5366d5" stroke-width="10" stroke-linecap="round" />
+    <circle cx="147" cy="265" r="13" fill="none" stroke="#fff" stroke-width="4" />
+    <g class="floating-bits" fill="#7184e9">
+      <circle cx="94" cy="115" r="4" />
+      <circle cx="146" cy="70" r="3.5" />
+      <circle cx="512" cy="63" r="3" />
+      <circle cx="700" cy="228" r="4" />
+      <circle cx="614" cy="320" r="3" />
+      <circle cx="250" cy="318" r="3" />
+    </g>
+    <defs>
+      <linearGradient id="lockGrad" x1="302" y1="178" x2="430" y2="305" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#ff5bc6" />
+        <stop offset="1" stop-color="#9f34c9" />
+      </linearGradient>
+      <linearGradient id="goldGrad" x1="112" y1="224" x2="182" y2="310" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#ffd95b" />
+        <stop offset="1" stop-color="#ffa14f" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="pulse-lock" aria-hidden="true">
+    <svg width="66" height="66" viewBox="0 0 66 66" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="16" y="30" width="34" height="24" rx="6" fill="#fff" />
+      <path d="M22 30V22C22 15.4 27.4 10 34 10C40.6 10 46 15.4 46 22V30" stroke="#fff" stroke-width="5" stroke-linecap="round" />
+      <circle cx="33.5" cy="41" r="4.5" fill="#ca3ea4" />
+    </svg>
+  </div>
+
+  <h1 id="restricted-title">Access Denied · Regional Lock</h1>
+  <p class="lead">This Family Hub is currently shared only within select regions for privacy and personal use.</p>
+  <p class="lead">Please access from an approved location to continue.</p>
+
+  <p class="region-list">Regional access only</p>
+
+  <p class="note">
+    If you believe this restriction is shown by mistake, please try again on a trusted network or check back later.
+  </p>
+
+  <footer>© {{ currentYear }} Chandu &amp; Family Hub · Regional access experience updated with care.</footer>
+</main>
