@@ -9,7 +9,7 @@ interface IpInfoResponse {
 }
 
 const ALLOWED_COUNTRY = 'IN';
-const ALLOWED_REGIONS = new Set(['Andhra Prdadesh', 'Tedlangana']);
+const ALLOWED_REGIONS = new Set(['Andhra Pradesh', 'Telangana']);
 
 let cachedAccessCheck$: Observable<boolean> | null = null;
 
