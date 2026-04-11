@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/location-guard.js"></script>
+  <title>Access Restricted</title>
+  <style>
+    :root {
+      --bg: #f6f7ff;
+      --card: #ffffff;
+      --text: #3e3f86;
+      --muted: #6d73a9;
+      --accent-2: #5e66d8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 8% 12%, #e8f4ff 0, transparent 25%),
+        radial-gradient(circle at 92% 88%, #f7e9ff 0, transparent 25%),
+        var(--bg);
+      font-family: "Lato", Arial, sans-serif;
+      color: var(--text);
+      padding: 24px;
+    }
+    .card {
+      width: min(760px, 100%);
+      background: var(--card);
+      border-radius: 28px;
+      padding: 26px 24px 20px;
+      box-shadow: 0 20px 48px rgba(89, 98, 194, 0.14);
+      border: 1px solid #e6e8ff;
+      text-align: center;
+    }
+    h1 {
+      font-size: clamp(1.7rem, 4vw, 2.2rem);
+      margin: 12px 0;
+      color: var(--accent-2);
+    }
+    .lead {
+      font-size: 1.03rem;
+      line-height: 1.65;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .region-list {
+      margin: 14px auto 20px;
+      font-weight: 700;
+      color: var(--text);
+      padding: 9px 16px;
+      display: inline-block;
+      border-radius: 999px;
+      background: #f2efff;
+      border: 1px solid #d9d4ff;
+    }
+    .note {
+      font-size: 0.95rem;
+      color: #8f7668;
+      line-height: 1.6;
+      max-width: 48ch;
+      margin: 0 auto 8px;
+    }
+    footer {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px dashed #d9dcff;
+      font-size: 0.84rem;
+      color: #838ac4;
+    }
+    @media (max-width: 640px) {
+      .card { border-radius: 18px; padding: 16px 14px 14px; }
+      .lead { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="restricted-title">
+    <h1 id="restricted-title">Access Denied · Regional Lock</h1>
+    <p class="lead">This Golden Greetings app is currently shared only within select regions for privacy and personal use.</p>
+    <p class="lead">Please access from an approved location to continue.</p>
+    <p class="region-list">Regional access only: Andhra Pradesh / Telangana (IN)</p>
+    <p class="note">If you believe this restriction is shown by mistake, please try again on a trusted network or check back later.</p>
+    <footer>© <span id="rr-year"></span> Golden Greetings · Regional access experience updated with care.</footer>
+  </main>
+  <script>document.getElementById('rr-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
