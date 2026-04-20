@@ -28,7 +28,8 @@ import {
   PollinationsBalanceResponse,
   UserStatusUpdateRequest,
   ProfilePictureUploadUrlRequest,
-  ProfilePictureUploadUrlResponse
+  ProfilePictureUploadUrlResponse,
+  WishPreviewResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -293,6 +294,12 @@ export class ApiService {
 
   updateWishSettings(payload: WishSettingsPayload) {
     return this.http.patch(`${environment.apiUrl}/users/me/wish-settings`, payload);
+  }
+
+  getMyWishPreview(): Observable<WishPreviewResponse> {
+    return this.http.get<ApiResponse<WishPreviewResponse>>(`${environment.apiUrl}/users/me/wish-preview`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   getProfilePictureUploadUrl(payload: ProfilePictureUploadUrlRequest): Observable<ProfilePictureUploadUrlResponse> {

@@ -177,6 +177,14 @@ export interface WishSettingsPayload {
   isBirthdayEnabled: boolean;
 }
 
+export interface WishPreviewResponse {
+  showMessage: boolean;
+  wishType?: string | null;
+  subject?: string | null;
+  htmlMessage?: string | null;
+  imageData?: number[] | null;
+}
+
 export interface PollinationsBalanceResponse {
   balance: number;
 }
