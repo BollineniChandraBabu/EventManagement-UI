@@ -25,7 +25,10 @@ import {
   SchedulerTriggerResponse,
   RelationshipSeed,
   WishSettingsPayload,
-  PollinationsBalanceResponse, UserStatusUpdateRequest
+  PollinationsBalanceResponse,
+  UserStatusUpdateRequest,
+  ProfilePictureUploadUrlRequest,
+  ProfilePictureUploadUrlResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -290,6 +293,26 @@ export class ApiService {
 
   updateWishSettings(payload: WishSettingsPayload) {
     return this.http.patch(`${environment.apiUrl}/users/me/wish-settings`, payload);
+  }
+
+  getProfilePictureUploadUrl(payload: ProfilePictureUploadUrlRequest): Observable<ProfilePictureUploadUrlResponse> {
+    return this.http.post<ApiResponse<ProfilePictureUploadUrlResponse>>(`${environment.apiUrl}/users/me/profile-picture/presigned-url`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  uploadMyProfilePicture(file: File): Observable<AppUser> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<AppUser>>(`${environment.apiUrl}/users/me/profile-picture`, formData).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  removeMyProfilePicture(): Observable<AppUser> {
+    return this.http.delete<ApiResponse<AppUser>>(`${environment.apiUrl}/users/me/profile-picture`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   getPollinationsBalance(): Observable<number> {

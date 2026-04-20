@@ -35,7 +35,7 @@ export interface ChatMessage {
   seenAt: string | null;
   mine: boolean;
   replyToMessageId?: number | null;
-  replyToMessageText?: string | null;
+  replyMessageText?: string | null;
   reactionEmoji?: string | null;
 }
 

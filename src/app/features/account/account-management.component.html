@@ -3,8 +3,14 @@
   <div class="account-hero">
     <div class="account-hero-content">
       <div class="account-avatar">
-        <i class="fa-solid fa-user-secret" *ngIf="impersonation.isImpersonating()"></i>
-        <i class="fa-solid fa-user" *ngIf="!impersonation.isImpersonating()"></i>
+        <img
+          *ngIf="profilePictureUrl"
+          [src]="profilePictureUrl"
+          alt="Profile picture"
+          class="account-avatar-image"
+        />
+        <i class="fa-solid fa-user-secret" *ngIf="impersonation.isImpersonating() && !profilePictureUrl"></i>
+        <i class="fa-solid fa-user" *ngIf="!impersonation.isImpersonating() && !profilePictureUrl"></i>
       </div>
       <div>
         <h1 class="page-header-title">
@@ -39,6 +45,45 @@
           <div class="alert-info rounded p-3 mb-4 d-flex align-items-center gap-2" style="font-size:.875rem;">
             <i class="fa-solid fa-circle-info"></i>
             Profile editing is managed by your administrator.
+          </div>
+          <div class="profile-picture-panel mb-4" *ngIf="!impersonation.isImpersonating()">
+            <div class="profile-picture-preview">
+              <img
+                *ngIf="profilePictureUrl"
+                [src]="profilePictureUrl"
+                alt="Current profile picture"
+                class="profile-picture-preview-image"
+              />
+              <i class="fa-solid fa-user profile-picture-placeholder" *ngIf="!profilePictureUrl"></i>
+            </div>
+            <div class="profile-picture-actions">
+              <h3 class="profile-picture-title">Profile Picture</h3>
+              <p class="text-muted mb-3" style="font-size:.85rem;">
+                Upload an image to personalize your account, or remove it to restore the default avatar.
+              </p>
+              <div class="d-flex flex-wrap gap-2">
+                <label class="btn btn-sm btn-outline-primary mb-0" [class.disabled]="isUploadingProfilePicture">
+                  <i class="fa-solid me-1" [class.fa-upload]="!isUploadingProfilePicture" [class.fa-spinner]="isUploadingProfilePicture" [class.fa-spin]="isUploadingProfilePicture"></i>
+                  {{ isUploadingProfilePicture ? 'Uploading…' : 'Upload new picture' }}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="d-none"
+                    [disabled]="isUploadingProfilePicture"
+                    (change)="onProfilePictureSelected($event)"
+                  />
+                </label>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  [disabled]="!profilePictureUrl || isRemovingProfilePicture"
+                  (click)="removeProfilePicture()"
+                >
+                  <i class="fa-solid me-1" [class.fa-trash]="!isRemovingProfilePicture" [class.fa-spinner]="isRemovingProfilePicture" [class.fa-spin]="isRemovingProfilePicture"></i>
+                  {{ isRemovingProfilePicture ? 'Removing…' : 'Remove picture' }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="pollinations-balance-card mb-4" *ngIf="isAdmin()">
