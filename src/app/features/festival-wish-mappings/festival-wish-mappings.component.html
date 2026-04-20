@@ -83,16 +83,18 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>Festival</th>
               <th>User</th>
+              <th>Festival</th>
+              <th>Date</th>
               <th>Status</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let mapping of mappings">
-              <td>{{ mapping.festivalName }}</td>
               <td>{{ mapping.userName }}</td>
+              <td>{{ mapping.festivalName }}</td>
+              <td>{{ (mapping.eventDate | date:'mediumDate') }}</td>
               <td>
                 <span class="badge" [class.badge-success]="mapping.active" [class.badge-danger]="!mapping.active">
                   {{ mapping.active ? 'Active' : 'Inactive' }}

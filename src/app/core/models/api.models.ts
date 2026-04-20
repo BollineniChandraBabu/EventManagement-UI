@@ -105,6 +105,7 @@ export interface FestivalWishMapping {
   userId: number;
   userName: string;
   active: boolean;
+  eventDate: string;
 }
 
 export interface SaveFestivalWishMappingPayload {
