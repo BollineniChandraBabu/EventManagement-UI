@@ -11,6 +11,7 @@ export interface TokenResponse {
   refreshToken: string;
   expiresIn: number;
   role: UserRole;
+  unreadChatMessagesCount?: number;
 }
 
 export interface OtpRequest {

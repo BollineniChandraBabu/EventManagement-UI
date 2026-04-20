@@ -44,6 +44,12 @@
             <input class="form-control" type="date" formControlName="dob" />
           </div>
           <div class="col-12 col-md-4">
+            <label class="form-label">Gender <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="gender">
+              <option *ngFor="let gender of genderOptions" [value]="gender">{{ gender }}</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-4">
             <label class="form-label">Relationship <span class="text-danger">*</span></label>
             <select class="form-select" formControlName="relationShip">
               <option value="" disabled>Select relationship</option>

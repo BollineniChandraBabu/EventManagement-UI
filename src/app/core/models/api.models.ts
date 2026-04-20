@@ -34,10 +34,16 @@ export interface DashboardChartResponse {
   points: DashboardChartPoint[];
 }
 
+export interface AuthSSOClientResponse {
+  clientId: string;
+}
+
 export interface AppUser {
   id: number;
   name: string;
   email: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  profilePictureUrl?: string;
   dob?: string;
   dateOfBirth?: string;
   role: UserRole;
@@ -52,6 +58,7 @@ export interface SaveUserPayload {
   id?: number;
   name: string;
   email: string;
+  gender: 'MALE' | 'FEMALE' | 'OTHER';
   dob: string;
   role: UserRole;
   relationShip: string;
@@ -97,14 +104,12 @@ export interface FestivalWishMapping {
   festivalName: string;
   userId: number;
   userName: string;
-  customMessage?: string;
   active: boolean;
 }
 
 export interface SaveFestivalWishMappingPayload {
   specialEventId: number;
   userId: number;
-  customMessage?: string;
   active: boolean;
 }
 

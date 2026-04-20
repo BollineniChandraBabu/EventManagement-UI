@@ -324,6 +324,7 @@ export class ChatWidgetComponent {
       otherUserEmail: user.email,
       otherUserOnline: user.online,
       otherUserLastSeenAt: user.lastSeenAt,
+      otherUserProfilePictureUrl: user.profilePictureUrl ?? null,
       otherUserActive: user.active !== false,
       lastMessage: '',
       lastMessageAt: null,
@@ -415,9 +416,9 @@ export class ChatWidgetComponent {
   canEdit(message: ChatMessage): boolean { return this.isWithinEditWindow(message) && message.mine; }
 
   deleteLatestIfEligible(message: ChatMessage): void {
-    if (!this.canDelete(message) || !this.activeConversation) return;
+    if (!this.canDelete(message)) return;
     this.clearActiveMessageState();
-    this.chat.deleteLastSentMessage(this.activeConversation.otherUserId)
+    this.chat.deleteMessageById(message.messageId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((res) => {
           this.messages = this.messages.filter((m) => m.messageId !== res.messageId);
@@ -723,6 +724,14 @@ export class ChatWidgetComponent {
 
   onImageError(event: Event): void {
     (event.target as HTMLImageElement).style.display = 'none';
+  }
+
+  conversationAvatar(conversation: ChatConversation): string | null {
+    return conversation.otherUserProfilePictureUrl ?? null;
+  }
+
+  userAvatar(user: ChatUser): string | null {
+    return user.profilePictureUrl ?? null;
   }
 
   // ── Private: socket events ────────────────────────────────────────────────

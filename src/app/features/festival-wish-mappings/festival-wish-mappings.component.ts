@@ -37,7 +37,6 @@ export class FestivalWishMappingsComponent {
   form: SaveFestivalWishMappingPayload = {
     specialEventId: 0,
     userId: 0,
-    customMessage: '',
     active: true
   };
 
@@ -109,10 +108,7 @@ export class FestivalWishMappingsComponent {
     }
 
     this.saving = true;
-    const payload: SaveFestivalWishMappingPayload = {
-      ...this.form,
-      customMessage: this.form.customMessage?.trim() || undefined
-    };
+    const payload: SaveFestivalWishMappingPayload = { ...this.form };
 
     this.api.saveFestivalWishMapping(payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
@@ -175,7 +171,6 @@ export class FestivalWishMappingsComponent {
     this.form = {
       specialEventId: mapping.specialEventId,
       userId: mapping.userId,
-      customMessage: mapping.customMessage ?? '',
       active: mapping.active
     };
     this.goToEditorMode();
@@ -196,7 +191,6 @@ export class FestivalWishMappingsComponent {
     this.form = {
       specialEventId: this.festivals[0]?.id ?? 0,
       userId: this.users[0]?.id ?? 0,
-      customMessage: '',
       active: true
     };
   }

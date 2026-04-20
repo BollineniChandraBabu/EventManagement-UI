@@ -45,6 +45,8 @@ export const routes: Routes = [
     { path: 'email-status', component: EmailStatusComponent },
     { path: 'email-status/otp', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'OTP Email Status', emailType: 'OTP' } },
     { path: 'email-status/forgot-password', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'Forgot Password Email Status', emailType: 'FORGOT_PASSWORD' } },
+    { path: 'email-status/festival-wishes', component: EmailStatusComponent, data: { title: 'Festival Wishes Email Status', emailType: 'FESTIVAL_WISH' } },
+    { path: 'email-status/unread-chat', component: EmailStatusComponent, data: { title: 'Unread Chat Email Status', emailType: 'UNREAD_CHAT_MESSAGE' } },
     { path: 'schedulers', component: SchedulersComponent, canActivate: [adminGuard] },
     { path: 'relationship-seeds', component: RelationshipSeedsComponent, canActivate: [adminGuard] },
     { path: 'relationship-seeds/new', component: RelationshipSeedEditorComponent, canActivate: [adminGuard] },

@@ -116,6 +116,12 @@ export class ChatService {
     );
   }
 
+  deleteMessageById(messageId: number): Observable<{ messageId: number; conversationId: number; deletedAt: string }> {
+    return this.http.delete<{ messageId: number; conversationId: number; deletedAt: string }>(
+      `${environment.apiUrl}/chat/messages/${messageId}`
+    );
+  }
+
   editMessage(messageId: number, messageText: string): Observable<ChatMessage> {
     return this.http.patch<ChatMessage>(`${environment.apiUrl}/chat/messages/${messageId}`, { messageText });
   }

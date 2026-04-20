@@ -56,7 +56,10 @@
                             <button type="button" class="new-chat-user-btn"
                                     *ngFor="let user of filteredNewChatUsers"
                                     (click)="startConversation(user)">
-                                <div class="mini-avatar">{{ (user.name || '?').charAt(0).toUpperCase() }}</div>
+                                <div class="mini-avatar">
+                                  <img *ngIf="userAvatar(user); else userInitialAvatar" [src]="userAvatar(user)" alt="avatar" />
+                                  <ng-template #userInitialAvatar>{{ (user.name || '?').charAt(0).toUpperCase() }}</ng-template>
+                                </div>
                                 <div class="new-chat-user-info">
                                     <div class="new-chat-user-name">{{ user.name }}</div>
                                 </div>
@@ -75,7 +78,10 @@
                             (click)="chooseConversation(convo)">
                         <div class="convo-avatar-wrap">
                             <div class="convo-avatar" [class.online]="convo.otherUserOnline">
-                                {{ (convo.otherUserName || '?').charAt(0).toUpperCase() }}
+                                <img *ngIf="conversationAvatar(convo); else convoInitialAvatar" [src]="conversationAvatar(convo)" alt="avatar" />
+                                <ng-template #convoInitialAvatar>
+                                  {{ (convo.otherUserName || '?').charAt(0).toUpperCase() }}
+                                </ng-template>
                             </div>
                             <span class="presence-dot" [class.online]="convo.otherUserOnline"></span>
                         </div>
@@ -117,7 +123,10 @@
 
                     <div class="thread-avatar-wrap">
                         <div class="thread-avatar" [class.online]="activeConversation.otherUserOnline">
-                            {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
+                            <img *ngIf="conversationAvatar(activeConversation); else threadInitialAvatar" [src]="conversationAvatar(activeConversation)" alt="avatar" />
+                            <ng-template #threadInitialAvatar>
+                              {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
+                            </ng-template>
                         </div>
                         <span class="thread-presence-dot" [class.online]="activeConversation.otherUserOnline"></span>
                     </div>
@@ -170,7 +179,10 @@
                         >
                             <!-- Sender avatar (received, last in group) -->
                             <div class="msg-sender-avatar">
-                                {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
+                                <img *ngIf="conversationAvatar(activeConversation); else senderInitialAvatar" [src]="conversationAvatar(activeConversation)" alt="avatar" />
+                                <ng-template #senderInitialAvatar>
+                                  {{ (activeConversation.otherUserName || '?').charAt(0).toUpperCase() }}
+                                </ng-template>
                             </div>
 
                             <div class="msg-bubble-wrap" [style.transform]="messageTransform(message.messageId)">
