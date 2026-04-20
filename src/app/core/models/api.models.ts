@@ -181,6 +181,19 @@ export interface PollinationsBalanceResponse {
   balance: number;
 }
 
+export interface ProfilePictureUploadUrlRequest {
+  fileName: string;
+  contentType: string;
+}
+
+export interface ProfilePictureUploadUrlResponse {
+  uploadUrl: string;
+  publicUrl: string;
+  objectKey: string;
+  method: string;
+  expiresInSeconds: number;
+}
+
 // Matches scheduler API response payload shape from backend.
 export interface SchedulerItem {
   name: string;

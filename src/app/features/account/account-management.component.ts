@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ImpersonationService } from '../../core/services/impersonation.service';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { AppUser } from '../../core/models/api.models';
 
 @Component({
   standalone: true,
@@ -52,36 +53,22 @@ export class AccountManagementComponent {
   showCurrentPassword = false;
   showNewPassword = false;
   showConfirmPassword = false;
+  profilePictureUrl: string | null = null;
+  isUploadingProfilePicture = false;
+  isRemovingProfilePicture = false;
 
   constructor() {
     this.auth.getProfile().subscribe({
       next: (profile) => {
         // When impersonating, show the impersonated user's details
         if (this.impersonation.isImpersonating()) {
-          const imp = this.impersonation.impersonatedUser()!;
-          this.profileForm.patchValue({
-            fullName: imp.name ?? '',
-            email: imp.email ?? '',
-            role: imp.role,
-          });
-          this.wishSettingsForm.patchValue({
-            isBirthdayEnabled: !!imp.isBirthdayEnabled,
-            isGoodMorningEnabled: !!imp.isGoodMorningEnabled,
-            isGoodNightEnabled: !!imp.isGoodNightEnabled,
-          });
+          const imp = this.impersonation.impersonatedUser();
+          if (imp) {
+            this.applyProfile(imp);
+          }
           return;
         }
-
-        this.profileForm.patchValue({
-          fullName: profile.name ?? '',
-          email: profile.email ?? '',
-          role: profile.role,
-        });
-        this.wishSettingsForm.patchValue({
-          isBirthdayEnabled: !!profile.isBirthdayEnabled,
-          isGoodMorningEnabled: !!profile.isGoodMorningEnabled,
-          isGoodNightEnabled: !!profile.isGoodNightEnabled,
-        });
+        this.applyProfile(profile);
       },
       error: () => {
         this.toast.warning('Unable to fetch profile right now.');
@@ -117,6 +104,60 @@ export class AccountManagementComponent {
     this.api.updateWishSettings(payload).subscribe({
       next: () => this.toast.success('Wish settings updated successfully.'),
       error: () => this.toast.error('Unable to update wish settings. Please try again.')
+    });
+  }
+
+  onProfilePictureSelected(event: Event): void {
+    if (this.impersonation.isImpersonating()) {
+      this.toast.warning('Profile picture updates are disabled while impersonating.');
+      return;
+    }
+
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.toast.error('Please select a valid image file.');
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingProfilePicture = true;
+    this.api.uploadMyProfilePicture(file).subscribe({
+      next: (profile) => {
+        this.applyProfile(profile);
+        this.toast.success('Profile picture uploaded successfully.');
+        this.isUploadingProfilePicture = false;
+        input.value = '';
+      },
+      error: () => {
+        this.toast.error('Unable to upload profile picture right now.');
+        this.isUploadingProfilePicture = false;
+        input.value = '';
+      }
+    });
+  }
+
+  removeProfilePicture(): void {
+    if (this.impersonation.isImpersonating()) {
+      this.toast.warning('Profile picture updates are disabled while impersonating.');
+      return;
+    }
+
+    this.isRemovingProfilePicture = true;
+    this.api.removeMyProfilePicture().subscribe({
+      next: (profile) => {
+        this.applyProfile(profile);
+        this.toast.success('Profile picture removed successfully.');
+        this.isRemovingProfilePicture = false;
+      },
+      error: () => {
+        this.toast.error('Unable to remove profile picture right now.');
+        this.isRemovingProfilePicture = false;
+      }
     });
   }
 
@@ -174,5 +215,19 @@ export class AccountManagementComponent {
     }
 
     this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  private applyProfile(profile: AppUser): void {
+    this.profileForm.patchValue({
+      fullName: profile.name ?? '',
+      email: profile.email ?? '',
+      role: profile.role,
+    });
+    this.wishSettingsForm.patchValue({
+      isBirthdayEnabled: !!profile.isBirthdayEnabled,
+      isGoodMorningEnabled: !!profile.isGoodMorningEnabled,
+      isGoodNightEnabled: !!profile.isGoodNightEnabled,
+    });
+    this.profilePictureUrl = profile.profilePictureUrl ?? null;
   }
 }
