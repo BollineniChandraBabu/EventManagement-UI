@@ -254,10 +254,14 @@ export class ApiService {
 
   emailStatuses(page = 0, size = 10, searchKey = '', emailType = ''): Observable<PagedResponse<EmailStatus>> {
     let url = `${environment.apiUrl}/emails/status`;
-    if(emailType === 'OTP'){
-      url = url + "/admin/otp";
-    }else if(emailType === 'FORGOT_PASSWORD'){
-      url = url + "/admin/forgot-password";
+    if (emailType === 'OTP') {
+      url += '/admin/otp';
+    } else if (emailType === 'FORGOT_PASSWORD') {
+      url += '/admin/forgot-password';
+    } else if (emailType === 'FESTIVAL_WISH') {
+      url += '/festival-wishes';
+    } else if (emailType === 'UNREAD_CHAT_MESSAGE') {
+      url += '/unread-chat-messages';
     }
     const params = this.pagedParams(page, size, searchKey);
     const requestWithEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(url, {

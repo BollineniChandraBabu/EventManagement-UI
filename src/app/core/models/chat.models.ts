@@ -4,6 +4,7 @@ export interface ChatUser {
   email: string;
   online: boolean;
   lastSeenAt: string | null;
+  profilePictureUrl?: string | null;
   active?: boolean;
 }
 
@@ -14,6 +15,7 @@ export interface ChatConversation {
   otherUserEmail: string;
   otherUserOnline: boolean;
   otherUserLastSeenAt: string | null;
+  otherUserProfilePictureUrl?: string | null;
   otherUserActive?: boolean;
   lastMessage: string | null;
   lastMessageAt: string | null;

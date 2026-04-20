@@ -45,6 +45,8 @@
 
       <div class="auth-divider">or</div>
 
+      <div id="google-signin-button" class="d-flex justify-content-center mb-3" *ngIf="isGoogleSsoEnabled"></div>
+
       <a class="btn btn-outline-secondary w-100" routerLink="/otp-login">
         <i class="fa-solid fa-mobile-screen-button me-2"></i>Sign in with OTP
       </a>

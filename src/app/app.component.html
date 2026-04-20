@@ -49,6 +49,16 @@
             <span class="nav-icon"><i class="fa-solid fa-envelope-circle-check"></i></span>
             <span class="nav-label">Email Status</span>
           </a>
+
+          <a class="nav-item" routerLink="/email-status/festival-wishes" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Festival Wish Emails">
+            <span class="nav-icon"><i class="fa-solid fa-gift"></i></span>
+            <span class="nav-label">Festival Wish Emails</span>
+          </a>
+
+          <a class="nav-item" routerLink="/email-status/unread-chat" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Unread Chat Emails">
+            <span class="nav-icon"><i class="fa-solid fa-comments"></i></span>
+            <span class="nav-label">Unread Chat Emails</span>
+          </a>
         </div>
 
         <!-- Admin section — hidden while impersonating -->

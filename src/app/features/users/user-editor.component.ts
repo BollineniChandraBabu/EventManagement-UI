@@ -24,6 +24,7 @@ export class UserEditorComponent {
 
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
+  readonly genderOptions = ['MALE', 'FEMALE', 'OTHER'] as const;
 
   loading = false;
   saving = false;
@@ -34,6 +35,7 @@ export class UserEditorComponent {
     id: [0],
     name: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
+    gender: ['MALE' as 'MALE' | 'FEMALE' | 'OTHER', [Validators.required]],
     dob: ['', [Validators.required]],
     role: [ROLE_USER as UserRole, [Validators.required]],
     relationShip: ['', [Validators.required]],
@@ -138,6 +140,7 @@ export class UserEditorComponent {
       id: user.id,
       name: user.name,
       email: user.email,
+      gender: user.gender ?? 'MALE',
       dob: user.dob || user.dateOfBirth || '',
       role: user.role,
       relationShip: user.relationShip || '',
@@ -152,6 +155,7 @@ export class UserEditorComponent {
       id: 0,
       name: '',
       email: '',
+      gender: 'MALE',
       dob: '',
       role: ROLE_USER,
       relationShip: '',
