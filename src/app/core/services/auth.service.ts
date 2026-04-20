@@ -5,7 +5,7 @@ import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
-import { AppUser } from '../models/api.models';
+import {AppUser, AuthSSOClientResponse} from '../models/api.models';
 import { ImpersonationService } from './impersonation.service';
 
 const ACCESS_TOKEN = 'fw_access_token';
@@ -52,8 +52,8 @@ export class AuthService {
     );
   }
 
-  googleSsoToken(): Observable<string> {
-    return this.http.get<string>(`${environment.apiUrl}/auth/sso/token`);
+  googleSsoToken(): Observable<AuthSSOClientResponse> {
+    return this.http.get<AuthSSOClientResponse>(`${environment.apiUrl}/auth/sso/token`);
   }
 
   loginAsUser(email: string): Observable<TokenResponse> {

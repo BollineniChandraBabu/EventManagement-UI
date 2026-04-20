@@ -6,6 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { environment } from '../../../environments/environment';
+import {AuthSSOClientResponse} from "../../core/models/api.models";
 
 declare global {
   interface Window {
@@ -61,18 +62,22 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.auth.googleSsoToken().subscribe(value =>
-    {
-      this.googleClientId = value;
-      this.isGoogleSsoEnabled = value.trim()!=="";
-    })
-    if (!this.isGoogleSsoEnabled) {
-      return;
-    }
+    this.auth.googleSsoToken().subscribe({
+        next: (value:AuthSSOClientResponse) => {
+      this.googleClientId = value.clientId;
+      this.isGoogleSsoEnabled = value.clientId.trim()!=="";
+          if (!this.isGoogleSsoEnabled) {
+            return;
+          }
 
-    this.ensureGoogleScriptLoaded()
-      .then(() => this.initializeGoogleSso())
-      .catch(() => this.toast.warning('Google sign-in is currently unavailable.'));
+          this.ensureGoogleScriptLoaded()
+              .then(() => this.initializeGoogleSso())
+              .catch(() => this.toast.warning('Google sign-in is currently unavailable.'));
+
+    }, error: (error) => {
+          console.error("Failed to load OAuth config: ", error);
+      }
+    })
   }
 
   private ensureGoogleScriptLoaded(): Promise<void> {

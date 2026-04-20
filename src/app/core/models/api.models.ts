@@ -34,6 +34,10 @@ export interface DashboardChartResponse {
   points: DashboardChartPoint[];
 }
 
+export interface AuthSSOClientResponse {
+  clientId: string;
+}
+
 export interface AppUser {
   id: number;
   name: string;
