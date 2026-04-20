@@ -220,7 +220,7 @@
                                         <i class="fa-solid fa-pen"></i> Edit
                                     </button>
                                     <button type="button" class="action-btn danger"
-                                            *ngIf="canDelete(message) && editingMessageId !== message.messageId"
+                                            *ngIf="message.mine && canDelete(message) && editingMessageId !== message.messageId"
                                             (click)="deleteMessage(message)">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>

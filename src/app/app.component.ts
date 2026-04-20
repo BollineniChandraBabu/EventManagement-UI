@@ -47,15 +47,16 @@ export class AppComponent {
         return;
       }
 
-      this.api.getMyWishPreview().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (response) => {
-          sessionStorage.setItem(WISH_PREVIEW_SEEN_KEY, token);
-          this.wishPreview = response;
-          this.isWishPreviewVisible = !!response.showMessage;
-        },
-        error: () => {
-          // Keep key unset so the app can retry later in this login session.
-        }
+      queueMicrotask(() => {
+        this.api.getMyWishPreview()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (response) => {
+                sessionStorage.setItem(WISH_PREVIEW_SEEN_KEY, token);
+                this.wishPreview = response;
+                this.isWishPreviewVisible = !!response.showMessage;
+              }
+            });
       });
     });
   }
