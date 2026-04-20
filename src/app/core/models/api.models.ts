@@ -182,7 +182,7 @@ export interface WishPreviewResponse {
   wishType?: string | null;
   subject?: string | null;
   htmlMessage?: string | null;
-  imageData?: number[] | null;
+  imageData?: number[] | string | null;
 }
 
 export interface PollinationsBalanceResponse {

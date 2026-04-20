@@ -90,12 +90,22 @@ export class AppComponent {
   }
 
   wishPreviewImage(): string | null {
-    const bytes = this.wishPreview?.imageData;
-    if (!bytes?.length) {
+    const imageData = this.wishPreview?.imageData;
+    if (!imageData) {
       return null;
     }
 
-    const binary = bytes.map((value) => String.fromCharCode(value)).join('');
+    if (typeof imageData === 'string') {
+      return imageData.startsWith('data:image')
+        ? imageData
+        : `data:image/png;base64,${imageData}`;
+    }
+
+    if (!imageData.length) {
+      return null;
+    }
+
+    const binary = imageData.map((value) => String.fromCharCode(value)).join('');
     return `data:image/png;base64,${btoa(binary)}`;
   }
 }

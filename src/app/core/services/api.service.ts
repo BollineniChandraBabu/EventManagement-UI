@@ -297,8 +297,19 @@ export class ApiService {
   }
 
   getMyWishPreview(): Observable<WishPreviewResponse> {
-    return this.http.get<ApiResponse<WishPreviewResponse>>(`${environment.apiUrl}/users/me/wish-preview`).pipe(
-      map((response) => this.unwrap(response))
+    const requestWithUsersPrefix = () =>
+      this.http.get<ApiResponse<WishPreviewResponse> | WishPreviewResponse>(
+        `${environment.apiUrl}/users/me/wish-preview`
+      );
+
+    const requestWithoutUsersPrefix = () =>
+      this.http.get<ApiResponse<WishPreviewResponse> | WishPreviewResponse>(
+        `${environment.apiUrl}/me/wish-preview`
+      );
+
+    return requestWithUsersPrefix().pipe(
+      catchError(() => requestWithoutUsersPrefix()),
+      map((response) => this.normalizeWishPreview(this.unwrap(response)))
     );
   }
 
@@ -444,6 +455,20 @@ export class ApiService {
     }
 
     return response as T;
+  }
+
+  private normalizeWishPreview(payload: Partial<WishPreviewResponse> | null | undefined): WishPreviewResponse {
+    if (!payload || typeof payload !== 'object') {
+      return { showMessage: false };
+    }
+
+    return {
+      showMessage: !!payload.showMessage,
+      wishType: payload.wishType ?? null,
+      subject: payload.subject ?? null,
+      htmlMessage: payload.htmlMessage ?? null,
+      imageData: payload.imageData ?? null
+    };
   }
 
   private requestWithFallback<T>(
