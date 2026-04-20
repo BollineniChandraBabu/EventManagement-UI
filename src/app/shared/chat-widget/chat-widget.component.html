@@ -221,7 +221,7 @@
                                     </button>
                                     <button type="button" class="action-btn danger"
                                             *ngIf="canDelete(message) && editingMessageId !== message.messageId"
-                                            (click)="deleteLatestIfEligible(message)">
+                                            (click)="deleteMessage(message)">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>

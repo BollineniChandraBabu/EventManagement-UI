@@ -413,9 +413,9 @@ export class ChatWidgetComponent {
     if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.saveEdit(message); }
   }
 
-  canEdit(message: ChatMessage): boolean { return this.isWithinEditWindow(message) && message.mine; }
+  canEdit(message: ChatMessage): boolean { return message.mine; }
 
-  deleteLatestIfEligible(message: ChatMessage): void {
+  deleteMessage(message: ChatMessage): void {
     if (!this.canDelete(message)) return;
     this.clearActiveMessageState();
     this.chat.deleteMessageById(message.messageId)
@@ -427,12 +427,7 @@ export class ChatWidgetComponent {
   }
 
   canDelete(message: ChatMessage): boolean {
-    return this.isWithinEditWindow(message) && message.mine;
-  }
-
-  isWithinEditWindow(message: ChatMessage): boolean {
-    const sent = new Date(message.sentAt).getTime();
-    return !Number.isNaN(sent) && (Date.now() - sent) <= (24 * 60 * 60 * 1000);
+    return !!message.messageId;
   }
 
   // ── Reactions ─────────────────────────────────────────────────────────────
