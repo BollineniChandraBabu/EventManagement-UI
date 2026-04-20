@@ -33,7 +33,8 @@ export class LoginComponent implements OnInit {
 
   showPassword = false;
   isSubmitting = false;
-  readonly isGoogleSsoEnabled = !!environment.googleClientId;
+  isGoogleSsoEnabled = false;
+  googleClientId: string = "";
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
@@ -60,6 +61,11 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.auth.googleSsoToken().subscribe(value =>
+    {
+      this.googleClientId = value;
+      this.isGoogleSsoEnabled = value.trim()!=="";
+    })
     if (!this.isGoogleSsoEnabled) {
       return;
     }
@@ -99,7 +105,7 @@ export class LoginComponent implements OnInit {
     }
 
     window.google.accounts.id.initialize({
-      client_id: environment.googleClientId,
+      client_id: this.googleClientId,
       callback: (response: { credential?: string }) => this.onGoogleCredential(response?.credential ?? '')
     });
 

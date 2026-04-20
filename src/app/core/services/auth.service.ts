@@ -52,6 +52,10 @@ export class AuthService {
     );
   }
 
+  googleSsoToken(): Observable<string> {
+    return this.http.get<string>(`${environment.apiUrl}/auth/sso/token`);
+  }
+
   loginAsUser(email: string): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/admin/login-as-user`, { email }).pipe(
       tap((res) => this.setSession(res, this.shouldPersistSession()))
