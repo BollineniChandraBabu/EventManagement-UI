@@ -1,11 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import {Component, OnInit, inject, NgZone} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { environment } from '../../../environments/environment';
 import {AuthSSOClientResponse} from "../../core/models/api.models";
 
 declare global {
@@ -13,7 +12,7 @@ declare global {
     google?: any;
   }
 }
-
+const SSO_TOKEN: string = 'fw_sso_token';
 @Component({
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
@@ -25,6 +24,7 @@ export class LoginComponent implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private ngZone = inject(NgZone);
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -62,23 +62,32 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.auth.googleSsoToken().subscribe({
-        next: (value:AuthSSOClientResponse) => {
-      this.googleClientId = value.clientId;
-      this.isGoogleSsoEnabled = value.clientId.trim()!=="";
-          if (!this.isGoogleSsoEnabled) {
-            return;
-          }
-
-          this.ensureGoogleScriptLoaded()
-              .then(() => this.initializeGoogleSso())
-              .catch(() => this.toast.warning('Google sign-in is currently unavailable.'));
-
-    }, error: (error) => {
+    let encryptedToken = localStorage.getItem(SSO_TOKEN);
+    if(encryptedToken === null) {
+      this.auth.googleSsoToken().subscribe({
+        next: (value: AuthSSOClientResponse) => {
+          localStorage.setItem(SSO_TOKEN, window.btoa(value.clientId));
+          this.initiateGoogleSSO(value.clientId);
+        }, error: (error) => {
           console.error("Failed to load OAuth config: ", error);
-      }
-    })
+        }
+      })
+    }else{
+      this.initiateGoogleSSO(window.atob(encryptedToken));
+    }
   }
+
+  private initiateGoogleSSO(clientId: string): void {
+    this.googleClientId = clientId;
+    this.isGoogleSsoEnabled = clientId.trim() !== "";
+    if (!this.isGoogleSsoEnabled) {
+      return;
+    }
+
+    this.ensureGoogleScriptLoaded()
+        .then(() => this.initializeGoogleSso())
+        .catch(() => this.toast.warning('Google sign-in is currently unavailable.'));
+}
 
   private ensureGoogleScriptLoaded(): Promise<void> {
     if (window.google?.accounts?.id) {
@@ -129,12 +138,22 @@ export class LoginComponent implements OnInit {
     this.isSubmitting = true;
     this.auth.googleSsoLogin(idToken, this.form.controls.rememberMe.value).subscribe({
       next: () => {
+        this.ngZone.run(() => {
         this.isSubmitting = false;
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/dashboard']).then(success => {
+          if (success) {
+            console.log('Navigation success');
+          } else {
+            console.log('Navigation failed');
+          }
+        });
+        });
       },
       error: (error: HttpErrorResponse) => {
-        this.toast.error(this.getLoginErrorMessage(error));
-        this.isSubmitting = false;
+        this.ngZone.run(() => {
+          this.toast.error(this.getLoginErrorMessage(error));
+          this.isSubmitting = false;
+        });
       }
     });
   }
