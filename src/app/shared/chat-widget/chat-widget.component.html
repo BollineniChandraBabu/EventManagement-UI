@@ -231,7 +231,7 @@
                                         *ngIf="message.replyToMessageId"
                                         (click)="jumpToMessage(message.replyToMessageId); $event.stopPropagation()">
                                     <i class="fa-solid fa-reply" style="font-size:10px;flex-shrink:0;"></i>
-                                    <span>{{ message.replyToMessageText || ('Reply #' + message.replyToMessageId) }}</span>
+                                    <span>{{ message.replyToMessageText || '…' }}</span>
                                 </button>
 
                                 <!-- Bubble -->
