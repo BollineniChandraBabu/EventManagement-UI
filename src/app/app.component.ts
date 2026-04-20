@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, effect, inject } from '@angular/core';
 import {Router, RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
@@ -8,6 +8,10 @@ import { LoadingOverlayComponent } from './shared/loading-overlay.component';
 import { ChatWidgetComponent } from './shared/chat-widget/chat-widget.component';
 import { ToastService } from './core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ApiService } from './core/services/api.service';
+import { WishPreviewResponse } from './core/models/api.models';
+
+const WISH_PREVIEW_SEEN_KEY = 'fw_wish_preview_seen_token';
 
 @Component({
   selector: 'app-root',
@@ -21,11 +25,41 @@ export class AppComponent {
   readonly impersonation = inject(ImpersonationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly api = inject(ApiService);
   readonly currentYear = new Date().getFullYear();
   private router = inject(Router);
 
   isMobileMenuOpen = false;
   isSidebarCollapsed = false;
+  isWishPreviewVisible = false;
+  wishPreview?: WishPreviewResponse;
+
+  constructor() {
+    effect(() => {
+      if (!this.auth.authenticated()) {
+        this.isWishPreviewVisible = false;
+        this.wishPreview = undefined;
+        return;
+      }
+
+      const token = this.auth.getAccessToken();
+      if (!token || sessionStorage.getItem(WISH_PREVIEW_SEEN_KEY) === token) {
+        return;
+      }
+
+      queueMicrotask(() => {
+        this.api.getMyWishPreview()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (response) => {
+                sessionStorage.setItem(WISH_PREVIEW_SEEN_KEY, token);
+                this.wishPreview = response;
+                this.isWishPreviewVisible = !!response.showMessage;
+              }
+            });
+      });
+    });
+  }
 
   toggleMobileMenu(): void {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
@@ -50,5 +84,29 @@ export class AppComponent {
         this.toast.error('Unable to switch back to admin right now.');
       }
     });
+  }
+
+  closeWishPreview(): void {
+    this.isWishPreviewVisible = false;
+  }
+
+  wishPreviewImage(): string | null {
+    const imageData = this.wishPreview?.imageData;
+    if (!imageData) {
+      return null;
+    }
+
+    if (typeof imageData === 'string') {
+      return imageData.startsWith('data:image')
+        ? imageData
+        : `data:image/png;base64,${imageData}`;
+    }
+
+    if (!imageData.length) {
+      return null;
+    }
+
+    const binary = imageData.map((value) => String.fromCharCode(value)).join('');
+    return `data:image/png;base64,${btoa(binary)}`;
   }
 }

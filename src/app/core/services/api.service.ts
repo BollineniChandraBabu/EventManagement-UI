@@ -28,7 +28,8 @@ import {
   PollinationsBalanceResponse,
   UserStatusUpdateRequest,
   ProfilePictureUploadUrlRequest,
-  ProfilePictureUploadUrlResponse
+  ProfilePictureUploadUrlResponse,
+  WishPreviewResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -295,6 +296,14 @@ export class ApiService {
     return this.http.patch(`${environment.apiUrl}/users/me/wish-settings`, payload);
   }
 
+  getMyWishPreview(): Observable<WishPreviewResponse> {
+    return this.http.get<ApiResponse<WishPreviewResponse> | WishPreviewResponse>(
+      `${environment.apiUrl}/users/me/wish-preview`
+    ).pipe(
+      map((response) => this.normalizeWishPreview(this.unwrap(response)))
+    );
+  }
+
   getProfilePictureUploadUrl(payload: ProfilePictureUploadUrlRequest): Observable<ProfilePictureUploadUrlResponse> {
     return this.http.post<ApiResponse<ProfilePictureUploadUrlResponse>>(`${environment.apiUrl}/users/me/profile-picture/presigned-url`, payload).pipe(
       map((response) => this.unwrap(response))
@@ -437,6 +446,20 @@ export class ApiService {
     }
 
     return response as T;
+  }
+
+  private normalizeWishPreview(payload: Partial<WishPreviewResponse> | null | undefined): WishPreviewResponse {
+    if (!payload || typeof payload !== 'object') {
+      return { showMessage: false };
+    }
+
+    return {
+      showMessage: !!payload.showMessage,
+      wishType: payload.wishType ?? null,
+      subject: payload.subject ?? null,
+      htmlMessage: payload.htmlMessage ?? null,
+      imageData: payload.imageData ?? null
+    };
   }
 
   private requestWithFallback<T>(

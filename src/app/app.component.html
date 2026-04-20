@@ -169,5 +169,20 @@
   </main>
 </ng-template>
 
+<div class="wish-preview-modal-backdrop" *ngIf="isWishPreviewVisible">
+  <section class="wish-preview-modal" role="dialog" aria-modal="true" aria-label="Wish preview">
+    <button class="wish-preview-close" type="button" (click)="closeWishPreview()" aria-label="Close wish preview">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <p class="wish-preview-type" *ngIf="wishPreview?.wishType">{{ wishPreview?.wishType }} wish preview</p>
+    <h3 class="wish-preview-subject">{{ wishPreview?.subject || 'A special wish for you' }}</h3>
+    <div class="wish-preview-image-wrap" *ngIf="wishPreviewImage() as previewImage">
+      <img [src]="previewImage" alt="Wish preview" class="wish-preview-image" />
+    </div>
+    <div class="wish-preview-content" [innerHTML]="wishPreview?.htmlMessage || ''"></div>
+    <button class="btn btn-primary mt-3 px-4" type="button" (click)="closeWishPreview()">Close</button>
+  </section>
+</div>
+
 <app-toast-container></app-toast-container>
 <app-loading-overlay></app-loading-overlay>
