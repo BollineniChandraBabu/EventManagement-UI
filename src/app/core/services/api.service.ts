@@ -297,18 +297,9 @@ export class ApiService {
   }
 
   getMyWishPreview(): Observable<WishPreviewResponse> {
-    const requestWithUsersPrefix = () =>
-      this.http.get<ApiResponse<WishPreviewResponse> | WishPreviewResponse>(
-        `${environment.apiUrl}/users/me/wish-preview`
-      );
-
-    const requestWithoutUsersPrefix = () =>
-      this.http.get<ApiResponse<WishPreviewResponse> | WishPreviewResponse>(
-        `${environment.apiUrl}/me/wish-preview`
-      );
-
-    return requestWithUsersPrefix().pipe(
-      catchError(() => requestWithoutUsersPrefix()),
+    return this.http.get<ApiResponse<WishPreviewResponse> | WishPreviewResponse>(
+      `${environment.apiUrl}/users/me/wish-preview`
+    ).pipe(
       map((response) => this.normalizeWishPreview(this.unwrap(response)))
     );
   }
