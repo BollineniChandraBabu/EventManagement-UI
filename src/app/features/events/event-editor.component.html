@@ -27,11 +27,6 @@
           </select>
         </div>
 
-        <div *ngIf="form.controls.type.value === 'Festival'">
-          <label class="form-label">Festival Name</label>
-          <input class="form-control" formControlName="festival" [readonly]="!isAdmin()" placeholder="Enter festival name" />
-        </div>
-
         <div>
           <label class="form-label">Date</label>
           <input class="form-control" type="date" formControlName="eventDate" [readonly]="!isAdmin()" />

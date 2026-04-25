@@ -37,7 +37,6 @@ export class EventEditorComponent {
   form = this.fb.nonNullable.group({
     userId: [0, [Validators.required, Validators.min(1)]],
     type: ['Birthday', [Validators.required]],
-    festival: [''],
     eventDate: [''],
     recurring: [false]
   });
@@ -45,14 +44,13 @@ export class EventEditorComponent {
   constructor() {
     this.loadUsers();
     this.loadEventTypeSeeds();
-
     if (this.editingEventId) {
       this.loadEvent(this.editingEventId);
     }
   }
 
   get types(): string[] {
-    return this.eventTypeSeeds.length ? this.eventTypeSeeds.map((seed) => seed.displayName) : this.fallbackTypes;
+    return this.eventTypeSeeds.length ? this.eventTypeSeeds.map((seed) => seed.displayName.toUpperCase()) : this.fallbackTypes;
   }
 
   get pageTitle(): string {
@@ -140,8 +138,7 @@ export class EventEditorComponent {
           userId: matchedUser?.id ?? 0,
           type: this.prettyType(event.eventType),
           eventDate: event.eventDate,
-          recurring: event.recurring,
-          festival: ''
+          recurring: event.recurring
         });
         this.loading = false;
       },
@@ -159,7 +156,6 @@ export class EventEditorComponent {
     if (type === 'Good Night') {
       return 'GOODNIGHT';
     }
-
     return type;
   }
 
@@ -170,7 +166,6 @@ export class EventEditorComponent {
     if (type === 'GOODNIGHT') {
       return 'Good Night';
     }
-
     return type ?? 'Birthday';
   }
 }
