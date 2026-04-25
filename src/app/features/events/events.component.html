@@ -69,6 +69,7 @@
                 </button>
               </th>
               <th>Recurring</th>
+              <th class="text-end" *ngIf="isAdmin()">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -84,15 +85,23 @@
                   {{ event.recurring ? 'Yes' : 'No' }}
                 </span>
               </td>
+              <td class="text-end" *ngIf="isAdmin()">
+                <a class="btn btn-sm btn-link" [routerLink]="['/events', event.id, 'edit']" [class.disabled]="loading || isDeleting(event.id)">
+                  <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                </a>
+                <button class="btn btn-sm btn-link text-danger" type="button" (click)="deleteEvent(event)" [disabled]="loading || isDeleting(event.id)">
+                  <i class="fa-solid fa-trash-can me-1"></i>{{ isDeleting(event.id) ? 'Deleting…' : 'Delete' }}
+                </button>
+              </td>
             </tr>
             <tr *ngIf="loading" class="table-loading">
-              <td colspan="5">
+              <td [attr.colspan]="isAdmin() ? 5 : 4">
                 <div class="loading-dots"><span></span><span></span><span></span></div>
                 <div class="mt-2">Loading events…</div>
               </td>
             </tr>
             <tr *ngIf="!loading && viewEvents.length === 0" class="table-empty">
-              <td colspan="5">
+              <td [attr.colspan]="isAdmin() ? 5 : 4">
                 <div class="empty-state">
                   <div class="empty-state-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
                   <p class="empty-state-title">No events yet</p>

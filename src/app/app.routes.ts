@@ -13,7 +13,6 @@ import { UsersComponent } from './features/users/users.component';
 import { UserEditorComponent } from './features/users/user-editor.component';
 import { EventsComponent } from './features/events/events.component';
 import { EventEditorComponent } from './features/events/event-editor.component';
-import { AiWishesComponent } from './features/ai-wishes/ai-wishes.component';
 import { EmailPreviewComponent } from './features/email-preview/email-preview.component';
 import { EmailStatusComponent } from './features/email-status/email-status.component';
 import { SchedulersComponent } from './features/schedulers/schedulers.component';
@@ -40,7 +39,7 @@ export const routes: Routes = [
     { path: 'users/:id/edit', component: UserEditorComponent, canActivate: [adminGuard] },
     { path: 'events', component: EventsComponent },
     { path: 'events/new', component: EventEditorComponent, canActivate: [adminGuard] },
-    { path: 'ai-wishes', component: AiWishesComponent },
+    { path: 'events/:id/edit', component: EventEditorComponent, canActivate: [adminGuard] },
     { path: 'email-preview', component: EmailPreviewComponent },
     { path: 'email-status', component: EmailStatusComponent },
     { path: 'email-status/otp', component: EmailStatusComponent, canActivate: [adminGuard], data: { title: 'OTP Email Status', emailType: 'OTP' } },

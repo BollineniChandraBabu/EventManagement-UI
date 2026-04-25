@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AppUser, EventTypeSeed, SaveEventPayload } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
-import { AppUser, EventTypeSeed } from '../../core/models/api.models';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './event-editor.component.html',
   styleUrl: './event-editor.component.css'
 })
@@ -20,31 +20,35 @@ export class EventEditorComponent {
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isAdmin = this.auth.isAdmin;
-  readonly fallbackTypes = ['Anniversary', 'Engagement'];
+  readonly fallbackTypes = ['Birthday', 'Anniversary', 'Engagement'];
 
   allUsers: AppUser[] = [];
-  relationshipOptions: string[] = [];
   eventTypeSeeds: EventTypeSeed[] = [];
-  result = '';
   loading = false;
   saving = false;
+  editingUserName = '';
+
+  readonly editingEventId = Number(this.route.snapshot.paramMap.get('id')) || null;
 
   form = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
+    userId: [0, [Validators.required, Validators.min(1)]],
     type: ['Birthday', [Validators.required]],
     festival: [''],
     eventDate: [''],
-    recurring: [false],
-    relation: ['']
+    recurring: [false]
   });
 
   constructor() {
     this.loadUsers();
-    this.loadRelationshipSeeds();
     this.loadEventTypeSeeds();
+
+    if (this.editingEventId) {
+      this.loadEvent(this.editingEventId);
+    }
   }
 
   get types(): string[] {
@@ -52,40 +56,15 @@ export class EventEditorComponent {
   }
 
   get pageTitle(): string {
-    return 'Create Event';
+    return this.editingEventId ? 'Edit Event' : 'Create Event';
   }
 
   get submitLabel(): string {
-    return 'Save Event';
-  }
-
-  get desktopPreviewSrcDoc(): string {
-    return this.wrapPreviewHtml(this.result);
-  }
-
-  get mobilePreviewSrcDoc(): string {
-    return this.wrapPreviewHtml(this.result);
-  }
-
-  generateWish(): void {
-    if (!this.isAdmin() || !this.form.controls.name.value) {
-      this.form.controls.name.markAsTouched();
-      return;
+    if (this.saving) {
+      return this.editingEventId ? 'Updating...' : 'Saving...';
     }
 
-    const selectedUser = this.form.controls.name.value as unknown as AppUser;
-    this.api.aiWish({
-      name: selectedUser.name,
-      event: this.form.controls.type.value,
-      tone: 'Warm',
-      language: 'English',
-      relation: this.form.controls.relation.value
-    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => {
-        this.result = res.htmlMessage;
-      },
-      error: () => this.toast.error('Unable to generate AI wish right now.')
-    });
+    return this.editingEventId ? 'Update Event' : 'Save Event';
   }
 
   save(): void {
@@ -95,24 +74,26 @@ export class EventEditorComponent {
     }
 
     const value = this.form.getRawValue();
-    const selectedUser = value.name as unknown as AppUser;
-    const payload = {
+    const payload: SaveEventPayload = {
       eventType: this.normalizeEventType(value.type),
       eventDate: value.eventDate,
       recurring: value.recurring,
-      festivalName: value.type === 'Festival' ? value.festival : undefined,
-      userId: selectedUser.id
+      userId: value.userId
     };
 
     this.saving = true;
-    this.api.saveEvent(payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const request$ = this.editingEventId
+      ? this.api.updateEvent(this.editingEventId, payload)
+      : this.api.saveEvent(payload);
+
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.toast.success('Event created successfully.');
+        this.toast.success(this.editingEventId ? 'Event updated successfully.' : 'Event created successfully.');
         this.saving = false;
         this.router.navigateByUrl('/events');
       },
       error: () => {
-        this.toast.error('Unable to save event. Please try again.');
+        this.toast.error(this.editingEventId ? 'Unable to update event. Please try again.' : 'Unable to save event. Please try again.');
         this.saving = false;
       }
     });
@@ -120,9 +101,18 @@ export class EventEditorComponent {
 
   private loadUsers(): void {
     this.loading = true;
-    this.api.users(0, 500, '').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.users(0, 500, '', 'name', 'asc').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.allUsers = response.content ?? [];
+        if (!this.editingEventId && this.allUsers.length) {
+          this.form.controls.userId.setValue(this.allUsers[0].id);
+        }
+        if (this.editingEventId && this.editingUserName) {
+          const matchedUser = this.allUsers.find((user) => user.name === this.editingUserName);
+          if (matchedUser) {
+            this.form.controls.userId.setValue(matchedUser.id);
+          }
+        }
         this.loading = false;
       },
       error: () => {
@@ -132,18 +122,32 @@ export class EventEditorComponent {
     });
   }
 
-  private loadRelationshipSeeds(): void {
-    this.api.relationshipSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (seeds) => {
-        this.relationshipOptions = (seeds ?? []).map((seed) => seed.code);
-      }
-    });
-  }
-
   private loadEventTypeSeeds(): void {
     this.api.eventTypeSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (seeds) => {
         this.eventTypeSeeds = seeds ?? [];
+      }
+    });
+  }
+
+  private loadEvent(eventId: number): void {
+    this.loading = true;
+    this.api.eventById(eventId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (event) => {
+        this.editingUserName = event.userName;
+        const matchedUser = this.allUsers.find((user) => user.name === event.userName);
+        this.form.patchValue({
+          userId: matchedUser?.id ?? 0,
+          type: this.prettyType(event.eventType),
+          eventDate: event.eventDate,
+          recurring: event.recurring,
+          festival: ''
+        });
+        this.loading = false;
+      },
+      error: () => {
+        this.toast.error('Unable to load event details right now.');
+        this.loading = false;
       }
     });
   }
@@ -159,7 +163,14 @@ export class EventEditorComponent {
     return type;
   }
 
-  private wrapPreviewHtml(content: string): string {
-    return `<html><body style="margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#212529;">${content}</body></html>`;
+  private prettyType(type?: string): string {
+    if (type === 'GOODMORNING') {
+      return 'Good Morning';
+    }
+    if (type === 'GOODNIGHT') {
+      return 'Good Night';
+    }
+
+    return type ?? 'Birthday';
   }
 }

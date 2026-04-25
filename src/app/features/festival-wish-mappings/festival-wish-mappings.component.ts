@@ -24,6 +24,8 @@ export class FestivalWishMappingsComponent {
   festivals: FestivalItem[] = [];
   users: AppUser[] = [];
   mappings: FestivalWishMapping[] = [];
+  filteredMappings: FestivalWishMapping[] = [];
+  pagedMappings: FestivalWishMapping[] = [];
 
   loadingMappings = false;
   loadingFestivals = false;
@@ -33,6 +35,13 @@ export class FestivalWishMappingsComponent {
   selectedMonth = new Date().getMonth() + 1;
   mode: 'dashboard' | 'editor' = 'dashboard';
   editingMappingId: number | null = null;
+
+  searchText = '';
+  page = 0;
+  pageSize = 10;
+  readonly pageSizes = [5, 10, 20];
+  sortBy: 'userName' | 'festivalName' | 'eventDate' | 'active' = 'eventDate';
+  sortDir: 'asc' | 'desc' = 'asc';
 
   form: SaveFestivalWishMappingPayload = {
     specialEventId: 0,
@@ -65,6 +74,26 @@ export class FestivalWishMappingsComponent {
     });
   }
 
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredMappings.length / this.pageSize));
+  }
+
+  get displayPage(): number {
+    return this.page + 1;
+  }
+
+  get startRow(): number {
+    if (this.filteredMappings.length === 0 || this.pagedMappings.length === 0) {
+      return 0;
+    }
+
+    return this.page * this.pageSize + 1;
+  }
+
+  get endRow(): number {
+    return this.pagedMappings.length === 0 ? 0 : this.startRow + this.pagedMappings.length - 1;
+  }
+
   loadFestivals(): void {
     this.loadingFestivals = true;
     this.api.festivals(this.selectedMonth).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -84,9 +113,10 @@ export class FestivalWishMappingsComponent {
 
   loadMappings(): void {
     this.loadingMappings = true;
-    this.api.festivalWishMappings().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.festivalWishMappings(0, 2000, '', this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (mappings) => {
         this.mappings = mappings ?? [];
+        this.applyClientFilters();
         this.loadingMappings = false;
       },
       error: () => {
@@ -99,6 +129,67 @@ export class FestivalWishMappingsComponent {
   onMonthChange(month: number): void {
     this.selectedMonth = Number(month);
     this.loadFestivals();
+  }
+
+  onSearchInput(value: string): void {
+    const previous = this.searchText;
+    this.searchText = value;
+
+    if (previous.trim() && !this.searchText.trim()) {
+      this.applySearch();
+    }
+  }
+
+  applySearch(): void {
+    this.searchText = this.searchText.trim();
+    this.page = 0;
+    this.applyClientFilters();
+  }
+
+  clearSearch(): void {
+    if (!this.searchText) {
+      return;
+    }
+
+    this.searchText = '';
+    this.page = 0;
+    this.applyClientFilters();
+  }
+
+  onPageSizeChange(value: string): void {
+    this.pageSize = Number(value);
+    this.page = 0;
+    this.applyClientFilters();
+  }
+
+  toggleSort(field: 'userName' | 'festivalName' | 'eventDate' | 'active'): void {
+    if (this.sortBy === field) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = field;
+      this.sortDir = 'asc';
+    }
+
+    this.page = 0;
+    this.applyClientFilters();
+  }
+
+  isSortedBy(field: 'userName' | 'festivalName' | 'eventDate' | 'active'): boolean {
+    return this.sortBy === field;
+  }
+
+  nextPage(): void {
+    if (this.page < this.totalPages - 1) {
+      this.page += 1;
+      this.paginate();
+    }
+  }
+
+  prevPage(): void {
+    if (this.page > 0) {
+      this.page -= 1;
+      this.paginate();
+    }
   }
 
   save(): void {
@@ -163,7 +254,7 @@ export class FestivalWishMappingsComponent {
   startCreate(): void {
     this.editingMappingId = null;
     this.resetForm();
-    this.selectedMonth=new Date().getMonth() + 1;
+    this.selectedMonth = new Date().getMonth() + 1;
     this.loadFestivals();
     this.goToEditorMode();
   }
@@ -171,7 +262,7 @@ export class FestivalWishMappingsComponent {
   startEdit(mapping: FestivalWishMapping): void {
     this.editingMappingId = mapping.id;
     const date = new Date(mapping.eventDate);
-    this.selectedMonth=date.getMonth() + 1;
+    this.selectedMonth = date.getMonth() + 1;
     this.loadFestivals();
     this.form = {
       specialEventId: mapping.specialEventId,
@@ -198,5 +289,51 @@ export class FestivalWishMappingsComponent {
       userId: this.users[0]?.id ?? 0,
       active: true
     };
+  }
+
+  private applyClientFilters(): void {
+    const search = this.searchText.trim().toLowerCase();
+    const filtered = search
+      ? this.mappings.filter((mapping) =>
+          [mapping.userName, mapping.festivalName, mapping.eventDate]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(search))
+        )
+      : [...this.mappings];
+
+    this.filteredMappings = filtered.sort((a, b) => {
+      const left = this.sortValue(a, this.sortBy);
+      const right = this.sortValue(b, this.sortBy);
+
+      if (left === right) {
+        return 0;
+      }
+
+      const result = left > right ? 1 : -1;
+      return this.sortDir === 'asc' ? result : -result;
+    });
+
+    if (this.page > this.totalPages - 1) {
+      this.page = Math.max(0, this.totalPages - 1);
+    }
+
+    this.paginate();
+  }
+
+  private paginate(): void {
+    const start = this.page * this.pageSize;
+    this.pagedMappings = this.filteredMappings.slice(start, start + this.pageSize);
+  }
+
+  private sortValue(mapping: FestivalWishMapping, field: 'userName' | 'festivalName' | 'eventDate' | 'active'): string | number {
+    if (field === 'eventDate') {
+      return new Date(mapping.eventDate).getTime();
+    }
+
+    if (field === 'active') {
+      return mapping.active ? 1 : 0;
+    }
+
+    return (mapping[field] ?? '').toString().toLowerCase();
   }
 }
