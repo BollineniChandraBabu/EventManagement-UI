@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { EventItem } from '../../core/models/api.models';
 import { ToastService } from '../../core/services/toast.service';
+import {AuthService} from "../../core/services/auth.service";
 
 @Component({
   standalone: true,
@@ -17,7 +18,8 @@ export class EventsComponent {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
-
+  private readonly auth = inject(AuthService);
+  readonly isAdmin = this.auth.isAdmin;
   events: EventItem[] = [];
   viewEvents: EventItem[] = [];
   eventTypeOptions: string[] = [];

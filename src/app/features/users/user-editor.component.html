@@ -53,7 +53,7 @@
             <label class="form-label">Relationship <span class="text-danger">*</span></label>
             <select class="form-select" formControlName="relationShip">
               <option value="" disabled>Select relationship</option>
-              <option *ngFor="let rel of relationshipOptions" [value]="rel.value">
+              <option *ngFor="let rel of relationshipOptions" [ngValue]="rel.value">
                 {{ rel.label }}
               </option>
             </select>

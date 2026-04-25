@@ -163,11 +163,16 @@ export class FestivalWishMappingsComponent {
   startCreate(): void {
     this.editingMappingId = null;
     this.resetForm();
+    this.selectedMonth=new Date().getMonth() + 1;
+    this.loadFestivals();
     this.goToEditorMode();
   }
 
   startEdit(mapping: FestivalWishMapping): void {
     this.editingMappingId = mapping.id;
+    const date = new Date(mapping.eventDate);
+    this.selectedMonth=date.getMonth() + 1;
+    this.loadFestivals();
     this.form = {
       specialEventId: mapping.specialEventId,
       userId: mapping.userId,

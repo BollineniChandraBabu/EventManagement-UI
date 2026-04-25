@@ -7,7 +7,7 @@
         <p class="page-header-subtitle">Manage scheduled events and celebrations</p>
       </div>
     </div>
-    <div class="page-header-actions">
+    <div class="page-header-actions" *ngIf="isAdmin()">
       <a class="btn btn-primary" routerLink="/events/new">
         <i class="fa-solid fa-plus me-1"></i>Create Event
       </a>
@@ -34,7 +34,7 @@
           <label class="form-label">Filter by event type</label>
           <select class="form-select" style="max-width:320px;" (change)="onTypeFilter($any($event.target).value)">
             <option value="ALL">All event types</option>
-            <option *ngFor="let type of eventTypeOptions" [value]="type">{{ type }}</option>
+            <option *ngFor="let type of eventTypeOptions" [value]="type.toUpperCase()">{{ type }}</option>
           </select>
         </div>
 
@@ -51,15 +51,15 @@
           <thead>
             <tr>
               <th>
+                    <button class="sort-header" type="button" (click)="toggleSort('user')" [disabled]="loading">
+                        User ID
+                        <i *ngIf="isSortedBy('user')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                    </button>
+              </th>
+              <th>
                 <button class="sort-header" type="button" (click)="toggleSort('eventType')" [disabled]="loading">
                   Event Type
                   <i *ngIf="isSortedBy('eventType')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
-                </button>
-              </th>
-              <th>
-                <button class="sort-header" type="button" (click)="toggleSort('festivalName')" [disabled]="loading">
-                  Festival / Name
-                  <i *ngIf="isSortedBy('festivalName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
                 </button>
               </th>
               <th>
@@ -68,23 +68,16 @@
                   <i *ngIf="isSortedBy('eventDate')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
                 </button>
               </th>
-              <th>
-                <button class="sort-header" type="button" (click)="toggleSort('userId')" [disabled]="loading">
-                  User ID
-                  <i *ngIf="isSortedBy('userId')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
-                </button>
-              </th>
               <th>Recurring</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let event of viewEvents">
+              <td><span class="text-muted">{{ event.userName || '—' }}</span></td>
               <td>
                 <span class="badge badge-info">{{ event.eventType || '—' }}</span>
               </td>
-              <td>{{ event.festivalName || '—' }}</td>
-              <td><span class="text-muted">{{ event.eventDate || '—' }}</span></td>
-              <td><span class="text-muted">#{{ event.userId || '—' }}</span></td>
+              <td><span class="text-muted">{{ (event.eventDate | date:'mediumDate') || '—' }}</span></td>
               <td>
                 <span class="badge" [class.badge-success]="event.recurring" [class.badge-secondary]="!event.recurring">
                   <i class="fa-solid me-1" [class.fa-rotate]="event.recurring" [class.fa-minus]="!event.recurring"></i>

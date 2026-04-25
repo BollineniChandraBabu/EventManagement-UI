@@ -23,7 +23,7 @@ export class EventEditorComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isAdmin = this.auth.isAdmin;
-  readonly fallbackTypes = ['Birthday', 'Anniversary', 'Engagement', 'Festival', 'Good Morning', 'Good Night'];
+  readonly fallbackTypes = ['Anniversary', 'Engagement'];
 
   allUsers: AppUser[] = [];
   relationshipOptions: string[] = [];

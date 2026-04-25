@@ -143,7 +143,7 @@ export class UserEditorComponent {
       gender: user.gender ?? 'MALE',
       dob: user.dob || user.dateOfBirth || '',
       role: user.role,
-      relationShip: user.relationShip || '',
+      relationShip: user.relationShip.toLowerCase() || '',
       isBirthdayEnabled: !!user.isBirthdayEnabled,
       isGoodMorningEnabled: !!user.isGoodMorningEnabled,
       isGoodNightEnabled: !!user.isGoodNightEnabled

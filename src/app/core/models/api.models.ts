@@ -122,10 +122,9 @@ export interface SaveEventTypeSeedPayload {
 export interface EventItem {
   id: number;
   eventType?: string;
-  festivalName?: string;
   eventDate: string;
   recurring: boolean;
-  userId: number;
+  userName: string;
   active?: boolean;
 }
 
