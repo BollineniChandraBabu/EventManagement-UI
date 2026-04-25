@@ -78,20 +78,58 @@
           <i class="fa-solid fa-pen-to-square me-1"></i>Create / Update
         </button>
       </div>
+      <div class="filter-bar mb-3">
+        <div>
+          <label class="form-label">Search mappings</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+            <input class="form-control border-start-0 ps-1" type="text" placeholder="User, festival, date..."
+              [ngModel]="searchText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loadingMappings" style="border-left:none!important;" />
+            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loadingMappings" *ngIf="searchText"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loadingMappings">Search</button>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Per page</label>
+          <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loadingMappings">
+            <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
+          </select>
+        </div>
+      </div>
 
       <div class="table-responsive">
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>User</th>
-              <th>Festival</th>
-              <th>Date</th>
-              <th>Status</th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('userName')" [disabled]="loadingMappings">
+                  User
+                  <i *ngIf="isSortedBy('userName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('festivalName')" [disabled]="loadingMappings">
+                  Festival
+                  <i *ngIf="isSortedBy('festivalName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('eventDate')" [disabled]="loadingMappings">
+                  Date
+                  <i *ngIf="isSortedBy('eventDate')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" type="button" (click)="toggleSort('active')" [disabled]="loadingMappings">
+                  Status
+                  <i *ngIf="isSortedBy('active')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                </button>
+              </th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let mapping of mappings">
+            <tr *ngFor="let mapping of pagedMappings">
               <td>{{ mapping.userName }}</td>
               <td>{{ mapping.festivalName }}</td>
               <td>{{ (mapping.eventDate | date:'mediumDate') }}</td>
@@ -110,12 +148,12 @@
               </td>
             </tr>
             <tr *ngIf="loadingMappings" class="table-loading">
-              <td colspan="4">
+              <td colspan="5">
                 <div class="loading-dots"><span></span><span></span><span></span></div>
               </td>
             </tr>
-            <tr *ngIf="!loadingMappings && mappings.length === 0" class="table-empty">
-              <td colspan="4">
+            <tr *ngIf="!loadingMappings && pagedMappings.length === 0" class="table-empty">
+              <td colspan="5">
                 <div class="empty-state">
                   <div class="empty-state-icon"><i class="fa-solid fa-gifts"></i></div>
                   <p class="empty-state-title">No mappings found</p>
@@ -124,6 +162,18 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="pagination-bar">
+        <span class="pagination-info">Showing {{ startRow }}–{{ endRow }} of {{ filteredMappings.length }} mappings</span>
+        <div class="btn-group pagination-controls">
+          <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loadingMappings || page === 0">
+            <i class="fa-solid fa-chevron-left me-1"></i>Prev
+          </button>
+          <button class="btn btn-sm btn-primary" type="button" disabled>{{ displayPage }} / {{ totalPages }}</button>
+          <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="loadingMappings || page >= totalPages - 1">
+            Next<i class="fa-solid fa-chevron-right ms-1"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>

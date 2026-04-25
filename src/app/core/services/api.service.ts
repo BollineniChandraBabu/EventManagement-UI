@@ -208,6 +208,20 @@ export class ApiService {
     return this.http.post(`${environment.apiUrl}/events`, payload);
   }
 
+  eventById(id: number): Observable<EventItem> {
+    return this.http.get<ApiResponse<EventItem>>(`${environment.apiUrl}/events/${id}`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  updateEvent(id: number, payload: SaveEventPayload): Observable<unknown> {
+    return this.http.put(`${environment.apiUrl}/events/${id}`, payload);
+  }
+
+  deleteEvent(id: number): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/events/${id}`);
+  }
+
   festivals(
     month?: number,
     page = 0,

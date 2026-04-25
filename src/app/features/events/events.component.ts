@@ -33,6 +33,7 @@ export class EventsComponent {
   sortBy = 'eventDate';
   sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
+  deletingIds = new Set<number>();
 
   constructor() {
     this.loadEventTypeOptions();
@@ -147,6 +148,25 @@ export class EventsComponent {
       this.page--;
       this.loadEvents();
     }
+  }
+
+  deleteEvent(event: EventItem): void {
+    this.deletingIds.add(event.id);
+    this.api.deleteEvent(event.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.toast.success('Event deleted successfully.');
+        this.deletingIds.delete(event.id);
+        this.loadEvents();
+      },
+      error: () => {
+        this.toast.error('Unable to delete event right now.');
+        this.deletingIds.delete(event.id);
+      }
+    });
+  }
+
+  isDeleting(id: number): boolean {
+    return this.deletingIds.has(id);
   }
 
   private applyTypeFilter(): void {

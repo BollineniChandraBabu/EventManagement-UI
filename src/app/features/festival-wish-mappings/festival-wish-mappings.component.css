@@ -13,3 +13,13 @@
   gap: 0.5rem;
   align-items: center;
 }
+
+.filter-bar {
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border-subtle);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.25rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(220px, 1fr) auto;
+}
