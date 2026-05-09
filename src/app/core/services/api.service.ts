@@ -382,6 +382,18 @@ export class ApiService {
     );
   }
 
+  unpublishNotification(id: number): Observable<NotificationItem> {
+    return this.http.post<ApiResponse<NotificationItem>>(`${environment.apiUrl}/notifications/${id}/unpublish`, {}).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  latestPublishedNotification(): Observable<NotificationItem | null> {
+    return this.http.get<ApiResponse<NotificationItem | null>>(`${environment.apiUrl}/notifications/published/latest`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
   schedulers(
     page = 0,
     size = 10,

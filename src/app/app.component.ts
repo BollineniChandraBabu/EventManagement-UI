@@ -13,6 +13,7 @@ import { NotificationRealtimeService } from './core/services/notification-realti
 import { NotificationItem, WishPreviewResponse } from './core/models/api.models';
 
 const WISH_PREVIEW_SEEN_KEY = 'fw_wish_preview_seen_token';
+const PUBLISHED_NOTIFICATION_SEEN_KEY = 'fw_published_notification_seen_token';
 
 @Component({
   selector: 'app-root',
@@ -67,6 +68,35 @@ export class AppComponent {
     this.notificationRealtime.published$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((notification) => {
       this.activeNotification = notification;
       this.toast.info(`New notification: ${notification.title}`);
+    });
+
+    effect(() => {
+      if (!this.auth.authenticated()) {
+        this.activeNotification = null;
+        return;
+      }
+
+      const token = this.auth.getAccessToken();
+      if (!token || sessionStorage.getItem(PUBLISHED_NOTIFICATION_SEEN_KEY) === token) {
+        return;
+      }
+
+      queueMicrotask(() => {
+        this.api.latestPublishedNotification()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (notification) => {
+              sessionStorage.setItem(PUBLISHED_NOTIFICATION_SEEN_KEY, token);
+              if (!notification) {
+                return;
+              }
+              this.activeNotification = notification;
+            },
+            error: () => {
+              sessionStorage.setItem(PUBLISHED_NOTIFICATION_SEEN_KEY, token);
+            }
+          });
+      });
     });
   }
 

@@ -43,4 +43,11 @@ export class NotificationsComponent {
       error: () => this.toast.error('Unable to publish notification right now.')
     });
   }
+
+  unpublish(item: NotificationItem): void {
+    this.api.unpublishNotification(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => { this.toast.success('Notification unpublished.'); this.load(); },
+      error: () => this.toast.error('Unable to unpublish notification right now.')
+    });
+  }
 }

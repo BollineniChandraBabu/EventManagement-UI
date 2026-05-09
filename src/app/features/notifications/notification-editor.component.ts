@@ -23,6 +23,7 @@ export class NotificationEditorComponent {
   id: number | null = null;
   loading = false;
   saving = false;
+  isPublished = false;
   form: SaveNotificationPayload = { title: '', message: '', canSendEmail: false };
 
   constructor() {
@@ -34,6 +35,10 @@ export class NotificationEditorComponent {
   }
 
   submit(): void {
+    if (this.id && this.isPublished) {
+      this.toast.error('Published notifications cannot be edited.');
+      return;
+    }
     if (!this.form.title.trim() || !this.form.message.trim()) return;
     this.saving = true;
     const payload = { ...this.form, title: this.form.title.trim(), message: this.form.message.trim() };
@@ -54,6 +59,12 @@ export class NotificationEditorComponent {
     this.loading = true;
     this.api.notificationById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (item) => {
+        this.isPublished = !!item.published;
+        if (this.isPublished) {
+          this.toast.error('Published notifications cannot be edited.');
+          this.router.navigate(['/notifications']);
+          return;
+        }
         this.form = { title: item.title, message: item.message, canSendEmail: !!item.canSendEmail };
         this.loading = false;
       },
