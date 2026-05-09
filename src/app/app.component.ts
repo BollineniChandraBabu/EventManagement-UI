@@ -9,7 +9,8 @@ import { ChatWidgetComponent } from './shared/chat-widget/chat-widget.component'
 import { ToastService } from './core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from './core/services/api.service';
-import { WishPreviewResponse } from './core/models/api.models';
+import { NotificationRealtimeService } from './core/services/notification-realtime.service';
+import { NotificationItem, WishPreviewResponse } from './core/models/api.models';
 
 const WISH_PREVIEW_SEEN_KEY = 'fw_wish_preview_seen_token';
 
@@ -28,11 +29,13 @@ export class AppComponent {
   private readonly api = inject(ApiService);
   readonly currentYear = new Date().getFullYear();
   private router = inject(Router);
+  private readonly notificationRealtime = inject(NotificationRealtimeService);
 
   isMobileMenuOpen = false;
   isSidebarCollapsed = false;
   isWishPreviewVisible = false;
   wishPreview?: WishPreviewResponse;
+  activeNotification: NotificationItem | null = null;
 
   constructor() {
     effect(() => {
@@ -58,6 +61,12 @@ export class AppComponent {
               }
             });
       });
+    });
+
+    this.notificationRealtime.connect();
+    this.notificationRealtime.published$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((notification) => {
+      this.activeNotification = notification;
+      this.toast.info(`New notification: ${notification.title}`);
     });
   }
 
@@ -108,5 +117,8 @@ export class AppComponent {
 
     const binary = imageData.map((value) => String.fromCharCode(value)).join('');
     return `data:image/png;base64,${btoa(binary)}`;
+  }
+  closeNotificationBanner(): void {
+    this.activeNotification = null;
   }
 }

@@ -23,6 +23,8 @@ import { EventTypeSeedEditorComponent } from './features/event-type-seeds/event-
 import { FestivalWishMappingsComponent } from './features/festival-wish-mappings/festival-wish-mappings.component';
 import { locationAccessGuard } from './core/guards/location-access.guard';
 import { RestrictedRegionComponent } from './features/restricted-region/restricted-region.component';
+import { NotificationsComponent } from './features/notifications/notifications.component';
+import { NotificationEditorComponent } from './features/notifications/notification-editor.component';
 
 export const routes: Routes = [
   { path: '', canActivate: [locationAccessGuard, resetLinkGuard], component: ResetPasswordComponent, pathMatch: 'full' },
@@ -37,6 +39,9 @@ export const routes: Routes = [
     { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
     { path: 'users/new', component: UserEditorComponent, canActivate: [adminGuard] },
     { path: 'users/:id/edit', component: UserEditorComponent, canActivate: [adminGuard] },
+    { path: 'notifications', component: NotificationsComponent, canActivate: [adminGuard] },
+    { path: 'notifications/new', component: NotificationEditorComponent, canActivate: [adminGuard] },
+    { path: 'notifications/:id/edit', component: NotificationEditorComponent, canActivate: [adminGuard] },
     { path: 'events', component: EventsComponent },
     { path: 'events/new', component: EventEditorComponent, canActivate: [adminGuard] },
     { path: 'events/:id/edit', component: EventEditorComponent, canActivate: [adminGuard] },

@@ -80,6 +80,10 @@
               <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
               <span class="nav-label">Users</span>
             </a>
+            <a class="nav-item" routerLink="/notifications" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Notifications">
+              <span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span>
+              <span class="nav-label">Notifications</span>
+            </a>
           </div>
 
           <div class="nav-section">
@@ -147,6 +151,16 @@
         <button class="impersonation-banner-btn" type="button" (click)="exitImpersonation()">
           <i class="fa-solid fa-rotate-left me-1"></i>Return to Admin
         </button>
+      </div>
+    </div>
+
+    <div class="notification-banner" *ngIf="activeNotification">
+      <div class="notification-banner-inner">
+        <div>
+          <strong>{{ activeNotification.title }}</strong>
+          <div>{{ activeNotification.message }}</div>
+        </div>
+        <button class="impersonation-banner-btn" type="button" (click)="closeNotificationBanner()">Dismiss</button>
       </div>
     </div>
 

@@ -1,0 +1,14 @@
+<div class="page">
+  <div class="page-header mb-3">
+    <div><h1 class="page-header-title">{{ id ? 'Edit' : 'Create' }} Notification</h1></div>
+    <a class="btn btn-outline-secondary" routerLink="/notifications">Back</a>
+  </div>
+
+  <div class="card"><div class="card-body">
+    <div class="mb-2"><label class="form-label">Title</label><input class="form-control" [(ngModel)]="form.title" maxlength="150" [disabled]="loading || saving"/></div>
+    <div class="mb-2"><label class="form-label">Message</label><textarea class="form-control" rows="5" [(ngModel)]="form.message" [disabled]="loading || saving"></textarea></div>
+    <div class="form-check mb-3"><input id="canSendEmail" class="form-check-input" type="checkbox" [(ngModel)]="form.canSendEmail" [disabled]="loading || saving"/><label class="form-check-label" for="canSendEmail">Send email to all users</label></div>
+    <button class="btn btn-primary me-2" (click)="submit()" [disabled]="saving || loading">{{ saving ? 'Saving…' : (id ? 'Update' : 'Create') }}</button>
+    <a class="btn btn-outline-secondary" routerLink="/notifications">Cancel</a>
+  </div></div>
+</div>

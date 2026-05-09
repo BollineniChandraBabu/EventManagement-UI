@@ -225,3 +225,23 @@ export interface SchedulerTriggerResponse {
   message: string;
   triggeredAt: string;
 }
+
+
+export interface NotificationItem {
+  id: number;
+  title: string;
+  message: string;
+  published: boolean;
+  canSendEmail: boolean;
+  publishedAt?: string | null;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SaveNotificationPayload {
+  title: string;
+  message: string;
+  canSendEmail: boolean;
+}

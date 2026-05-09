@@ -1,0 +1,27 @@
+<div class="page">
+  <div class="page-header">
+    <div><h1 class="page-header-title">Notifications</h1><p class="page-header-subtitle">Manage published and draft notifications</p></div>
+    <a class="btn btn-primary" routerLink="/notifications/new"><i class="fa-solid fa-plus me-1"></i>Create Notification</a>
+  </div>
+  <div class="card"><div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead><tr><th>Title</th><th>Status</th><th>Published At</th><th>Email</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let item of notifications">
+            <td><div class="fw-semibold">{{ item.title }}</div><small class="text-muted">{{ item.message }}</small></td>
+            <td><span class="badge" [class.badge-success]="item.published" [class.badge-secondary]="!item.published">{{ item.published ? 'Published' : 'Draft' }}</span></td>
+            <td>{{ item.publishedAt ? (item.publishedAt | date:'medium') : '—' }}</td>
+            <td>{{ item.canSendEmail ? 'Enabled' : 'Disabled' }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-link" [routerLink]="['/notifications', item.id, 'edit']">Edit</a>
+              <button class="btn btn-sm btn-link text-danger" (click)="remove(item)">Delete</button>
+              <button class="btn btn-sm btn-primary" [disabled]="item.published" (click)="publish(item)">Publish</button>
+            </td>
+          </tr>
+          <tr *ngIf="!loading && notifications.length === 0"><td colspan="5" class="text-center text-muted">No notifications yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+</div>
