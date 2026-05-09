@@ -29,7 +29,9 @@ import {
   UserStatusUpdateRequest,
   ProfilePictureUploadUrlRequest,
   ProfilePictureUploadUrlResponse,
-  WishPreviewResponse
+  WishPreviewResponse,
+  NotificationItem,
+  SaveNotificationPayload
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -341,6 +343,42 @@ export class ApiService {
   getPollinationsBalance(): Observable<number> {
     return this.http.get<ApiResponse<PollinationsBalanceResponse>>(`${environment.apiUrl}/ai/pollinations/balance`).pipe(
       map((response) => this.unwrap(response).balance)
+    );
+  }
+
+
+  notifications(): Observable<NotificationItem[]> {
+    return this.http.get<ApiResponse<NotificationItem[]>>(`${environment.apiUrl}/notifications`).pipe(
+      map((response) => this.normalizeCollection(this.unwrap(response)))
+    );
+  }
+
+
+  notificationById(id: number): Observable<NotificationItem> {
+    return this.http.get<ApiResponse<NotificationItem>>(`${environment.apiUrl}/notifications/${id}`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  createNotification(payload: SaveNotificationPayload): Observable<NotificationItem> {
+    return this.http.post<ApiResponse<NotificationItem>>(`${environment.apiUrl}/notifications`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  updateNotification(id: number, payload: SaveNotificationPayload): Observable<NotificationItem> {
+    return this.http.put<ApiResponse<NotificationItem>>(`${environment.apiUrl}/notifications/${id}`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  deleteNotification(id: number): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/notifications/${id}`);
+  }
+
+  publishNotification(id: number): Observable<NotificationItem> {
+    return this.http.post<ApiResponse<NotificationItem>>(`${environment.apiUrl}/notifications/${id}/publish`, {}).pipe(
+      map((response) => this.unwrap(response))
     );
   }
 
