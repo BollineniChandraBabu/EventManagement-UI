@@ -24,7 +24,7 @@ export class NotificationEditorComponent {
   loading = false;
   saving = false;
   isPublished = false;
-  form: SaveNotificationPayload = { title: '', message: '', canSendEmail: false };
+  form: SaveNotificationPayload = { title: '', message: '', canSendEmail: false, scheduledFrom: null, scheduledTo: null };
 
   constructor() {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -39,9 +39,21 @@ export class NotificationEditorComponent {
       this.toast.error('Published notifications cannot be edited.');
       return;
     }
+
+    if (this.form.scheduledFrom && this.form.scheduledTo && this.form.scheduledTo < this.form.scheduledFrom) {
+      this.toast.error('Schedule end time must be after start time.');
+      return;
+    }
+
     if (!this.form.title.trim() || !this.form.message.trim()) return;
     this.saving = true;
-    const payload = { ...this.form, title: this.form.title.trim(), message: this.form.message.trim() };
+    const payload = {
+      ...this.form,
+      title: this.form.title.trim(),
+      message: this.form.message.trim(),
+      scheduledFrom: this.form.scheduledFrom || null,
+      scheduledTo: this.form.scheduledTo || null
+    };
     const req = this.id ? this.api.updateNotification(this.id, payload) : this.api.createNotification(payload);
     req.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
@@ -65,7 +77,13 @@ export class NotificationEditorComponent {
           this.router.navigate(['/notifications']);
           return;
         }
-        this.form = { title: item.title, message: item.message, canSendEmail: !!item.canSendEmail };
+        this.form = {
+          title: item.title,
+          message: item.message,
+          canSendEmail: !!item.canSendEmail,
+          scheduledFrom: this.toDateTimeLocal(item.scheduledFrom),
+          scheduledTo: this.toDateTimeLocal(item.scheduledTo)
+        };
         this.loading = false;
       },
       error: () => {
@@ -73,5 +91,13 @@ export class NotificationEditorComponent {
         this.loading = false;
       }
     });
+  }
+
+  private toDateTimeLocal(value?: string | null): string | null {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    const offsetMs = date.getTimezoneOffset() * 60_000;
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
   }
 }

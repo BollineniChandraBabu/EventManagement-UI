@@ -6,11 +6,18 @@
   <div class="card"><div class="card-body">
     <div class="table-responsive">
       <table class="table table-hover">
-        <thead><tr><th>Title</th><th>Status</th><th>Last Published At</th><th>Email</th><th class="text-center">Actions</th></tr></thead>
+        <thead><tr><th>Title</th><th>Status</th><th>Schedule Window</th><th>Last Published At</th><th>Email</th><th class="text-center">Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let item of notifications">
             <td><div class="fw-semibold">{{ item.title }}</div><small class="text-muted">{{ item.message }}</small></td>
             <td><span class="badge" [class.badge-success]="item.published" [class.badge-secondary]="!item.published">{{ item.published ? 'Published' : 'Draft' }}</span></td>
+            <td>
+              <div *ngIf="item.scheduledFrom || item.scheduledTo; else noSchedule">
+                <small class="text-muted d-block">From: {{ item.scheduledFrom ? (item.scheduledFrom | date:'medium') : '—' }}</small>
+                <small class="text-muted d-block">To: {{ item.scheduledTo ? (item.scheduledTo | date:'medium') : '—' }}</small>
+              </div>
+              <ng-template #noSchedule>—</ng-template>
+            </td>
             <td>{{ item.publishedAt ? (item.publishedAt | date:'medium') : '—' }}</td>
             <td>{{ item.canSendEmail ? 'Enabled' : 'Disabled' }}</td>
             <td class="text-end">
@@ -20,7 +27,7 @@
                 &nbsp;<button class="btn btn-sm btn-outline-warning" *ngIf="item.published" (click)="unpublish(item)"><i class="fa-solid fa-bell-slash me-1"></i>Unpublish</button>
             </td>
           </tr>
-          <tr *ngIf="!loading && notifications.length === 0"><td colspan="5" class="text-center text-muted">No notifications yet.</td></tr>
+          <tr *ngIf="!loading && notifications.length === 0"><td colspan="6" class="text-center text-muted">No notifications yet.</td></tr>
         </tbody>
       </table>
     </div>

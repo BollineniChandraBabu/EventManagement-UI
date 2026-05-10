@@ -233,6 +233,8 @@ export interface NotificationItem {
   message: string;
   published: boolean;
   canSendEmail: boolean;
+  scheduledFrom?: string | null;
+  scheduledTo?: string | null;
   publishedAt?: string | null;
   createdBy?: string;
   updatedBy?: string;
@@ -244,4 +246,6 @@ export interface SaveNotificationPayload {
   title: string;
   message: string;
   canSendEmail: boolean;
+  scheduledFrom?: string | null;
+  scheduledTo?: string | null;
 }
