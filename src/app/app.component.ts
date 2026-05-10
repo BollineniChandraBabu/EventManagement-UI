@@ -37,8 +37,8 @@ export class AppComponent {
   isWishPreviewVisible = false;
   wishPreview?: WishPreviewResponse;
   activeNotification: NotificationItem | null = null;
-  private scheduleStartTimerId: number | null = null;
-  private scheduleEndTimerId: number | null = null;
+  private scheduledCandidate: NotificationItem | null = null;
+  private scheduleIntervalId: number | null = null;
 
   constructor() {
     effect(() => {
@@ -76,8 +76,10 @@ export class AppComponent {
     });
 
     this.destroyRef.onDestroy(() => {
-      this.clearScheduleStartTimer();
-      this.clearScheduleEndTimer();
+      if (this.scheduleIntervalId !== null) {
+        window.clearInterval(this.scheduleIntervalId);
+        this.scheduleIntervalId = null;
+      }
     });
   }
 
@@ -141,65 +143,53 @@ export class AppComponent {
   }
 
   private consumeNotification(notification: NotificationItem | null, showToast: boolean): void {
-    this.clearScheduleStartTimer();
-    this.clearScheduleEndTimer();
     if (!notification || !notification.title || !notification.message || this.isNotificationDismissed(notification.id)) {
+      this.scheduledCandidate = null;
       this.activeNotification = null;
       return;
     }
 
-    const start = this.parseDate(notification.scheduledFrom);
-    const end = this.parseDate(notification.scheduledTo);
+    this.scheduledCandidate = notification;
+    this.evaluateScheduledCandidate(showToast);
+    this.startScheduleInterval(showToast);
+  }
+
+  private startScheduleInterval(showToast: boolean): void {
+    if (this.scheduleIntervalId !== null) {
+      window.clearInterval(this.scheduleIntervalId);
+    }
+    this.scheduleIntervalId = window.setInterval(() => this.evaluateScheduledCandidate(showToast), 1000);
+  }
+
+  private evaluateScheduledCandidate(showToast: boolean): void {
+    const notification = this.scheduledCandidate;
+    if (!notification) {
+      this.activeNotification = null;
+      return;
+    }
+
     const now = Date.now();
+    const start = this.parseDate(notification.scheduledFrom)?.getTime();
+    const end = this.parseDate(notification.scheduledTo)?.getTime();
 
-    if (end && now > end.getTime()) {
-      this.activeNotification = null;
+    const inStartWindow = !start || now >= start;
+    const inEndWindow = !end || now <= end;
+
+    if (inStartWindow && inEndWindow) {
+      const wasHidden = !this.activeNotification || this.activeNotification.id !== notification.id;
+      this.activeNotification = notification;
+      if (showToast && wasHidden) this.toast.info(`New notification: ${notification.title}`);
       return;
     }
 
-    if (start && now < start.getTime()) {
-      this.activeNotification = null;
-      const delayMs = start.getTime() - now;
-      this.scheduleStartTimerId = window.setTimeout(() => {
-        this.activeNotification = notification;
-        if (showToast) this.toast.info(`New notification: ${notification.title}`);
-        this.scheduleNotificationHideAtEnd(notification);
-      }, delayMs);
-      return;
-    }
-
-    this.activeNotification = notification;
-    if (showToast) this.toast.info(`New notification: ${notification.title}`);
-    this.scheduleNotificationHideAtEnd(notification);
-  }
-
-  private clearScheduleStartTimer(): void {
-    if (this.scheduleStartTimerId !== null) {
-      window.clearTimeout(this.scheduleStartTimerId);
-      this.scheduleStartTimerId = null;
-    }
-  }
-
-  private clearScheduleEndTimer(): void {
-    if (this.scheduleEndTimerId !== null) {
-      window.clearTimeout(this.scheduleEndTimerId);
-      this.scheduleEndTimerId = null;
-    }
-  }
-
-  private scheduleNotificationHideAtEnd(notification: NotificationItem): void {
-    const end = this.parseDate(notification.scheduledTo);
-    if (!end) return;
-    const delayMs = end.getTime() - Date.now();
-    if (delayMs <= 0) {
-      this.activeNotification = null;
-      return;
-    }
-    this.scheduleEndTimerId = window.setTimeout(() => {
-      if (this.activeNotification?.id === notification.id) {
-        this.activeNotification = null;
+    this.activeNotification = null;
+    if (end && now > end) {
+      this.scheduledCandidate = null;
+      if (this.scheduleIntervalId !== null) {
+        window.clearInterval(this.scheduleIntervalId);
+        this.scheduleIntervalId = null;
       }
-    }, delayMs);
+    }
   }
 
   private fetchInitialNotification(): void {

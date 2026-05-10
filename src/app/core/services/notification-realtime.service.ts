@@ -9,8 +9,8 @@ interface NotificationSocketEvent { type?: string; notification?: NotificationIt
 export class NotificationRealtimeService {
   private socket: WebSocket | null = null;
   private connected = false;
-  private readonly subject = new Subject<NotificationItem>();
-  readonly published$: Observable<NotificationItem> = this.subject.asObservable();
+  private readonly subject = new Subject<NotificationItem | null>();
+  readonly published$: Observable<NotificationItem | null> = this.subject.asObservable();
 
   connect(): void {
     if (this.socket) return;
@@ -33,6 +33,7 @@ export class NotificationRealtimeService {
     try {
       const parsed = JSON.parse(body) as NotificationSocketEvent;
       if (parsed.type === 'NOTIFICATION_PUBLISHED' && parsed.notification) this.subject.next(parsed.notification);
+      if (parsed.type === 'NOTIFICATION_UNPUBLISHED') this.subject.next(null);
     } catch {}
   }
 
