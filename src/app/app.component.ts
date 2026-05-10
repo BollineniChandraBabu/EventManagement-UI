@@ -66,10 +66,6 @@ export class AppComponent {
 
     this.notificationRealtime.connect();
     this.notificationRealtime.published$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((notification) => {
-      if (this.isNotificationDismissed(notification.id)) {
-        return;
-      }
-
       this.activeNotification = notification;
       this.toast.info(`New notification: ${notification.title}`);
     });
@@ -138,12 +134,12 @@ export class AppComponent {
   }
   closeNotificationBanner(): void {
     if (this.activeNotification?.id) {
-      localStorage.setItem(PUBLISHED_NOTIFICATION_DISMISSED_KEY, String(this.activeNotification.id));
+      sessionStorage.setItem(PUBLISHED_NOTIFICATION_DISMISSED_KEY, String(this.activeNotification.id));
     }
     this.activeNotification = null;
   }
 
   private isNotificationDismissed(notificationId: number): boolean {
-    return localStorage.getItem(PUBLISHED_NOTIFICATION_DISMISSED_KEY) === String(notificationId);
+    return sessionStorage.getItem(PUBLISHED_NOTIFICATION_DISMISSED_KEY) === String(notificationId);
   }
 }
