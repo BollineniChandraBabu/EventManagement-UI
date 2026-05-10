@@ -37,6 +37,7 @@ export class AppComponent {
   isWishPreviewVisible = false;
   wishPreview?: WishPreviewResponse;
   activeNotification: NotificationItem | null = null;
+  private scheduleStartTimerId: number | null = null;
 
   constructor() {
     effect(() => {
@@ -66,12 +67,7 @@ export class AppComponent {
 
     this.notificationRealtime.connect();
     this.notificationRealtime.published$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((notification) => {
-      if (notification && notification.title && notification.message) {
-        this.activeNotification = notification;
-        this.toast.info(`New notification: ${notification.title}`);
-      }else{
-        this.activeNotification = null;
-      }
+      this.consumeNotification(notification, true);
     });
 
     queueMicrotask(() => {
@@ -79,10 +75,7 @@ export class AppComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (notification) => {
-            if (!notification || this.isNotificationDismissed(notification.id)) {
-              return;
-            }
-            this.activeNotification = notification;
+            this.consumeNotification(notification, false);
           }
         });
     });
@@ -145,5 +138,48 @@ export class AppComponent {
 
   private isNotificationDismissed(notificationId: number): boolean {
     return sessionStorage.getItem(PUBLISHED_NOTIFICATION_DISMISSED_KEY) === String(notificationId);
+  }
+
+  private consumeNotification(notification: NotificationItem | null, showToast: boolean): void {
+    this.clearScheduleStartTimer();
+    if (!notification || !notification.title || !notification.message || this.isNotificationDismissed(notification.id)) {
+      this.activeNotification = null;
+      return;
+    }
+
+    const start = this.parseDate(notification.scheduledFrom);
+    const end = this.parseDate(notification.scheduledTo);
+    const now = Date.now();
+
+    if (end && now > end.getTime()) {
+      this.activeNotification = null;
+      return;
+    }
+
+    if (start && now < start.getTime()) {
+      this.activeNotification = null;
+      const delayMs = start.getTime() - now;
+      this.scheduleStartTimerId = window.setTimeout(() => {
+        this.activeNotification = notification;
+        if (showToast) this.toast.info(`New notification: ${notification.title}`);
+      }, delayMs);
+      return;
+    }
+
+    this.activeNotification = notification;
+    if (showToast) this.toast.info(`New notification: ${notification.title}`);
+  }
+
+  private clearScheduleStartTimer(): void {
+    if (this.scheduleStartTimerId !== null) {
+      window.clearTimeout(this.scheduleStartTimerId);
+      this.scheduleStartTimerId = null;
+    }
+  }
+
+  private parseDate(value?: string | null): Date | null {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 }
