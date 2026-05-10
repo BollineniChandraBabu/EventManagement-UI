@@ -16,8 +16,8 @@
             <td class="text-end">
               <a class="btn btn-sm btn-link" [class.disabled]="item.published" [attr.aria-disabled]="item.published" [routerLink]="item.published ? null : ['/notifications', item.id, 'edit']">Edit</a>
               <button class="btn btn-sm btn-link text-danger" [disabled]="item.published" (click)="remove(item)">Delete</button>
-              <button class="btn btn-sm btn-primary" [disabled]="item.published" (click)="publish(item)">Publish</button>
-              <button class="btn btn-sm btn-outline-secondary ms-2" [disabled]="!item.published" (click)="unpublish(item)">Unpublish</button>
+              <button class="btn btn-sm btn-outline-success" *ngIf="!item.published" (click)="publish(item)">Publish</button>
+              <button class="btn btn-sm btn-outline-primary" *ngIf="item.published" (click)="unpublish(item)">Unpublish</button>
             </td>
           </tr>
           <tr *ngIf="!loading && notifications.length === 0"><td colspan="5" class="text-center text-muted">No notifications yet.</td></tr>
