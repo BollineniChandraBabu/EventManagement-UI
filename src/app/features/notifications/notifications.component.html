@@ -4,27 +4,32 @@
     <a class="btn btn-primary" routerLink="/notifications/new"><i class="fa-solid fa-plus me-1"></i>Create Notification</a>
   </div>
   <div class="card"><div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead><tr><th>Title</th><th>Status</th><th>Schedule Window</th><th>Last Published At</th><th>Email</th><th class="text-center">Actions</th></tr></thead>
+    <div class="table-responsive notifications-table-wrap">
+      <table class="table table-hover notifications-table align-middle">
+        <thead><tr><th>Notification</th><th>Status</th><th>Schedule Window</th><th>Published</th><th>Email</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let item of notifications">
-            <td><div class="fw-semibold">{{ item.title }}</div><small class="text-muted">{{ item.message }}</small></td>
-            <td><span class="badge" [class.badge-success]="item.published" [class.badge-secondary]="!item.published">{{ item.published ? 'Published' : 'Draft' }}</span></td>
             <td>
-              <div *ngIf="item.scheduledFrom || item.scheduledTo; else noSchedule">
-                <small class="text-muted d-block">From: {{ item.scheduledFrom ? (item.scheduledFrom | date:'medium') : '—' }}</small>
-                <small class="text-muted d-block">To: {{ item.scheduledTo ? (item.scheduledTo | date:'medium') : '—' }}</small>
+              <div class="notification-cell-title">{{ item.title }}</div>
+              <div class="notification-cell-message">{{ item.message }}</div>
+            </td>
+            <td>
+              <span class="badge" [class.badge-success]="item.published" [class.badge-secondary]="!item.published">{{ item.published ? 'Published' : 'Draft' }}</span>
+            </td>
+            <td class="schedule-cell">
+              <div class="schedule-chip-wrap" *ngIf="item.scheduledFrom || item.scheduledTo; else noSchedule">
+                <span class="schedule-chip">From: {{ item.scheduledFrom ? (item.scheduledFrom | date:'medium') : '—' }}</span>
+                <span class="schedule-chip">To: {{ item.scheduledTo ? (item.scheduledTo | date:'medium') : '—' }}</span>
               </div>
               <ng-template #noSchedule>—</ng-template>
             </td>
             <td>{{ item.publishedAt ? (item.publishedAt | date:'medium') : '—' }}</td>
-            <td>{{ item.canSendEmail ? 'Enabled' : 'Disabled' }}</td>
-            <td class="text-end">
+            <td><span class="badge" [class.badge-success]="item.canSendEmail" [class.badge-secondary]="!item.canSendEmail">{{ item.canSendEmail ? 'Enabled' : 'Disabled' }}</span></td>
+            <td class="text-end notification-actions">
               <a class="btn btn-sm btn-outline-primary" [class.disabled]="item.published" [attr.aria-disabled]="item.published" [routerLink]="item.published ? null : ['/notifications', item.id, 'edit']"><i class="fa-solid fa-pen-to-square me-1"></i>Edit</a>
-                &nbsp;<button class="btn btn-sm btn-outline-danger" [disabled]="item.published" (click)="remove(item)"><i class="fa-solid fa-trash-can me-1"></i>Delete</button>
-                &nbsp;<button class="btn btn-sm btn-outline-success" *ngIf="!item.published" (click)="publish(item)"><i class="fa-solid fa-bell me-1"></i>Publish</button>
-                &nbsp;<button class="btn btn-sm btn-outline-warning" *ngIf="item.published" (click)="unpublish(item)"><i class="fa-solid fa-bell-slash me-1"></i>Unpublish</button>
+              <button class="btn btn-sm btn-outline-danger" [disabled]="item.published" (click)="remove(item)"><i class="fa-solid fa-trash-can me-1"></i>Delete</button>
+              <button class="btn btn-sm btn-outline-success" *ngIf="!item.published" (click)="publish(item)"><i class="fa-solid fa-bell me-1"></i>Publish</button>
+              <button class="btn btn-sm btn-outline-warning" *ngIf="item.published" (click)="unpublish(item)"><i class="fa-solid fa-bell-slash me-1"></i>Unpublish</button>
             </td>
           </tr>
           <tr *ngIf="!loading && notifications.length === 0"><td colspan="6" class="text-center text-muted">No notifications yet.</td></tr>

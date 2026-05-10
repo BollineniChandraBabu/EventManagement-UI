@@ -39,7 +39,6 @@ export class AppComponent {
   activeNotification: NotificationItem | null = null;
   private scheduleStartTimerId: number | null = null;
   private scheduleEndTimerId: number | null = null;
-  private notificationRefreshIntervalId: number | null = null;
 
   constructor() {
     effect(() => {
@@ -76,17 +75,9 @@ export class AppComponent {
       this.fetchLatestPublishedNotification();
     });
 
-    this.notificationRefreshIntervalId = window.setInterval(() => {
-      this.fetchLatestPublishedNotification();
-    }, 30_000);
-
     this.destroyRef.onDestroy(() => {
       this.clearScheduleStartTimer();
       this.clearScheduleEndTimer();
-      if (this.notificationRefreshIntervalId !== null) {
-        window.clearInterval(this.notificationRefreshIntervalId);
-        this.notificationRefreshIntervalId = null;
-      }
     });
   }
 
