@@ -389,7 +389,7 @@ export class ApiService {
   }
 
   latestPublishedNotification(): Observable<NotificationItem | null> {
-    return this.http.get<ApiResponse<NotificationItem | null>>(`${environment.apiUrl}/notifications/published/latest`).pipe(
+    return this.http.get<ApiResponse<NotificationItem | null>>(`${environment.apiUrl}/notifications/published`).pipe(
       map((response) => this.unwrap(response))
     );
   }
