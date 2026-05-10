@@ -72,7 +72,7 @@ export class AppComponent {
     });
 
     queueMicrotask(() => {
-      this.fetchLatestPublishedNotification();
+      this.fetchInitialNotification();
     });
 
     this.destroyRef.onDestroy(() => {
@@ -202,11 +202,42 @@ export class AppComponent {
     }, delayMs);
   }
 
-  private fetchLatestPublishedNotification(): void {
+  private fetchInitialNotification(): void {
     this.api.latestPublishedNotification()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (notification) => this.consumeNotification(notification, false)
+        next: (notification) => {
+          if (notification) {
+            this.consumeNotification(notification, false);
+            return;
+          }
+          this.loadPublishedNotificationFromCollection();
+        },
+        error: () => {
+          this.loadPublishedNotificationFromCollection();
+        }
+      });
+  }
+
+  private loadPublishedNotificationFromCollection(): void {
+    this.api.notifications()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => {
+          const candidate = items
+            .filter((item) => item.published && !!item.title && !!item.message)
+            .filter((item) => {
+              const end = this.parseDate(item.scheduledTo);
+              return !end || end.getTime() > Date.now();
+            })
+            .sort((a, b) => {
+              const aStart = this.parseDate(a.scheduledFrom)?.getTime() ?? 0;
+              const bStart = this.parseDate(b.scheduledFrom)?.getTime() ?? 0;
+              return bStart - aStart;
+            })[0] ?? null;
+
+          this.consumeNotification(candidate, false);
+        }
       });
   }
 
