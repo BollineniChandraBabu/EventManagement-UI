@@ -173,6 +173,16 @@
 </div>
 
 <ng-template #guestLayout>
+  <div class="notification-banner" *ngIf="activeNotification">
+    <div class="notification-banner-inner">
+      <div>
+        <strong>{{ activeNotification.title }}</strong>
+        <div>{{ activeNotification.message }}</div>
+      </div>
+      <button class="impersonation-banner-btn" type="button" (click)="closeNotificationBanner()">Dismiss</button>
+    </div>
+  </div>
+
   <main class="app-shell container py-4">
     <router-outlet></router-outlet>
   </main>

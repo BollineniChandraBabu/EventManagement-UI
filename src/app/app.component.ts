@@ -13,7 +13,7 @@ import { NotificationRealtimeService } from './core/services/notification-realti
 import { NotificationItem, WishPreviewResponse } from './core/models/api.models';
 
 const WISH_PREVIEW_SEEN_KEY = 'fw_wish_preview_seen_token';
-const PUBLISHED_NOTIFICATION_SEEN_KEY = 'fw_published_notification_seen_token';
+const PUBLISHED_NOTIFICATION_DISMISSED_KEY = 'fw_published_notification_dismissed_id';
 
 @Component({
   selector: 'app-root',
@@ -66,37 +66,25 @@ export class AppComponent {
 
     this.notificationRealtime.connect();
     this.notificationRealtime.published$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((notification) => {
+      if (this.isNotificationDismissed(notification.id)) {
+        return;
+      }
+
       this.activeNotification = notification;
       this.toast.info(`New notification: ${notification.title}`);
     });
 
-    effect(() => {
-      if (!this.auth.authenticated()) {
-        this.activeNotification = null;
-        return;
-      }
-
-      const token = this.auth.getAccessToken();
-      if (!token || sessionStorage.getItem(PUBLISHED_NOTIFICATION_SEEN_KEY) === token) {
-        return;
-      }
-
-      queueMicrotask(() => {
-        this.api.latestPublishedNotification()
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: (notification) => {
-              sessionStorage.setItem(PUBLISHED_NOTIFICATION_SEEN_KEY, token);
-              if (!notification) {
-                return;
-              }
-              this.activeNotification = notification;
-            },
-            error: () => {
-              sessionStorage.setItem(PUBLISHED_NOTIFICATION_SEEN_KEY, token);
+    queueMicrotask(() => {
+      this.api.latestPublishedNotification()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (notification) => {
+            if (!notification || this.isNotificationDismissed(notification.id)) {
+              return;
             }
-          });
-      });
+            this.activeNotification = notification;
+          }
+        });
     });
   }
 
@@ -149,6 +137,13 @@ export class AppComponent {
     return `data:image/png;base64,${btoa(binary)}`;
   }
   closeNotificationBanner(): void {
+    if (this.activeNotification?.id) {
+      localStorage.setItem(PUBLISHED_NOTIFICATION_DISMISSED_KEY, String(this.activeNotification.id));
+    }
     this.activeNotification = null;
+  }
+
+  private isNotificationDismissed(notificationId: number): boolean {
+    return localStorage.getItem(PUBLISHED_NOTIFICATION_DISMISSED_KEY) === String(notificationId);
   }
 }
