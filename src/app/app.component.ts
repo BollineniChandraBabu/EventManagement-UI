@@ -66,8 +66,12 @@ export class AppComponent {
 
     this.notificationRealtime.connect();
     this.notificationRealtime.published$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((notification) => {
-      this.activeNotification = notification;
-      this.toast.info(`New notification: ${notification.title}`);
+      if (notification && notification.title && notification.message) {
+        this.activeNotification = notification;
+        this.toast.info(`New notification: ${notification.title}`);
+      }else{
+        this.activeNotification = null;
+      }
     });
 
     queueMicrotask(() => {
