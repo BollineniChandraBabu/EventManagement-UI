@@ -38,6 +38,8 @@ export class AppComponent {
   wishPreview?: WishPreviewResponse;
   activeNotification: NotificationItem | null = null;
   private scheduleStartTimerId: number | null = null;
+  private scheduleEndTimerId: number | null = null;
+  private notificationRefreshIntervalId: number | null = null;
 
   constructor() {
     effect(() => {
@@ -71,13 +73,20 @@ export class AppComponent {
     });
 
     queueMicrotask(() => {
-      this.api.latestPublishedNotification()
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (notification) => {
-            this.consumeNotification(notification, false);
-          }
-        });
+      this.fetchLatestPublishedNotification();
+    });
+
+    this.notificationRefreshIntervalId = window.setInterval(() => {
+      this.fetchLatestPublishedNotification();
+    }, 30_000);
+
+    this.destroyRef.onDestroy(() => {
+      this.clearScheduleStartTimer();
+      this.clearScheduleEndTimer();
+      if (this.notificationRefreshIntervalId !== null) {
+        window.clearInterval(this.notificationRefreshIntervalId);
+        this.notificationRefreshIntervalId = null;
+      }
     });
   }
 
@@ -142,6 +151,7 @@ export class AppComponent {
 
   private consumeNotification(notification: NotificationItem | null, showToast: boolean): void {
     this.clearScheduleStartTimer();
+    this.clearScheduleEndTimer();
     if (!notification || !notification.title || !notification.message || this.isNotificationDismissed(notification.id)) {
       this.activeNotification = null;
       return;
@@ -162,12 +172,14 @@ export class AppComponent {
       this.scheduleStartTimerId = window.setTimeout(() => {
         this.activeNotification = notification;
         if (showToast) this.toast.info(`New notification: ${notification.title}`);
+        this.scheduleNotificationHideAtEnd(notification);
       }, delayMs);
       return;
     }
 
     this.activeNotification = notification;
     if (showToast) this.toast.info(`New notification: ${notification.title}`);
+    this.scheduleNotificationHideAtEnd(notification);
   }
 
   private clearScheduleStartTimer(): void {
@@ -175,6 +187,36 @@ export class AppComponent {
       window.clearTimeout(this.scheduleStartTimerId);
       this.scheduleStartTimerId = null;
     }
+  }
+
+  private clearScheduleEndTimer(): void {
+    if (this.scheduleEndTimerId !== null) {
+      window.clearTimeout(this.scheduleEndTimerId);
+      this.scheduleEndTimerId = null;
+    }
+  }
+
+  private scheduleNotificationHideAtEnd(notification: NotificationItem): void {
+    const end = this.parseDate(notification.scheduledTo);
+    if (!end) return;
+    const delayMs = end.getTime() - Date.now();
+    if (delayMs <= 0) {
+      this.activeNotification = null;
+      return;
+    }
+    this.scheduleEndTimerId = window.setTimeout(() => {
+      if (this.activeNotification?.id === notification.id) {
+        this.activeNotification = null;
+      }
+    }, delayMs);
+  }
+
+  private fetchLatestPublishedNotification(): void {
+    this.api.latestPublishedNotification()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (notification) => this.consumeNotification(notification, false)
+      });
   }
 
   private parseDate(value?: string | null): Date | null {
