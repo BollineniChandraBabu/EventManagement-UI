@@ -1,1 +1,76 @@
 textarea{resize:vertical}
+
+.notifications-table-wrap {
+  border-radius: 0.75rem;
+}
+
+.notifications-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.notification-cell-title {
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.2rem;
+}
+
+.notification-cell-message {
+  color: #64748b;
+  max-width: 420px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.schedule-cell {
+  min-width: 220px;
+}
+
+.schedule-chip-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.schedule-chip {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 0.75rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.notification-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  min-width: 230px;
+}
+
+@media (max-width: 991.98px) {
+  .notifications-table th,
+  .notifications-table td {
+    white-space: normal;
+    vertical-align: top;
+  }
+
+  .notification-cell-message {
+    max-width: 100%;
+  }
+
+  .notification-actions {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+}

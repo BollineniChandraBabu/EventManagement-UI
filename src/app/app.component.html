@@ -156,9 +156,9 @@
 
     <div class="notification-banner" *ngIf="activeNotification">
       <div class="notification-banner-inner">
-        <div>
-          <strong>{{ activeNotification.title }}</strong>
-          <div>{{ activeNotification.message }}</div>
+        <div class="notification-banner-content">
+          <strong class="notification-banner-title">{{ activeNotification.title }}</strong>
+          <div class="notification-banner-message">{{ activeNotification.message }}</div>
         </div>
         <button class="impersonation-banner-btn" type="button" (click)="closeNotificationBanner()">Dismiss</button>
       </div>
@@ -175,9 +175,9 @@
 <ng-template #guestLayout>
   <div class="notification-banner" *ngIf="activeNotification">
     <div class="notification-banner-inner">
-      <div>
-        <strong>{{ activeNotification.title }}</strong>
-        <div>{{ activeNotification.message }}</div>
+      <div class="notification-banner-content">
+        <strong class="notification-banner-title">{{ activeNotification.title }}</strong>
+        <div class="notification-banner-message">{{ activeNotification.message }}</div>
       </div>
       <button class="impersonation-banner-btn" type="button" (click)="closeNotificationBanner()">Dismiss</button>
     </div>
