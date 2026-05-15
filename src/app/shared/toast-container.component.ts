@@ -32,7 +32,7 @@ declare global {
             <i class="me-2" [ngClass]="iconClass(toast.level)"></i>
             <span>{{ levelLabel(toast.level) }}</span>
           </div>
-          <button type="button" class="btn-close ms-3" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
+          <button type="button" class="toast-close-btn ms-3" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
         </div>
         <div class="toast-body pt-2">{{ toast.text }}</div>
       </div>
@@ -106,9 +106,35 @@ declare global {
         font-weight: 500;
       }
 
-      .btn-close {
-        filter: saturate(0.2);
-        opacity: 0.75;
+      .toast-close-btn {
+        margin-left: auto;
+        border: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.08);
+        color: currentColor;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+        opacity: 0.8;
+      }
+
+      .toast-close-btn::before {
+        content: '\\00d7';
+        font-size: 1.2rem;
+        line-height: 1;
+        font-weight: 600;
+      }
+
+      .toast-close-btn:hover,
+      .toast-close-btn:focus-visible {
+        background: rgba(15, 23, 42, 0.16);
+        opacity: 1;
+        transform: scale(1.06);
+        outline: none;
       }
     `
   ]
