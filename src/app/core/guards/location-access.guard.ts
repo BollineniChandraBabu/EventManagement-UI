@@ -1,35 +1,35 @@
 import { inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { CanActivateFn, Router } from '@angular/router';
-import { Observable, catchError, map, of, timeout } from 'rxjs';
+import { from, map, Observable, shareReplay } from 'rxjs';
+import { LocationService } from '../services/location.service';
 
-interface IpInfoResponse {
-  country?: string;
-  region?: string;
-}
-
-const ALLOWED_COUNTRY = 'IN';
+const ALLOWED_COUNTRY = 'India';
 const ALLOWED_REGIONS = new Set(['Andhra Pradesh', 'Telangana']);
 
 let cachedAccessCheck$: Observable<boolean> | null = null;
 
-export const locationAccessGuard: CanActivateFn = (route) => {
-  if (route.routeConfig?.path === 'restricted-region') {
-    return true;
-  }
+function isAllowedLocation(country?: string, region?: string): boolean {
+  return country === ALLOWED_COUNTRY && !!region && ALLOWED_REGIONS.has(region);
+}
 
-  const http = inject(HttpClient);
+export const locationAccessGuard: CanActivateFn = (route) => {
+  const locationService = inject(LocationService);
   const router = inject(Router);
 
   if (!cachedAccessCheck$) {
-    cachedAccessCheck$ = http.get<IpInfoResponse>('https://ipinfo.io/json').pipe(
-      timeout(5000),
-      map((data) => data.country === ALLOWED_COUNTRY && !!data.region && ALLOWED_REGIONS.has(data.region)),
-      catchError(() => of(false))
+    cachedAccessCheck$ = from(locationService.getUserLocation()).pipe(
+      map((location) => isAllowedLocation(location?.country, location?.region)),
+      shareReplay(1)
     );
   }
 
   return cachedAccessCheck$.pipe(
-    map((isAllowedRegion) => (isAllowedRegion ? true : router.parseUrl('/restricted-region')))
+    map((isAllowedRegion) => {
+      if (route.routeConfig?.path === 'restricted-region') {
+        return isAllowedRegion ? router.parseUrl('/') : true;
+      }
+
+      return isAllowedRegion ? true : router.parseUrl('/restricted-region');
+    })
   );
 };
