@@ -61,6 +61,6 @@ export const routes: Routes = [
     { path: 'festival-wish-mappings', component: FestivalWishMappingsComponent, canActivate: [adminGuard] },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]},
-  { path: 'restricted-region', component: RestrictedRegionComponent },
+  { path: 'restricted-region', component: RestrictedRegionComponent, canActivate: [locationAccessGuard] },
   { path: '**', redirectTo: 'dashboard' }
 ];
