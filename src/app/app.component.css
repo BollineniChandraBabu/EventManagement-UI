@@ -488,6 +488,32 @@
   app-chat-widget.hide-on-mobile-menu {
     display: none;
   }
+
+
+  .nav-item {
+    min-height: 44px;
+  }
+
+  .app-shell {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .wish-preview-modal {
+    width: 100%;
+    max-height: 88dvh;
+    border-radius: 14px;
+    padding: 1rem 0.95rem 1.25rem;
+  }
+
+  .wish-preview-subject {
+    font-size: 1.1rem;
+  }
+
+  .notification-banner {
+    margin: 0.75rem;
+    padding: 0.65rem 0.8rem;
+  }
 }
 
 /* ─── Wish preview modal ─────────────────────────────────── */

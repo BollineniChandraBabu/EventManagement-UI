@@ -27,12 +27,12 @@ declare global {
         aria-live="assertive"
         aria-atomic="true"
       >
+        <button type="button" class="toast-close-btn" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
         <div class="toast-header border-0 bg-transparent pb-0">
           <div class="toast-level-pill" [ngClass]="pillClass(toast.level)">
             <i class="me-2" [ngClass]="iconClass(toast.level)"></i>
             <span>{{ levelLabel(toast.level) }}</span>
           </div>
-          <button type="button" class="btn-close ms-3" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
         </div>
         <div class="toast-body pt-2">{{ toast.text }}</div>
       </div>
@@ -52,6 +52,7 @@ declare global {
         backdrop-filter: blur(2px);
         margin-bottom: 0.75rem;
         overflow: hidden;
+        position: relative;
       }
 
       .toast-card.toast-success {
@@ -100,15 +101,51 @@ declare global {
         background-color: rgba(59, 130, 246, 0.18);
       }
 
-      .toast-body {
-        font-size: 0.92rem;
-        line-height: 1.4;
-        font-weight: 500;
+      .toast-header {
+        padding-right: 2.4rem;
       }
 
-      .btn-close {
-        filter: saturate(0.2);
-        opacity: 0.75;
+      .toast-body {
+        font-size: 0.92rem;
+        line-height: 1.45;
+        font-weight: 500;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        padding-right: 0.35rem;
+      }
+
+      .toast-close-btn {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
+        border: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.08);
+        color: currentColor;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+        opacity: 0.8;
+      }
+
+      .toast-close-btn::before {
+        content: '\\00d7';
+        font-size: 1.2rem;
+        line-height: 1;
+        font-weight: 600;
+      }
+
+      .toast-close-btn:hover,
+      .toast-close-btn:focus-visible {
+        background: rgba(15, 23, 42, 0.16);
+        opacity: 1;
+        transform: scale(1.06);
+        outline: none;
       }
     `
   ]
