@@ -27,12 +27,12 @@ declare global {
         aria-live="assertive"
         aria-atomic="true"
       >
+        <button type="button" class="toast-close-btn" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
         <div class="toast-header border-0 bg-transparent pb-0">
           <div class="toast-level-pill" [ngClass]="pillClass(toast.level)">
             <i class="me-2" [ngClass]="iconClass(toast.level)"></i>
             <span>{{ levelLabel(toast.level) }}</span>
           </div>
-          <button type="button" class="toast-close-btn ms-3" aria-label="Close" (click)="toastService.dismiss(toast.id)"></button>
         </div>
         <div class="toast-body pt-2">{{ toast.text }}</div>
       </div>
@@ -52,6 +52,7 @@ declare global {
         backdrop-filter: blur(2px);
         margin-bottom: 0.75rem;
         overflow: hidden;
+        position: relative;
       }
 
       .toast-card.toast-success {
@@ -100,14 +101,24 @@ declare global {
         background-color: rgba(59, 130, 246, 0.18);
       }
 
+      .toast-header {
+        padding-right: 2.4rem;
+      }
+
       .toast-body {
         font-size: 0.92rem;
-        line-height: 1.4;
+        line-height: 1.45;
         font-weight: 500;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        padding-right: 0.35rem;
       }
 
       .toast-close-btn {
-        margin-left: auto;
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
         border: 0;
         width: 2rem;
         height: 2rem;
