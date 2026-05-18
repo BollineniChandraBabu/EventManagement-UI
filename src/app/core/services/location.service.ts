@@ -11,12 +11,12 @@ export interface UserLocation {
   source: 'GPS' | 'IP';
 }
 
-interface IpApiResponse {
+interface IpWhoIsResponse {
+  success?: boolean;
   latitude?: number;
   longitude?: number;
   city?: string;
   region?: string;
-  country_name?: string;
   country?: string;
 }
 
@@ -74,9 +74,13 @@ export class LocationService {
 
   private async getLocationFromIP(): Promise<UserLocation | null> {
     try {
-      const response = await firstValueFrom(this.http.get<IpApiResponse>('https://ipapi.co/json/'));
+      const response = await firstValueFrom(this.http.get<IpWhoIsResponse>('https://ipwho.is/'));
 
-      if (typeof response.latitude !== 'number' || typeof response.longitude !== 'number') {
+      if (
+        response.success === false ||
+        typeof response.latitude !== 'number' ||
+        typeof response.longitude !== 'number'
+      ) {
         return null;
       }
 
@@ -85,7 +89,7 @@ export class LocationService {
         longitude: response.longitude,
         city: response.city,
         region: response.region,
-        country: response.country_name ?? response.country,
+        country: response.country,
         source: 'IP'
       };
     } catch {
