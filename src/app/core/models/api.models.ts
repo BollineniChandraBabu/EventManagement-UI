@@ -34,6 +34,15 @@ export interface DashboardChartResponse {
   points: DashboardChartPoint[];
 }
 
+export interface LoginLocationChartPoint {
+  location: string;
+  count: number;
+}
+
+export interface LoginLocationChartResponse {
+  points: LoginLocationChartPoint[];
+}
+
 export interface AuthSSOClientResponse {
   clientId: string;
 }

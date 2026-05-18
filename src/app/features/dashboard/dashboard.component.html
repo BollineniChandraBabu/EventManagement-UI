@@ -97,7 +97,23 @@
         <app-canvasjs-line-chart *ngIf="mailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
       </div>
     </div>
-  </div>
+
+    <ng-container *ngIf="loginLocationChart$ | async as locationChart">
+    <div class="card" *ngIf="auth.isAdmin()">
+      <div class="card-body">
+        <h3 class="section-title mb-3"><i class="fa-solid fa-location-dot me-2" style="color:#0ea5e9;"></i>Login Locations</h3>
+        <div *ngIf="locationChart.points?.length; else noLocations">
+          <div class="d-flex justify-content-between border-bottom py-2" *ngFor="let point of locationChart.points">
+            <span>{{ point.location || 'Unknown' }}</span>
+            <strong>{{ point.count }}</strong>
+          </div>
+        </div>
+        <ng-template #noLocations>
+          <p class="mb-0 text-muted">No login location data available yet.</p>
+        </ng-template>
+      </div>
+    </div>
+  </ng-container>
 
   <!-- Insta Dashboard -->
   <div *ngIf="igdata$ | async as data">

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -11,20 +11,34 @@ import { ToastService } from '../../core/services/toast.service';
   templateUrl: './otp-login.component.html',
   styleUrl: './otp-login.component.css'
 })
-export class OtpLoginComponent {
+export class OtpLoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
   private toast = inject(ToastService);
 
+  private readonly navState = (history.state ?? {}) as {
+    email?: string;
+    rememberMe?: boolean;
+    loginLocation?: string;
+    provider?: 'PASSWORD' | 'GOOGLE';
+    mfaRequired?: boolean;
+  };
+
   form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: [this.navState.email ?? '', [Validators.required, Validators.email]],
     otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]]
   });
 
   isSendingOtp = false;
   isVerifying = false;
   otpSent = false;
+
+  ngOnInit(): void {
+    if (this.navState.mfaRequired && this.form.controls.email.valid) {
+      this.sendOtp();
+    }
+  }
 
   sendOtp() {
     if (this.form.controls.email.invalid) {
@@ -55,7 +69,13 @@ export class OtpLoginComponent {
 
     this.isVerifying = true;
 
-    this.auth.verifyOtp(this.form.getRawValue()).subscribe({
+    this.auth.verifyLoginOtp({
+      email: this.form.controls.email.value,
+      otp: this.form.controls.otp.value,
+      rememberMe: this.navState.rememberMe ?? false,
+      loginLocation: this.navState.loginLocation,
+      provider: this.navState.provider
+    }).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: () => {
         this.toast.error('Invalid OTP. Please check the code and try again.');
