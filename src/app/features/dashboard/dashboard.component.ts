@@ -22,6 +22,7 @@ export class DashboardComponent {
   readonly igdata$ = this.api.getIGDashboard();
   readonly otpMailStats$ = this.api.getOtpMailDashboard();
   readonly forgotPasswordMailStats$ = this.api.getForgotPasswordMailDashboard();
+  readonly loginLocationChart$ = this.api.getLoginLocationChart();
 
   selectedDate = this.toDateInputValue(new Date());
   readonly maxDate = this.toDateInputValue(new Date());

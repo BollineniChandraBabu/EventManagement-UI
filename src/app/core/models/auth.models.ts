@@ -4,6 +4,8 @@ export interface LoginRequest {
   email: string;
   password: string;
   rememberMe: boolean;
+  loginLocation?: string;
+  forceMfa?: boolean;
 }
 
 export interface TokenResponse {
@@ -21,6 +23,14 @@ export interface OtpRequest {
 export interface OtpVerifyRequest {
   email: string;
   otp: string;
+}
+
+export interface LoginOtpVerifyRequest {
+  email: string;
+  otp: string;
+  rememberMe?: boolean;
+  loginLocation?: string;
+  provider?: "PASSWORD" | "GOOGLE";
 }
 
 

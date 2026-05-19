@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
+import { LoginOtpVerifyRequest, LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
 import {AppUser, AuthSSOClientResponse} from '../models/api.models';
 import { ImpersonationService } from './impersonation.service';
@@ -46,8 +46,8 @@ export class AuthService {
     );
   }
 
-  googleSsoLogin(idToken: string, rememberMe = true): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/sso/google`, { idToken }).pipe(
+  googleSsoLogin(idToken: string, rememberMe = true, loginLocation?: string, forceMfa = true): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/sso/google`, { idToken, loginLocation, forceMfa }).pipe(
       tap((res) => this.setSession(res, rememberMe))
     );
   }
@@ -75,6 +75,12 @@ export class AuthService {
   verifyOtp(payload: OtpVerifyRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/otp/verify`, payload).pipe(
       tap((res) => this.setSession(res, false))
+    );
+  }
+
+  verifyLoginOtp(payload: LoginOtpVerifyRequest): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/otp/verify-login`, payload).pipe(
+      tap((res) => this.setSession(res, payload.rememberMe ?? false))
     );
   }
 

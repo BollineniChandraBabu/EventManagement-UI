@@ -9,6 +9,7 @@ import {
   AppUser,
   DashboardChartResponse,
   DashboardStats,
+  LoginLocationChartResponse,
   FestivalItem,
   FestivalWishMapping,
   MailFlowStats,
@@ -84,6 +85,15 @@ export class ApiService {
     return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/mail/forgot-password`, {
       params: new HttpParams().set('days', days)
     }).pipe(map((response) => this.unwrap(response)));
+  }
+
+  getLoginLocationChart(fromDate?: string, toDate?: string): Observable<LoginLocationChartResponse> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+
+    return this.http.get<ApiResponse<LoginLocationChartResponse>>(`${environment.apiUrl}/dashboard/chart/login-locations`, { params })
+      .pipe(map((response) => this.unwrap(response)));
   }
 
   users(
