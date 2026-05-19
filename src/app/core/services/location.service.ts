@@ -74,7 +74,7 @@ export class LocationService {
 
   private async getLocationFromIP(): Promise<UserLocation | null> {
     try {
-      const response = await firstValueFrom(this.http.get<IpWhoIsResponse>('https://ipwho.is/'));
+      const response = await firstValueFrom(this.http.get<IpWhoIsResponse>('https://ipapi.co/json'));
 
       if (
         response.success === false ||
