@@ -3,7 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { from, map, Observable, shareReplay } from 'rxjs';
 import { LocationService } from '../services/location.service';
 
-const ALLOWED_COUNTRY = 'India';
+const ALLOWED_COUNTRY = 'IN';
 const ALLOWED_REGIONS = new Set(['Andhra Pradesh', 'Telangana']);
 
 let cachedAccessCheck$: Observable<boolean> | null = null;
