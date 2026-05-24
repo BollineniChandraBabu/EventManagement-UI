@@ -44,12 +44,12 @@ export class LoginComponent implements OnInit {
   async submit() {
     if (this.form.invalid) return this.form.markAllAsTouched();
     this.isSubmitting = true;
-    const loginLocation = await this.resolveLoginLocation();
+    const locationMeta = await this.resolveLoginLocation();
 
-    this.auth.login({ ...this.form.getRawValue(), loginLocation, forceMfa: true }).subscribe({
+    this.auth.login({ ...this.form.getRawValue(), ...locationMeta, forceMfa: true }).subscribe({
       next: () => { this.isSubmitting = false; this.router.navigate(['/dashboard']); },
       error: (error: HttpErrorResponse) => {
-        if (this.handleMfaChallenge(error, loginLocation, 'PASSWORD')) return;
+        if (this.handleMfaChallenge(error, locationMeta, 'PASSWORD')) return;
         this.toast.error(this.getLoginErrorMessage(error));
         this.isSubmitting = false;
       }
@@ -111,11 +111,11 @@ export class LoginComponent implements OnInit {
   private onGoogleCredential(idToken: string): void {
     if (!idToken) return void this.toast.error('Google sign-in failed. Missing token.');
     this.isSubmitting = true;
-    this.resolveLoginLocation().then((loginLocation) =>
-      this.auth.googleSsoLogin(idToken, this.form.controls.rememberMe.value, loginLocation, true).subscribe({
+    this.resolveLoginLocation().then((locationMeta) =>
+      this.auth.googleSsoLogin(idToken, this.form.controls.rememberMe.value, locationMeta.loginLocation, true).subscribe({
         next: () => this.ngZone.run(() => { this.isSubmitting = false; this.router.navigate(['/dashboard']); }),
         error: (error: HttpErrorResponse) => this.ngZone.run(() => {
-          if (this.handleMfaChallenge(error, loginLocation, 'GOOGLE')) return;
+          if (this.handleMfaChallenge(error, locationMeta, 'GOOGLE')) return;
           this.toast.error(this.getLoginErrorMessage(error));
           this.isSubmitting = false;
         })
@@ -123,16 +123,22 @@ export class LoginComponent implements OnInit {
     );
   }
 
-  private async resolveLoginLocation(): Promise<string | undefined> {
+  private async resolveLoginLocation(): Promise<{ loginLocation?: string; ipAddress?: string; latitude?: number; longitude?: number }> {
     const location = await this.locationService.getUserLocation();
-    if (!location) return undefined;
-    return [location.city, location.region, location.country].filter(Boolean).join(', ') || undefined;
+    if (!location) return {};
+
+    return {
+      loginLocation: [location.city, location.region, location.country].filter(Boolean).join(', ') || undefined,
+      ipAddress: location.ipAddress,
+      latitude: location.latitude,
+      longitude: location.longitude
+    };
   }
 
-  private handleMfaChallenge(error: HttpErrorResponse, loginLocation?: string, provider: 'PASSWORD' | 'GOOGLE' = 'PASSWORD'): boolean {
+  private handleMfaChallenge(error: HttpErrorResponse, locationMeta: { loginLocation?: string; ipAddress?: string; latitude?: number; longitude?: number } = {}, provider: 'PASSWORD' | 'GOOGLE' = 'PASSWORD'): boolean {
     const message = (error?.error?.message ?? '').toString();
     if (!message.includes('MFA_OTP_REQUIRED')) return false;
-    this.router.navigate(['/otp-login'], { state: { email: this.form.controls.email.value, rememberMe: this.form.controls.rememberMe.value, loginLocation, provider, mfaRequired: true } });
+    this.router.navigate(['/otp-login'], { state: { email: this.form.controls.email.value, rememberMe: this.form.controls.rememberMe.value, provider, mfaRequired: true, ...locationMeta } });
     this.isSubmitting = false;
     this.toast.info('MFA verification required. Enter the code sent to your email.');
     return true;

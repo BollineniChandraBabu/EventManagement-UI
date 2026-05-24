@@ -23,6 +23,9 @@ export class OtpLoginComponent implements OnInit {
     loginLocation?: string;
     provider?: 'PASSWORD' | 'GOOGLE';
     mfaRequired?: boolean;
+    ipAddress?: string;
+    latitude?: number;
+    longitude?: number;
   };
 
   form = this.fb.nonNullable.group({
@@ -74,7 +77,10 @@ export class OtpLoginComponent implements OnInit {
       otp: this.form.controls.otp.value,
       rememberMe: this.navState.rememberMe ?? false,
       loginLocation: this.navState.loginLocation,
-      provider: this.navState.provider
+      provider: this.navState.provider,
+      ipAddress: this.navState.ipAddress,
+      latitude: this.navState.latitude,
+      longitude: this.navState.longitude
     }).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: () => {

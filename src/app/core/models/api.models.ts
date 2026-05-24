@@ -37,6 +37,9 @@ export interface DashboardChartResponse {
 export interface LoginLocationChartPoint {
   location: string;
   count: number;
+  ipAddress?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface LoginLocationChartResponse {
