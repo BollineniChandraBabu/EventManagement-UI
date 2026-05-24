@@ -6,6 +6,9 @@ export interface LoginRequest {
   rememberMe: boolean;
   loginLocation?: string;
   forceMfa?: boolean;
+  ipAddress?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface TokenResponse {
@@ -31,6 +34,9 @@ export interface LoginOtpVerifyRequest {
   rememberMe?: boolean;
   loginLocation?: string;
   provider?: "PASSWORD" | "GOOGLE";
+  ipAddress?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 

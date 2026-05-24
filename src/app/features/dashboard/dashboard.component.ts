@@ -1,5 +1,6 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -16,53 +17,83 @@ type LineChartData = Array<{ name: string; series: Array<{ name: string; value: 
 })
 export class DashboardComponent {
   private readonly api = inject(ApiService);
+  private readonly sanitizer = inject(DomSanitizer);
   readonly auth = inject(AuthService);
+  selectedMapPoint: { location: string; latitude: number; longitude: number } | null = null;
 
   readonly maildata$ = this.api.getDashboard();
   readonly igdata$ = this.api.getIGDashboard();
   readonly otpMailStats$ = this.api.getOtpMailDashboard();
   readonly forgotPasswordMailStats$ = this.api.getForgotPasswordMailDashboard();
-  readonly loginLocationChart$ = this.api.getLoginLocationChart();
-
-  selectedDate = this.toDateInputValue(new Date());
   readonly maxDate = this.toDateInputValue(new Date());
+  selectedStartDate = this.toDateInputValue(this.daysAgo(6));
+  selectedEndDate = this.maxDate;
 
-  private readonly selectedDaysSubject = new BehaviorSubject<number>(1);
-  private readonly selectedDays$ = this.selectedDaysSubject.asObservable().pipe(distinctUntilChanged());
+  private readonly selectedDateRangeSubject = new BehaviorSubject<{ startDate: string; endDate: string }>({
+    startDate: this.selectedStartDate,
+    endDate: this.selectedEndDate
+  });
+  private readonly selectedDateRange$ = this.selectedDateRangeSubject.asObservable().pipe(
+    distinctUntilChanged(),
+    map(({ startDate, endDate }) => ({ startDate, endDate }))
+  );
 
-  readonly otpMailChart$ = this.selectedDays$.pipe(
-    switchMap((days) => this.api.getOtpMailChart(days)),
+  readonly otpMailChart$ = this.selectedDateRange$.pipe(
+    switchMap(({ startDate, endDate }) => this.api.getOtpMailChart(startDate, endDate)),
     map((response) => this.toLineChartData(response.points))
   );
 
-  readonly forgotPasswordMailChart$ = this.selectedDays$.pipe(
-    switchMap((days) => this.api.getForgotPasswordMailChart(days)),
+  readonly forgotPasswordMailChart$ = this.selectedDateRange$.pipe(
+    switchMap(({ startDate, endDate }) => this.api.getForgotPasswordMailChart(startDate, endDate)),
     map((response) => this.toLineChartData(response.points))
   );
 
-  readonly mailChart$ = this.selectedDays$.pipe(
-    switchMap((days) => this.api.getMailChart(days)),
+  readonly mailChart$ = this.selectedDateRange$.pipe(
+    switchMap(({ startDate, endDate }) => this.api.getMailChart(startDate, endDate)),
     map((response) => this.toLineChartData(response.points))
   );
 
-  readonly instaChart$ = this.selectedDays$.pipe(
-    switchMap((days) => this.api.getInstaChart(days)),
+  readonly instaChart$ = this.selectedDateRange$.pipe(
+    switchMap(({ startDate, endDate }) => this.api.getInstaChart(startDate, endDate)),
     map((response) => this.toLineChartData(response.points))
   );
 
+  readonly loginLocationChart$ = this.selectedDateRange$.pipe(
+    switchMap(({ startDate, endDate }) => this.api.getLoginLocationChart(startDate, endDate))
+  );
 
-  onChartDateChange(dateValue: string): void {
+  onStartDateChange(dateValue: string): void {
     const selectedDate = this.parseInputDate(dateValue);
     const now = new Date();
 
     if (!selectedDate || selectedDate > now) {
-      this.selectedDate = this.toDateInputValue(now);
-      this.selectedDaysSubject.next(1);
+      this.selectedStartDate = this.toDateInputValue(this.daysAgo(6));
+      this.pushDateRange();
       return;
     }
 
-    this.selectedDate = this.toDateInputValue(selectedDate);
-    this.selectedDaysSubject.next(this.calculateDaysFromDate(selectedDate));
+    this.selectedStartDate = this.toDateInputValue(selectedDate);
+    if (this.selectedStartDate > this.selectedEndDate) {
+      this.selectedEndDate = this.selectedStartDate;
+    }
+    this.pushDateRange();
+  }
+
+  onEndDateChange(dateValue: string): void {
+    const selectedDate = this.parseInputDate(dateValue);
+    const now = new Date();
+
+    if (!selectedDate || selectedDate > now) {
+      this.selectedEndDate = this.maxDate;
+      this.pushDateRange();
+      return;
+    }
+
+    this.selectedEndDate = this.toDateInputValue(selectedDate);
+    if (this.selectedEndDate < this.selectedStartDate) {
+      this.selectedStartDate = this.selectedEndDate;
+    }
+    this.pushDateRange();
   }
 
   mailFlowCards(stats: MailFlowStats | null | undefined): Array<{ label: string; value: number }> {
@@ -74,18 +105,6 @@ export class DashboardComponent {
     ];
   }
 
-  private calculateDaysFromDate(date: Date): number {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-
-    const startOfSelectedDate = new Date(date);
-    startOfSelectedDate.setHours(0, 0, 0, 0);
-
-    const msInDay = 24 * 60 * 60 * 1000;
-    const dayDifference = Math.floor((startOfToday.getTime() - startOfSelectedDate.getTime()) / msInDay);
-
-    return Math.max(dayDifference + 1, 1);
-  }
 
   private parseInputDate(dateValue: string): Date | null {
     if (!dateValue) {
@@ -175,5 +194,39 @@ export class DashboardComponent {
 
     const parsed = new Date(dateValue);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private pushDateRange(): void {
+    this.selectedDateRangeSubject.next({
+      startDate: this.selectedStartDate,
+      endDate: this.selectedEndDate
+    });
+  }
+
+  private daysAgo(days: number): Date {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    return date;
+  }
+
+  openLocationMap(location: string, latitude: number | null | undefined, longitude: number | null | undefined): void {
+    if (latitude == null || longitude == null) {
+      return;
+    }
+    this.selectedMapPoint = { location: location || 'Unknown', latitude, longitude };
+  }
+
+  closeLocationMap(): void {
+    this.selectedMapPoint = null;
+  }
+
+  mapEmbedUrl(): SafeResourceUrl | null {
+    if (!this.selectedMapPoint) {
+      return null;
+    }
+
+    const { latitude, longitude } = this.selectedMapPoint;
+    const mapUrl = `https://maps.google.com/maps?q=${latitude},${longitude}&z=14&output=embed`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(mapUrl);
   }
 }

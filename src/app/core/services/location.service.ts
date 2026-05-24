@@ -9,6 +9,7 @@ export interface UserLocation {
   region?: string;
   country?: string;
   source: 'GPS' | 'IP';
+  ipAddress?: string;
 }
 
 interface IpWhoIsResponse {
@@ -18,6 +19,7 @@ interface IpWhoIsResponse {
   city?: string;
   region?: string;
   country?: string;
+  ip?: string;
 }
 
 @Injectable({
@@ -90,6 +92,7 @@ export class LocationService {
         city: response.city,
         region: response.region,
         country: response.country,
+        ipAddress: response.ip,
         source: 'IP'
       };
     } catch {

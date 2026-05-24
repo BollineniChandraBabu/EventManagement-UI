@@ -51,15 +51,15 @@ export class ApiService {
     );
   }
 
-  getMailChart(days = 0): Observable<DashboardChartResponse> {
+  getMailChart(startDate: string, endDate: string): Observable<DashboardChartResponse> {
     return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/mail`, {
-      params: new HttpParams().set('days', days)
+      params: new HttpParams().set('startDate', startDate).set('endDate', endDate)
     }).pipe(map((response) => this.unwrap(response)));
   }
 
-  getInstaChart(days = 0): Observable<DashboardChartResponse> {
+  getInstaChart(startDate: string, endDate: string): Observable<DashboardChartResponse> {
     return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/insta`, {
-      params: new HttpParams().set('days', days)
+      params: new HttpParams().set('startDate', startDate).set('endDate', endDate)
     }).pipe(map((response) => this.unwrap(response)));
   }
 
@@ -75,22 +75,22 @@ export class ApiService {
     );
   }
 
-  getOtpMailChart(days = 7): Observable<DashboardChartResponse> {
+  getOtpMailChart(startDate: string, endDate: string): Observable<DashboardChartResponse> {
     return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/mail/otp`, {
-      params: new HttpParams().set('days', days)
+      params: new HttpParams().set('startDate', startDate).set('endDate', endDate)
     }).pipe(map((response) => this.unwrap(response)));
   }
 
-  getForgotPasswordMailChart(days = 7): Observable<DashboardChartResponse> {
+  getForgotPasswordMailChart(startDate: string, endDate: string): Observable<DashboardChartResponse> {
     return this.http.get<ApiResponse<DashboardChartResponse>>(`${environment.apiUrl}/dashboard/chart/mail/forgot-password`, {
-      params: new HttpParams().set('days', days)
+      params: new HttpParams().set('startDate', startDate).set('endDate', endDate)
     }).pipe(map((response) => this.unwrap(response)));
   }
 
-  getLoginLocationChart(fromDate?: string, toDate?: string): Observable<LoginLocationChartResponse> {
+  getLoginLocationChart(startDate?: string, endDate?: string): Observable<LoginLocationChartResponse> {
     let params = new HttpParams();
-    if (fromDate) params = params.set('fromDate', fromDate);
-    if (toDate) params = params.set('toDate', toDate);
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
 
     return this.http.get<ApiResponse<LoginLocationChartResponse>>(`${environment.apiUrl}/dashboard/chart/login-locations`, { params })
       .pipe(map((response) => this.unwrap(response)));

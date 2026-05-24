@@ -9,18 +9,32 @@
       </div>
     </div>
     <div class="page-header-actions">
-      <div class="chart-date-control">
-        <label for="chartStartDate" class="chart-date-label">
-          <i class="fa-regular fa-calendar me-1"></i>From date
-        </label>
-        <input
-          id="chartStartDate"
-          type="date"
-          class="form-control"
-          [value]="selectedDate"
-          [max]="maxDate"
-          (change)="onChartDateChange($any($event.target).value)"
-        />
+      <div class="chart-date-controls">
+        <div class="chart-date-control">
+          <label for="chartStartDate" class="chart-date-label">
+            <i class="fa-regular fa-calendar me-1"></i>Start date
+          </label>
+          <input
+            id="chartStartDate"
+            type="date"
+            class="form-control"
+            [value]="selectedStartDate"
+            [max]="selectedEndDate"
+            (change)="onStartDateChange($any($event.target).value)"
+          />
+        </div>
+        <div class="chart-date-control">
+          <label for="chartEndDate" class="chart-date-label">End date</label>
+          <input
+            id="chartEndDate"
+            type="date"
+            class="form-control"
+            [value]="selectedEndDate"
+            [min]="selectedStartDate"
+            [max]="maxDate"
+            (change)="onEndDateChange($any($event.target).value)"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -102,11 +116,37 @@
     <div class="card" *ngIf="auth.isAdmin()">
       <div class="card-body">
         <h3 class="section-title mb-3"><i class="fa-solid fa-location-dot me-2" style="color:#0ea5e9;"></i>Login Locations</h3>
-        <div *ngIf="locationChart.points?.length; else noLocations">
-          <div class="d-flex justify-content-between border-bottom py-2" *ngFor="let point of locationChart.points">
-            <span>{{ point.location || 'Unknown' }}</span>
-            <strong>{{ point.count }}</strong>
-          </div>
+        <div *ngIf="locationChart.points?.length; else noLocations" class="table-responsive">
+          <table class="table table-sm align-middle mb-0 login-locations-table">
+            <thead>
+              <tr>
+                <th>Location</th>
+                <th>IP Address</th>
+                <th>Coordinates</th>
+                <th class="text-end">Logins</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let point of locationChart.points">
+                <td>{{ point.location || 'Unknown' }}</td>
+                <td>{{ point.ipAddress || '—' }}</td>
+                <td>
+                  <span *ngIf="point.latitude != null && point.longitude != null; else noCoords">{{ point.latitude }}, {{ point.longitude }}</span>
+                  <ng-template #noCoords>—</ng-template>
+                </td>
+                <td class="text-end">
+                  <strong class="me-2">{{ point.count }}</strong>
+                  <button
+                    *ngIf="point.latitude != null && point.longitude != null"
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    (click)="openLocationMap(point.location || 'Unknown', point.latitude, point.longitude)">
+                    View map
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <ng-template #noLocations>
           <p class="mb-0 text-muted">No login location data available yet.</p>
@@ -151,4 +191,22 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="map-modal-backdrop" *ngIf="selectedMapPoint" (click)="closeLocationMap()">
+  <section class="map-modal" role="dialog" aria-modal="true" aria-label="Login location map" (click)="$event.stopPropagation()">
+    <header class="map-modal-header">
+      <h3 class="map-modal-title mb-0">Login Location Map</h3>
+      <button class="btn btn-sm btn-outline-secondary" type="button" (click)="closeLocationMap()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+    <div class="map-modal-body">
+      <p class="text-muted mb-2">
+        <strong>{{ selectedMapPoint.location }}</strong>
+        ({{ selectedMapPoint.latitude }}, {{ selectedMapPoint.longitude }})
+      </p>
+      <iframe *ngIf="mapEmbedUrl() as safeMapUrl" [src]="safeMapUrl" class="location-map-frame" title="Login location map"></iframe>
+    </div>
+  </section>
 </div>
