@@ -138,7 +138,7 @@ export interface EventItem {
 }
 
 export interface SaveEventPayload {
-  eventType: string;
+  eventType: string | undefined;
   festivalName?: string;
   eventDate: string;
   recurring: boolean;
