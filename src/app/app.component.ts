@@ -210,25 +210,27 @@ export class AppComponent {
   }
 
   private loadPublishedNotificationFromCollection(): void {
-    this.api.notifications()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (items) => {
-          const candidate = items
-            .filter((item) => item.published && !!item.title && !!item.message)
-            .filter((item) => {
-              const end = this.parseDate(item.scheduledTo);
-              return !end || end.getTime() > Date.now();
-            })
-            .sort((a, b) => {
-              const aStart = this.parseDate(a.scheduledFrom)?.getTime() ?? 0;
-              const bStart = this.parseDate(b.scheduledFrom)?.getTime() ?? 0;
-              return bStart - aStart;
-            })[0] ?? null;
+    if(this.auth.authenticated()) {
+      this.api.notifications()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (items) => {
+              const candidate = items
+                  .filter((item) => item.published && !!item.title && !!item.message)
+                  .filter((item) => {
+                    const end = this.parseDate(item.scheduledTo);
+                    return !end || end.getTime() > Date.now();
+                  })
+                  .sort((a, b) => {
+                    const aStart = this.parseDate(a.scheduledFrom)?.getTime() ?? 0;
+                    const bStart = this.parseDate(b.scheduledFrom)?.getTime() ?? 0;
+                    return bStart - aStart;
+                  })[0] ?? null;
 
-          this.consumeNotification(candidate, false);
-        }
-      });
+              this.consumeNotification(candidate, false);
+            }
+          });
+    }
   }
 
   private parseDate(value?: string | null): Date | null {

@@ -73,7 +73,7 @@ export class EventEditorComponent {
 
     const value = this.form.getRawValue();
     const payload: SaveEventPayload = {
-      eventType: this.normalizeEventType(value.type),
+      eventType: this.eventTypeSeeds.find(value1 => value1.displayName.toUpperCase()===value.type)?.code,
       eventDate: value.eventDate,
       recurring: value.recurring,
       userId: value.userId
@@ -136,7 +136,7 @@ export class EventEditorComponent {
         const matchedUser = this.allUsers.find((user) => user.name === event.userName);
         this.form.patchValue({
           userId: matchedUser?.id ?? 0,
-          type: this.prettyType(event.eventType),
+          type: this.eventTypeSeeds.find(e => e.code?.toUpperCase()===event.eventType)?.displayName.toUpperCase(),
           eventDate: event.eventDate,
           recurring: event.recurring
         });
