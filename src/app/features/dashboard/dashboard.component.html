@@ -111,7 +111,7 @@
         <app-canvasjs-line-chart *ngIf="mailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
       </div>
     </div>
-
+<br>
     <ng-container *ngIf="loginLocationChart$ | async as locationChart">
     <div class="card" *ngIf="auth.isAdmin()">
       <div class="card-body">
@@ -120,6 +120,7 @@
           <table class="table table-sm align-middle mb-0 login-locations-table">
             <thead>
               <tr>
+                <th>LoggedIn Time</th>
                 <th>Location</th>
                 <th>IP Address</th>
                 <th>Coordinates</th>
@@ -128,6 +129,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let point of locationChart.points">
+                  <td>{{point.loggedInAt | date:'mediumDate'}}</td>
                 <td>{{ point.location || 'Unknown' }}</td>
                 <td>{{ point.ipAddress || '—' }}</td>
                 <td>
@@ -154,7 +156,7 @@
       </div>
     </div>
   </ng-container>
-
+<br>
   <!-- Insta Dashboard -->
   <div *ngIf="igdata$ | async as data">
     <div class="dashboard-section-label">
@@ -209,4 +211,5 @@
       <iframe *ngIf="mapEmbedUrl() as safeMapUrl" [src]="safeMapUrl" class="location-map-frame" title="Login location map"></iframe>
     </div>
   </section>
+</div>
 </div>
