@@ -32,7 +32,8 @@ import {
   ProfilePictureUploadUrlResponse,
   WishPreviewResponse,
   NotificationItem,
-  SaveNotificationPayload
+  SaveNotificationPayload,
+  ViolatedUsersDashboardResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -93,6 +94,25 @@ export class ApiService {
     if (endDate) params = params.set('endDate', endDate);
 
     return this.http.get<ApiResponse<LoginLocationChartResponse>>(`${environment.apiUrl}/dashboard/chart/login-locations`, { params })
+      .pipe(map((response) => this.unwrap(response)));
+  }
+
+
+  getViolatedUsersDashboard(
+    startDate: string,
+    endDate: string,
+    page = 0,
+    size = 50,
+    includeIpInfo = true
+  ): Observable<ViolatedUsersDashboardResponse> {
+    const params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate)
+      .set('page', page)
+      .set('size', size)
+      .set('includeIpInfo', includeIpInfo);
+
+    return this.http.get<ApiResponse<ViolatedUsersDashboardResponse>>(`${environment.apiUrl}/dashboard/violated-users`, { params })
       .pipe(map((response) => this.unwrap(response)));
   }
 
@@ -260,12 +280,21 @@ export class ApiService {
     sortBy = 'id',
     sortDir: 'asc' | 'desc' = 'desc'
   ): Observable<FestivalWishMapping[]> {
+    return this.festivalWishMappingsPaged(page, size, searchKey, sortBy, sortDir).pipe(
+      map((response) => response.content)
+    );
+  }
+
+  festivalWishMappingsPaged(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'id',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<PagedResponse<FestivalWishMapping>> {
     return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`, {
       params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
-    }).pipe(
-      map((response) => this.unwrap(response)),
-      map((payload) => this.normalizeCollection(payload))
-    );
+    }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
   saveFestivalWishMapping(payload: SaveFestivalWishMappingPayload): Observable<FestivalWishMapping> {
@@ -358,9 +387,21 @@ export class ApiService {
 
 
   notifications(): Observable<NotificationItem[]> {
-    return this.http.get<ApiResponse<NotificationItem[]>>(`${environment.apiUrl}/notifications`).pipe(
-      map((response) => this.normalizeCollection(this.unwrap(response)))
+    return this.notificationsPaged(0, 100, '', 'createdAt', 'desc').pipe(
+      map((response) => response.content)
     );
+  }
+
+  notificationsPaged(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    sortBy = 'createdAt',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<PagedResponse<NotificationItem>> {
+    return this.http.get<ApiResponse<PagedResponse<NotificationItem> | NotificationItem[]>>(`${environment.apiUrl}/notifications`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
 
@@ -452,7 +493,9 @@ export class ApiService {
         page,
         size,
         totalElements: payload.length,
-        totalPages: payload.length ? 1 : 0
+        totalPages: payload.length ? 1 : 0,
+        hasNext: false,
+        hasPrevious: false
       };
     }
 
@@ -461,7 +504,9 @@ export class ApiService {
       page: payload.page ?? page,
       size: payload.size ?? size,
       totalElements: payload.totalElements ?? (payload.content?.length ?? 0),
-      totalPages: payload.totalPages ?? 0
+      totalPages: payload.totalPages ?? 0,
+      hasNext: payload.hasNext ?? ((payload.page ?? page) + 1 < (payload.totalPages ?? 0)),
+      hasPrevious: payload.hasPrevious ?? ((payload.page ?? page) > 0)
     };
   }
 
