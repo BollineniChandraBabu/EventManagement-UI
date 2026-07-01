@@ -8,6 +8,8 @@ export interface PagedResponse<T> {
   size: number;
   totalElements: number;
   totalPages: number;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
 }
 
 export interface DashboardStats {
@@ -36,8 +38,9 @@ export interface DashboardChartResponse {
 
 export interface LoginLocationChartPoint {
   loggedInAt: string;
-  location: string;
-  count: number;
+  loginLocation?: string | null;
+  location?: string | null;
+  count?: number | null;
   ipAddress?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -45,6 +48,62 @@ export interface LoginLocationChartPoint {
 
 export interface LoginLocationChartResponse {
   points: LoginLocationChartPoint[];
+}
+
+
+export interface ViolatedUserIpInfo {
+  ipAddress?: string | null;
+  status?: string | null;
+  message?: string | null;
+  country?: string | null;
+  countryCode?: string | null;
+  region?: string | null;
+  regionName?: string | null;
+  city?: string | null;
+  zip?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  timezone?: string | null;
+  isp?: string | null;
+  organization?: string | null;
+  asn?: string | null;
+  mobile?: boolean | null;
+  proxy?: boolean | null;
+  hosting?: boolean | null;
+}
+
+export interface ViolatedUserInfo {
+  id: number;
+  email: string;
+  password?: string | null;
+  loginLocation?: string | null;
+  ipAddress?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  loggedInAt: string;
+  ipInfo?: ViolatedUserIpInfo | null;
+}
+
+export interface ViolatedUserChartPoint {
+  date: string;
+  total: number;
+}
+
+export interface ViolatedUserMapPoint extends Omit<ViolatedUserInfo, 'password'> {}
+
+export interface ViolatedUsersDashboardResponse {
+  startDate: string;
+  endDate: string;
+  totalAttempts: number;
+  chartPoints: ViolatedUserChartPoint[];
+  mapPoints: ViolatedUserMapPoint[];
+  users: ViolatedUserInfo[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 export interface AuthSSOClientResponse {

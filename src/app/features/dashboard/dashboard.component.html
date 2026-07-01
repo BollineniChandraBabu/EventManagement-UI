@@ -124,27 +124,27 @@
                 <th>Location</th>
                 <th>IP Address</th>
                 <th>Coordinates</th>
-                <th class="text-end">Logins</th>
+                <th class="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let point of locationChart.points">
                   <td>{{point.loggedInAt | date:'mediumDate'}}</td>
-                <td>{{ point.location || 'Unknown' }}</td>
+                <td>{{ point.loginLocation || point.location || 'Unknown' }}</td>
                 <td>{{ point.ipAddress || '—' }}</td>
                 <td>
                   <span *ngIf="point.latitude != null && point.longitude != null; else noCoords">{{ point.latitude }}, {{ point.longitude }}</span>
                   <ng-template #noCoords>—</ng-template>
                 </td>
                 <td class="text-end">
-                  <strong class="me-2">{{ point.count }}</strong>
                   <button
                     *ngIf="point.latitude != null && point.longitude != null"
                     type="button"
                     class="btn btn-sm btn-outline-primary"
-                    (click)="openLocationMap(point.location || 'Unknown', point.latitude, point.longitude)">
+                    (click)="openLocationMap(point.loginLocation || point.location || 'Unknown', point.latitude, point.longitude)">
                     View map
                   </button>
+                  <span *ngIf="point.latitude == null || point.longitude == null">—</span>
                 </td>
               </tr>
             </tbody>

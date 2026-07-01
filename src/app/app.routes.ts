@@ -19,6 +19,7 @@ export const routes: Routes = [
       { path: 'users', canActivate: [adminGuard], loadComponent: () => import('./features/users/users.component').then((m) => m.UsersComponent) },
       { path: 'users/new', canActivate: [adminGuard], loadComponent: () => import('./features/users/user-editor.component').then((m) => m.UserEditorComponent) },
       { path: 'users/:id/edit', canActivate: [adminGuard], loadComponent: () => import('./features/users/user-editor.component').then((m) => m.UserEditorComponent) },
+      { path: 'violated-users', canActivate: [adminGuard], loadComponent: () => import('./features/violated-users/violated-users.component').then((m) => m.ViolatedUsersComponent) },
       { path: 'notifications', canActivate: [adminGuard], loadComponent: () => import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent) },
       { path: 'notifications/new', canActivate: [adminGuard], loadComponent: () => import('./features/notifications/notification-editor.component').then((m) => m.NotificationEditorComponent) },
       { path: 'notifications/:id/edit', canActivate: [adminGuard], loadComponent: () => import('./features/notifications/notification-editor.component').then((m) => m.NotificationEditorComponent) },

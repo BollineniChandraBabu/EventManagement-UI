@@ -3,10 +3,15 @@
     <div><h1 class="page-header-title">Notifications</h1><p class="page-header-subtitle">Manage published and draft notifications</p></div>
     <a class="btn btn-primary" routerLink="/notifications/new"><i class="fa-solid fa-plus me-1"></i>Create Notification</a>
   </div>
+  <div class="card mb-3"><div class="card-body notification-filters">
+    <input class="form-control" type="search" placeholder="Search title, message, or author" [(ngModel)]="searchKey" (keyup.enter)="applySearch()" />
+    <select class="form-select" [(ngModel)]="size" (change)="load(0)"><option [ngValue]="10">10</option><option [ngValue]="25">25</option><option [ngValue]="50">50</option></select>
+    <button class="btn btn-outline-primary" type="button" (click)="applySearch()" [disabled]="loading"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
+  </div></div>
   <div class="card"><div class="card-body">
     <div class="table-responsive notifications-table-wrap">
       <table class="table table-hover notifications-table align-middle">
-        <thead><tr><th>Notification</th><th>Status</th><th>Schedule Window</th><th>Published</th><th>Email</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th><button class="sort-header" type="button" (click)="toggleSort('title')" [disabled]="loading">Notification <i *ngIf="isSortedBy('title')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th><th><button class="sort-header" type="button" (click)="toggleSort('published')" [disabled]="loading">Status <i *ngIf="isSortedBy('published')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th><th>Schedule Window</th><th><button class="sort-header" type="button" (click)="toggleSort('publishedAt')" [disabled]="loading">Published <i *ngIf="isSortedBy('publishedAt')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th><th>Email</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let item of notifications">
             <td>
@@ -35,6 +40,13 @@
           <tr *ngIf="!loading && notifications.length === 0"><td colspan="6" class="text-center text-muted">No notifications yet.</td></tr>
         </tbody>
       </table>
+    </div>
+    <div class="notifications-pagination">
+      <span class="text-muted small">Page {{ page + 1 }} of {{ totalPages || 1 }} · {{ totalElements }} total</span>
+      <div class="pagination-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="load(page - 1)" [disabled]="loading || page <= 0">Previous</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="load(page + 1)" [disabled]="loading || page + 1 >= totalPages">Next</button>
+      </div>
     </div>
   </div></div>
 </div>

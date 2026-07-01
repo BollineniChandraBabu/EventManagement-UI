@@ -113,12 +113,7 @@
                   <i *ngIf="isSortedBy('festivalName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
                 </button>
               </th>
-              <th>
-                <button class="sort-header" type="button" (click)="toggleSort('eventDate')" [disabled]="loadingMappings">
-                  Date
-                  <i *ngIf="isSortedBy('eventDate')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
-                </button>
-              </th>
+              <th>Date</th>
               <th>
                 <button class="sort-header" type="button" (click)="toggleSort('active')" [disabled]="loadingMappings">
                   Status
@@ -164,7 +159,7 @@
         </table>
       </div>
       <div class="pagination-bar">
-        <span class="pagination-info">Showing {{ startRow }}–{{ endRow }} of {{ filteredMappings.length }} mappings</span>
+        <span class="pagination-info">Showing {{ startRow }}–{{ endRow }} of {{ totalElements }} mappings</span>
         <div class="btn-group pagination-controls">
           <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loadingMappings || page === 0">
             <i class="fa-solid fa-chevron-left me-1"></i>Prev

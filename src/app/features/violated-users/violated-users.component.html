@@ -1,0 +1,71 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon danger"><i class="fa-solid fa-user-shield"></i></span>
+      <div>
+        <h1 class="page-header-title">Violated User Attempts</h1>
+        <p class="page-header-subtitle">Review unknown-user login attempts captured by the audit dashboard.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body filters-grid">
+      <label>Start date<input class="form-control" type="date" [(ngModel)]="startDate" [max]="endDate" /></label>
+      <label>End date<input class="form-control" type="date" [(ngModel)]="endDate" [min]="startDate" [max]="maxDate" /></label>
+      <label>Page size<select class="form-select" [(ngModel)]="size"><option [ngValue]="10">10</option><option [ngValue]="25">25</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option></select></label>
+      <label class="form-check include-ip"><input class="form-check-input" type="checkbox" [(ngModel)]="includeIpInfo" /> Include IP lookup</label>
+      <button class="btn btn-primary" type="button" (click)="applyFilters()" [disabled]="loading"><i class="fa-solid fa-rotate me-1"></i>Refresh</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid mb-3">
+    <div class="kpi-card"><div class="kpi-label">Attempts in range</div><div class="kpi-value">{{ totalAttempts }}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Rows loaded</div><div class="kpi-value">{{ users.length }}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Map points</div><div class="kpi-value">{{ mapPoints.length }}</div></div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <h3 class="section-title mb-3"><i class="fa-solid fa-chart-simple me-2"></i>Daily Attempts</h3>
+      <div class="attempt-bars" *ngIf="chartPoints.length; else noChart">
+        <div class="attempt-bar-row" *ngFor="let point of chartPoints">
+          <span class="attempt-date">{{ point.date | date:'mediumDate' }}</span>
+          <div class="attempt-bar-track"><span class="attempt-bar" [style.width.%]="totalAttempts ? (point.total / totalAttempts) * 100 : 0"></span></div>
+          <strong>{{ point.total }}</strong>
+        </div>
+      </div>
+      <ng-template #noChart><p class="text-muted mb-0">No attempts found for this date range.</p></ng-template>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h3 class="section-title mb-0"><i class="fa-solid fa-list-check me-2"></i>Attempt Details</h3>
+        <span class="text-muted small">Page {{ page + 1 }} of {{ totalPages || 1 }} · {{ totalElements }} total</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle violated-users-table">
+          <thead><tr><th>Time</th><th>Email</th><th>Password</th><th>Location</th><th>IP Address</th><th>Network</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.loggedInAt | date:'medium' }}</td>
+              <td>{{ user.email || '—' }}</td>
+              <td><code>{{ user.password || '—' }}</code></td>
+              <td>{{ cityLabel(user) }}</td>
+              <td>{{ user.ipAddress || '—' }}</td>
+              <td>{{ user.ipInfo?.isp || user.ipInfo?.organization || '—' }}</td>
+              <td><span class="badge badge-warning me-1" *ngFor="let badge of riskBadges(user)">{{ badge }}</span><span *ngIf="!riskBadges(user).length">—</span></td>
+            </tr>
+            <tr *ngIf="!loading && users.length === 0"><td colspan="7" class="text-center text-muted">No violated user attempts found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="load(page - 1)" [disabled]="loading || !hasPrevious">Previous</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="load(page + 1)" [disabled]="loading || !hasNext">Next</button>
+      </div>
+    </div>
+  </div>
+</div>

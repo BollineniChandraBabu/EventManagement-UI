@@ -14,7 +14,7 @@ import {
   ChatUser
 } from '../models/chat.models';
 import { AuthService } from './auth.service';
-import { ApiResponse } from '../models/api.models';
+import { ApiResponse, PagedResponse } from '../models/api.models';
 
 interface StompFrame {
   command: string;
@@ -57,8 +57,21 @@ export class ChatService {
     );
   }
 
-  listActiveUsers(): Observable<ChatUser[]> {
-    return this.http.get<ApiResponse<ChatUser[] | { content: ChatUser[] }>>(`${environment.apiUrl}/chat/users/active`).pipe(
+  listActiveUsers(
+    page = 0,
+    size = 200,
+    searchKey = '',
+    sortBy = 'name',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<ChatUser[]> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('searchKey', searchKey)
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+
+    return this.http.get<ApiResponse<ChatUser[] | PagedResponse<ChatUser>>>(`${environment.apiUrl}/dashboard/chat/users/active`, { params }).pipe(
       map((response) => this.unwrap(response)),
       map((payload) => this.normalizeCollection(payload))
     );

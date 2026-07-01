@@ -23,8 +23,6 @@ export class FestivalWishMappingsComponent {
 
   festivals: FestivalItem[] = [];
   users: AppUser[] = [];
-  mappings: FestivalWishMapping[] = [];
-  filteredMappings: FestivalWishMapping[] = [];
   pagedMappings: FestivalWishMapping[] = [];
 
   loadingMappings = false;
@@ -39,8 +37,10 @@ export class FestivalWishMappingsComponent {
   searchText = '';
   page = 0;
   pageSize = 10;
-  readonly pageSizes = [5, 10, 20];
-  sortBy: 'userName' | 'festivalName' | 'eventDate' | 'active' = 'eventDate';
+  readonly pageSizes = [5, 10, 20, 50];
+  totalElements = 0;
+  totalPages = 0;
+  sortBy: 'userName' | 'festivalName' | 'active' = 'festivalName';
   sortDir: 'asc' | 'desc' = 'asc';
 
   form: SaveFestivalWishMappingPayload = {
@@ -74,16 +74,12 @@ export class FestivalWishMappingsComponent {
     });
   }
 
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredMappings.length / this.pageSize));
-  }
-
   get displayPage(): number {
     return this.page + 1;
   }
 
   get startRow(): number {
-    if (this.filteredMappings.length === 0 || this.pagedMappings.length === 0) {
+    if (this.totalElements === 0 || this.pagedMappings.length === 0) {
       return 0;
     }
 
@@ -113,14 +109,18 @@ export class FestivalWishMappingsComponent {
 
   loadMappings(): void {
     this.loadingMappings = true;
-    this.api.festivalWishMappings(0, 2000, '', this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (mappings) => {
-        this.mappings = mappings ?? [];
-        this.applyClientFilters();
+    this.api.festivalWishMappingsPaged(this.page, this.pageSize, this.searchText, this.backendSortBy(), this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.pagedMappings = response.content ?? [];
+        this.totalElements = response.totalElements ?? this.pagedMappings.length;
+        this.totalPages = response.totalPages ?? 0;
         this.loadingMappings = false;
       },
       error: () => {
         this.toast.error('Unable to load festival wish mappings right now.');
+        this.pagedMappings = [];
+        this.totalElements = 0;
+        this.totalPages = 0;
         this.loadingMappings = false;
       }
     });
@@ -143,7 +143,7 @@ export class FestivalWishMappingsComponent {
   applySearch(): void {
     this.searchText = this.searchText.trim();
     this.page = 0;
-    this.applyClientFilters();
+    this.loadMappings();
   }
 
   clearSearch(): void {
@@ -153,16 +153,16 @@ export class FestivalWishMappingsComponent {
 
     this.searchText = '';
     this.page = 0;
-    this.applyClientFilters();
+    this.loadMappings();
   }
 
   onPageSizeChange(value: string): void {
     this.pageSize = Number(value);
     this.page = 0;
-    this.applyClientFilters();
+    this.loadMappings();
   }
 
-  toggleSort(field: 'userName' | 'festivalName' | 'eventDate' | 'active'): void {
+  toggleSort(field: 'userName' | 'festivalName' | 'active'): void {
     if (this.sortBy === field) {
       this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
     } else {
@@ -171,24 +171,24 @@ export class FestivalWishMappingsComponent {
     }
 
     this.page = 0;
-    this.applyClientFilters();
+    this.loadMappings();
   }
 
-  isSortedBy(field: 'userName' | 'festivalName' | 'eventDate' | 'active'): boolean {
+  isSortedBy(field: 'userName' | 'festivalName' | 'active'): boolean {
     return this.sortBy === field;
   }
 
   nextPage(): void {
     if (this.page < this.totalPages - 1) {
       this.page += 1;
-      this.paginate();
+      this.loadMappings();
     }
   }
 
   prevPage(): void {
     if (this.page > 0) {
       this.page -= 1;
-      this.paginate();
+      this.loadMappings();
     }
   }
 
@@ -291,49 +291,11 @@ export class FestivalWishMappingsComponent {
     };
   }
 
-  private applyClientFilters(): void {
-    const search = this.searchText.trim().toLowerCase();
-    const filtered = search
-      ? this.mappings.filter((mapping) =>
-          [mapping.userName, mapping.festivalName, mapping.eventDate]
-            .filter(Boolean)
-            .some((value) => String(value).toLowerCase().includes(search))
-        )
-      : [...this.mappings];
-
-    this.filteredMappings = filtered.sort((a, b) => {
-      const left = this.sortValue(a, this.sortBy);
-      const right = this.sortValue(b, this.sortBy);
-
-      if (left === right) {
-        return 0;
-      }
-
-      const result = left > right ? 1 : -1;
-      return this.sortDir === 'asc' ? result : -result;
-    });
-
-    if (this.page > this.totalPages - 1) {
-      this.page = Math.max(0, this.totalPages - 1);
-    }
-
-    this.paginate();
-  }
-
-  private paginate(): void {
-    const start = this.page * this.pageSize;
-    this.pagedMappings = this.filteredMappings.slice(start, start + this.pageSize);
-  }
-
-  private sortValue(mapping: FestivalWishMapping, field: 'userName' | 'festivalName' | 'eventDate' | 'active'): string | number {
-    if (field === 'eventDate') {
-      return new Date(mapping.eventDate).getTime();
-    }
-
-    if (field === 'active') {
-      return mapping.active ? 1 : 0;
-    }
-
-    return (mapping[field] ?? '').toString().toLowerCase();
+  private backendSortBy(): string {
+    return {
+      userName: 'user.name',
+      festivalName: 'specialEvent.eventName',
+      active: 'active'
+    }[this.sortBy];
   }
 }

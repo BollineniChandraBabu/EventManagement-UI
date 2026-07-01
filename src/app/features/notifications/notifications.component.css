@@ -74,3 +74,39 @@ textarea{resize:vertical}
     justify-content: flex-start;
   }
 }
+
+.notification-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 110px auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.notifications-pagination,
+.pagination-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pagination-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 767.98px) {
+  .notification-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sort-header {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+}
