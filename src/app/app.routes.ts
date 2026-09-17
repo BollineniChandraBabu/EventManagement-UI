@@ -40,6 +40,7 @@ export const routes: Routes = [
       { path: 'event-type-seeds/new', canActivate: [adminGuard], loadComponent: () => import('./features/event-type-seeds/event-type-seed-editor.component').then((m) => m.EventTypeSeedEditorComponent) },
       { path: 'event-type-seeds/:id/edit', canActivate: [adminGuard], loadComponent: () => import('./features/event-type-seeds/event-type-seed-editor.component').then((m) => m.EventTypeSeedEditorComponent) },
       { path: 'festival-wish-mappings', canActivate: [adminGuard], loadComponent: () => import('./features/festival-wish-mappings/festival-wish-mappings.component').then((m) => m.FestivalWishMappingsComponent) },
+      { path: 'wish-images', canActivate: [adminGuard], loadComponent: () => import('./features/wish-images/wish-images.component').then((m) => m.WishImagesComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
