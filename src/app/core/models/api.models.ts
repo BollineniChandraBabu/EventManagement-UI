@@ -139,6 +139,18 @@ export interface SaveUserPayload {
   isBirthdayEnabled?: boolean;
 }
 
+/** An administrator-uploaded image used as a fallback for a generated wish. */
+export interface WishImage {
+  id: number;
+  userId?: number | null;
+  userName?: string | null;
+  eventType: string;
+  imageUrl: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface UserStatusUpdateRequest {
   active: boolean;
 }

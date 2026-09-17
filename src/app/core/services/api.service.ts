@@ -33,7 +33,8 @@ import {
   WishPreviewResponse,
   NotificationItem,
   SaveNotificationPayload,
-  ViolatedUsersDashboardResponse
+  ViolatedUsersDashboardResponse,
+  WishImage
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -144,6 +145,45 @@ export class ApiService {
 
   deactivateUser(id: number, userStatusUpdateRequest: UserStatusUpdateRequest) {
     return this.http.patch(`${environment.apiUrl}/users/${id}/status`, userStatusUpdateRequest);
+  }
+
+  wishImages(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    eventType = '',
+    userId?: number,
+    active?: boolean,
+    sortBy = 'id',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<PagedResponse<WishImage>> {
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir).set('eventType', eventType);
+    if (userId !== undefined) params = params.set('userId', userId);
+    if (active !== undefined) params = params.set('active', active);
+
+    return this.http.get<ApiResponse<PagedResponse<WishImage> | WishImage[]>>(`${environment.apiUrl}/admin/wish-images`, { params })
+      .pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  createWishImage(file: File, eventType: string, active: boolean, userId?: number): Observable<WishImage> {
+    const formData = this.wishImageFormData(file, eventType, active, userId);
+    return this.http.post<ApiResponse<WishImage>>(`${environment.apiUrl}/admin/wish-images`, formData)
+      .pipe(map((response) => this.unwrap(response)));
+  }
+
+  updateWishImage(id: number, eventType?: string, active?: boolean, userId?: number, clearUser = false, file?: File): Observable<WishImage> {
+    const formData = new FormData();
+    if (eventType !== undefined) formData.append('eventType', eventType);
+    if (active !== undefined) formData.append('active', String(active));
+    if (userId !== undefined) formData.append('userId', String(userId));
+    if (clearUser) formData.append('clearUser', 'true');
+    if (file) formData.append('file', file);
+    return this.http.put<ApiResponse<WishImage>>(`${environment.apiUrl}/admin/wish-images/${id}`, formData)
+      .pipe(map((response) => this.unwrap(response)));
+  }
+
+  deleteWishImage(id: number): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/admin/wish-images/${id}`);
   }
 
   relationshipSeeds(
@@ -534,6 +574,15 @@ export class ApiService {
       isGoodMorningEnabled: payload.isGoodMorningEnabled ?? false,
       isGoodNightEnabled: payload.isGoodNightEnabled ?? false
     };
+  }
+
+  private wishImageFormData(file: File, eventType: string, active: boolean, userId?: number): FormData {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('eventType', eventType);
+    formData.append('active', String(active));
+    if (userId !== undefined) formData.append('userId', String(userId));
+    return formData;
   }
 
   private normalizeEnumSeedPayload(payload: SaveRelationshipSeedPayload | SaveEventTypeSeedPayload): Record<string, unknown> {
