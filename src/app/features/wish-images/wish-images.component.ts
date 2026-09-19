@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { AppUser, WishImage } from '../../core/models/api.models';
@@ -35,6 +35,7 @@ export class WishImagesComponent {
   editing?: WishImage;
   selectedFile?: File;
   previewUrl?: string;
+  selectedImage: WishImage | null = null;
   form = { eventType: '', userId: '', active: true };
 
   constructor() {
@@ -54,6 +55,14 @@ export class WishImagesComponent {
   openCreate(): void { this.editing = undefined; this.form = { eventType: '', userId: '', active: true }; this.selectedFile = undefined; this.previewUrl = undefined; this.editorOpen = true; }
   openEdit(image: WishImage): void { this.editing = image; this.form = { eventType: image.eventType, userId: image.userId ? String(image.userId) : '', active: image.active }; this.selectedFile = undefined; this.previewUrl = image.imageUrl; this.editorOpen = true; }
   closeEditor(): void { if (!this.saving) this.editorOpen = false; }
+
+  openImagePreview(image: WishImage): void { this.selectedImage = image; }
+  closeImagePreview(): void { this.selectedImage = null; }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.selectedImage) this.closeImagePreview();
+  }
 
   onFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
