@@ -32,6 +32,8 @@ export class EmailStatusComponent {
 
   filterText = '';
   filterStatus = 'ALL';
+  sortBy: 'id' | 'toEmail' | 'status' | 'sentAt' = 'id';
+  sortDir: 'asc' | 'desc' = 'desc';
   page = 0;
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
@@ -122,6 +124,15 @@ export class EmailStatusComponent {
     this.applyStatusFilter();
   }
 
+  toggleSort(field: typeof this.sortBy): void {
+    this.sortDir = this.sortBy === field ? (this.sortDir === 'asc' ? 'desc' : 'asc') : 'asc';
+    this.sortBy = field;
+    this.page = 0;
+    this.loadItems();
+  }
+
+  isSortedBy(field: typeof this.sortBy): boolean { return this.sortBy === field; }
+
   onPageSizeChange(value: string): void {
     this.pageSize = Number(value);
     this.page = 0;
@@ -149,7 +160,7 @@ export class EmailStatusComponent {
     this.totalElements = 0;
     this.totalPages = 0;
 
-    this.api.emailStatuses(this.page, this.pageSize, this.filterText, this.emailTypeFilter).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.emailStatuses(this.page, this.pageSize, this.filterText, this.emailTypeFilter, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.allItems = response.content ?? [];
         this.totalElements = response.totalElements ?? this.allItems.length;

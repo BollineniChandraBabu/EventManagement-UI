@@ -58,8 +58,8 @@
             <tr>
               <th>Recipient</th>
               <th>Subject</th>
-              <th>Status</th>
-              <th>Sent at</th>
+              <th><button class="sort-header" type="button" (click)="toggleSort('status')">Status <i *ngIf="isSortedBy('status')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
+              <th><button class="sort-header" type="button" (click)="toggleSort('sentAt')">Sent at <i *ngIf="isSortedBy('sentAt')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>

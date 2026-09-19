@@ -20,6 +20,13 @@ export class EventTypeSeedsComponent {
 
   eventTypeSeeds: EventTypeSeed[] = [];
   filterText = '';
+  page = 0;
+  pageSize = 10;
+  readonly pageSizes = [5, 10, 20];
+  totalPages = 0;
+  totalElements = 0;
+  sortBy: 'code' | 'displayName' | 'active' = 'displayName';
+  sortDir: 'asc' | 'desc' = 'asc';
   loading = false;
   deletingIds = new Set<number>();
 
@@ -38,6 +45,7 @@ export class EventTypeSeedsComponent {
 
   applySearch(): void {
     this.filterText = this.filterText.trim();
+    this.page = 0;
     this.loadEventTypeSeeds();
   }
 
@@ -47,8 +55,17 @@ export class EventTypeSeedsComponent {
     }
 
     this.filterText = '';
+    this.page = 0;
     this.loadEventTypeSeeds();
   }
+
+  onPageSizeChange(value: string): void { this.pageSize = Number(value); this.page = 0; this.loadEventTypeSeeds(); }
+  nextPage(): void { if (this.page < this.totalPages - 1) { this.page++; this.loadEventTypeSeeds(); } }
+  prevPage(): void { if (this.page > 0) { this.page--; this.loadEventTypeSeeds(); } }
+  toggleSort(field: typeof this.sortBy): void { this.sortDir = this.sortBy === field ? (this.sortDir === 'asc' ? 'desc' : 'asc') : 'asc'; this.sortBy = field; this.page = 0; this.loadEventTypeSeeds(); }
+  isSortedBy(field: typeof this.sortBy): boolean { return this.sortBy === field; }
+  get startRow(): number { return this.eventTypeSeeds.length ? this.page * this.pageSize + 1 : 0; }
+  get endRow(): number { return this.eventTypeSeeds.length ? this.startRow + this.eventTypeSeeds.length - 1 : 0; }
 
   deleteSeed(seed: EventTypeSeed): void {
     this.deletingIds.add(seed.id);
@@ -73,13 +90,17 @@ export class EventTypeSeedsComponent {
     this.loading = true;
     this.eventTypeSeeds = [];
 
-    this.api.eventTypeSeeds(this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.eventTypeSeedsPaged(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
-        this.eventTypeSeeds = response ?? [];
+        this.eventTypeSeeds = response.content ?? [];
+        this.totalElements = response.totalElements ?? this.eventTypeSeeds.length;
+        this.totalPages = response.totalPages ?? 0;
         this.loading = false;
       },
       error: () => {
         this.toast.error('Unable to load event type seeds right now.');
+        this.totalElements = 0;
+        this.totalPages = 0;
         this.loading = false;
       }
     });

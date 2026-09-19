@@ -28,6 +28,8 @@ export class WishImagesComponent {
   filterText = '';
   eventTypeFilter = '';
   activeFilter = 'ALL';
+  sortBy: 'id' | 'eventType' | 'active' | 'createdAt' | 'updatedAt' = 'updatedAt';
+  sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
   saving = false;
   deletingIds = new Set<number>();
@@ -49,6 +51,8 @@ export class WishImagesComponent {
   search(): void { this.page = 0; this.loadImages(); }
   clearSearch(): void { this.filterText = ''; this.search(); }
   changePageSize(value: string): void { this.pageSize = Number(value); this.page = 0; this.loadImages(); }
+  toggleSort(field: typeof this.sortBy): void { this.sortDir = this.sortBy === field ? (this.sortDir === 'asc' ? 'desc' : 'asc') : 'asc'; this.sortBy = field; this.page = 0; this.loadImages(); }
+  isSortedBy(field: typeof this.sortBy): boolean { return this.sortBy === field; }
   previousPage(): void { if (this.page) { this.page--; this.loadImages(); } }
   nextPage(): void { if (this.page + 1 < this.totalPages) { this.page++; this.loadImages(); } }
 
@@ -99,7 +103,7 @@ export class WishImagesComponent {
   private loadImages(): void {
     this.loading = true;
     const active = this.activeFilter === 'ALL' ? undefined : this.activeFilter === 'ACTIVE';
-    this.api.wishImages(this.page, this.pageSize, this.filterText.trim(), this.eventTypeFilter.trim(), undefined, active)
+    this.api.wishImages(this.page, this.pageSize, this.filterText.trim(), this.eventTypeFilter.trim(), undefined, active, this.sortBy, this.sortDir)
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (result) => { this.images = result.content ?? []; this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.loading = false; },
         error: () => { this.images = []; this.loading = false; this.toast.error('Unable to load wish images right now.'); }

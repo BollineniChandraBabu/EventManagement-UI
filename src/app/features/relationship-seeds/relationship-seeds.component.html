@@ -39,9 +39,9 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Display Name</th>
-              <th>Status</th>
+              <th><button class="sort-header" type="button" (click)="toggleSort('code')">Name <i *ngIf="isSortedBy('code')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
+              <th><button class="sort-header" type="button" (click)="toggleSort('displayName')">Display Name <i *ngIf="isSortedBy('displayName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
+              <th><button class="sort-header" type="button" (click)="toggleSort('active')">Status <i *ngIf="isSortedBy('active')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
