@@ -8,10 +8,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { EmailStatus } from '../../core/models/api.models';
 import { ToastService } from '../../core/services/toast.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, SensitiveEmailPipe],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
   templateUrl: './email-status.component.html',
   styleUrl: './email-status.component.css'
 })

@@ -11,7 +11,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from './core/services/api.service';
 import { NotificationRealtimeService } from './core/services/notification-realtime.service';
 import { NotificationItem, WishPreviewResponse } from './core/models/api.models';
-import { SensitiveDataService } from './core/services/sensitive-data.service';
 
 const WISH_PREVIEW_SEEN_KEY = 'fw_wish_preview_seen_token';
 const PUBLISHED_NOTIFICATION_DISMISSED_KEY = 'fw_published_notification_dismissed_id';
@@ -26,7 +25,6 @@ const PUBLISHED_NOTIFICATION_DISMISSED_KEY = 'fw_published_notification_dismisse
 export class AppComponent {
   readonly auth = inject(AuthService);
   readonly impersonation = inject(ImpersonationService);
-  readonly sensitive = inject(SensitiveDataService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
@@ -83,10 +81,6 @@ export class AppComponent {
         this.scheduleIntervalId = null;
       }
     });
-  }
-
-  toggleSensitiveInfo(): void {
-    this.sensitive.toggle();
   }
 
   toggleMobileMenu(): void {

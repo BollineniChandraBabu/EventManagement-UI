@@ -8,10 +8,11 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, SensitiveEmailPipe],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, SensitiveEmailPipe, SensitiveInfoToggleComponent],
   templateUrl: './event-editor.component.html',
   styleUrl: './event-editor.component.css'
 })

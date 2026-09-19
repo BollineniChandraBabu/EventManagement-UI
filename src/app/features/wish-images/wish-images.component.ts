@@ -6,10 +6,11 @@ import { AppUser, WishImage } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, SensitiveEmailPipe],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
   templateUrl: './wish-images.component.html',
   styleUrl: './wish-images.component.css'
 })

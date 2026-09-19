@@ -8,13 +8,15 @@ import { ImpersonationService } from '../../core/services/impersonation.service'
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 import { SensitiveDataService } from '../../core/services/sensitive-data.service';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { AppUser } from '../../core/models/api.models';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    SensitiveInfoToggleComponent
   ],
   templateUrl: './account-management.component.html',
   styleUrl: './account-management.component.css'

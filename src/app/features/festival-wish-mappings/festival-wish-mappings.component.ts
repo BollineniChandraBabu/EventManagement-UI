@@ -7,11 +7,12 @@ import { AppUser, FestivalItem, FestivalWishMapping, SaveFestivalWishMappingPayl
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
 @Component({
   selector: 'app-festival-wish-mappings',
   standalone: true,
-  imports: [CommonModule, FormsModule, SensitiveEmailPipe],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
   templateUrl: './festival-wish-mappings.component.html',
   styleUrl: './festival-wish-mappings.component.css'
 })

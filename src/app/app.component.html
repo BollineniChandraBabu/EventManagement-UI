@@ -152,10 +152,6 @@
   </aside>
 
   <div class="content-shell">
-    <button class="sensitive-toggle" type="button" (click)="toggleSensitiveInfo()" [attr.aria-pressed]="!sensitive.hidden()" [attr.aria-label]="sensitive.hidden() ? 'Show sensitive information' : 'Hide sensitive information'">
-      <i class="fa-solid" [class.fa-eye]="sensitive.hidden()" [class.fa-eye-slash]="!sensitive.hidden()"></i>
-      <span>{{ sensitive.hidden() ? 'Show sensitive info' : 'Hide sensitive info' }}</span>
-    </button>
     <!-- Impersonation banner -->
     <div class="impersonation-banner" *ngIf="impersonation.isImpersonating()">
       <div class="impersonation-banner-inner">
@@ -163,7 +159,6 @@
         <span class="impersonation-banner-text">
           You are viewing the app as
           <strong>{{ impersonation.impersonatedUser()?.name }}</strong>
-          ({{ sensitive.maskEmail(impersonation.impersonatedUser()?.email) }})
           — all actions use your admin credentials
         </span>
         <button class="impersonation-banner-btn" type="button" (click)="exitImpersonation()">

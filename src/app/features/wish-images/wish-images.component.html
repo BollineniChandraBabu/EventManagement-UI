@@ -4,7 +4,7 @@
       <span class="page-header-icon purple"><i class="fa-solid fa-images"></i></span>
       <div><h1 class="page-header-title">Wish Images</h1><p class="page-header-subtitle">Upload curated images for event wishes before AI generation is used</p></div>
     </div>
-    <div class="page-header-actions"><span class="badge badge-primary">{{ totalElements }} total</span><button class="btn btn-primary" type="button" (click)="openCreate()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Image</button></div>
+    <div class="page-header-actions"><app-sensitive-info-toggle /><span class="badge badge-primary">{{ totalElements }} total</span><button class="btn btn-primary" type="button" (click)="openCreate()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Image</button></div>
   </div>
 
   <div class="card"><div class="card-body">

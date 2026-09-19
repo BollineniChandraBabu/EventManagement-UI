@@ -625,5 +625,3 @@
     align-self: flex-end;
   }
 }
-
-.sensitive-toggle { position:fixed; z-index:90; right:1.25rem; top:1rem; display:inline-flex; align-items:center; gap:.45rem; border:1px solid var(--c-border); border-radius:999px; background:var(--c-surface); color:var(--c-text-secondary); padding:.48rem .8rem; font:inherit; font-size:.8rem; font-weight:700; box-shadow:var(--shadow-md); cursor:pointer; }.sensitive-toggle:hover { color:var(--c-primary); border-color:var(--c-primary); }@media(max-width:991px) { .sensitive-toggle { top:auto; bottom:1rem; right:1rem; } }
