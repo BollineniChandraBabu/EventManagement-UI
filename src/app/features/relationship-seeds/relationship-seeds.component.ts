@@ -25,6 +25,8 @@ export class RelationshipSeedsComponent {
   pageSize = 10;
   totalPages = 0;
   totalElements = 0;
+  sortBy: 'code' | 'displayName' | 'active' = 'displayName';
+  sortDir: 'asc' | 'desc' = 'asc';
   loading = false;
   deletingIds = new Set<number>();
 
@@ -56,6 +58,9 @@ export class RelationshipSeedsComponent {
     this.page = 0;
     this.loadRelationshipSeeds();
   }
+
+  toggleSort(field: typeof this.sortBy): void { this.sortDir = this.sortBy === field ? (this.sortDir === 'asc' ? 'desc' : 'asc') : 'asc'; this.sortBy = field; this.page = 0; this.loadRelationshipSeeds(); }
+  isSortedBy(field: typeof this.sortBy): boolean { return this.sortBy === field; }
 
   onPageSizeChange(value: string): void {
     this.pageSize = Number(value);
@@ -115,7 +120,7 @@ export class RelationshipSeedsComponent {
     this.loading = true;
     this.relationshipSeeds = [];
 
-    this.api.relationshipSeedsPaged(this.page, this.pageSize, this.filterText).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.relationshipSeedsPaged(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.relationshipSeeds = response.content ?? [];
         this.totalElements = response.totalElements ?? this.relationshipSeeds.length;

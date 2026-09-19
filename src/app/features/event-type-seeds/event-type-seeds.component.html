@@ -16,7 +16,7 @@
 
   <div class="card">
     <div class="card-body">
-      <div class="filter-bar mb-4" style="grid-template-columns: 1fr;">
+      <div class="filter-bar mb-4" style="grid-template-columns: 1fr auto;">
         <div>
           <label class="form-label">Search event types</label>
           <div class="input-group" style="max-width:400px;">
@@ -27,6 +27,7 @@
             <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loading">Search</button>
           </div>
         </div>
+        <div><label class="form-label">Per page</label><select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading"><option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option></select></div>
       </div>
 
       <div class="table-responsive">
@@ -71,6 +72,7 @@
           </tbody>
         </table>
       </div>
+      <div class="pagination-bar"><span class="pagination-info">Showing {{ startRow }}–{{ endRow }} of {{ totalElements }} event types</span><div class="btn-group pagination-controls"><button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loading || page === 0">Prev</button><button class="btn btn-sm btn-primary" type="button" disabled>{{ page + 1 }} / {{ totalPages || 1 }}</button><button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="loading || page >= totalPages - 1">Next</button></div></div>
     </div>
   </div>
 </div>

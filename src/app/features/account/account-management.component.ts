@@ -7,13 +7,16 @@ import { AuthService } from '../../core/services/auth.service';
 import { ImpersonationService } from '../../core/services/impersonation.service';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { SensitiveDataService } from '../../core/services/sensitive-data.service';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { AppUser } from '../../core/models/api.models';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    SensitiveInfoToggleComponent
   ],
   templateUrl: './account-management.component.html',
   styleUrl: './account-management.component.css'
@@ -23,6 +26,7 @@ export class AccountManagementComponent {
   private readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  readonly sensitive = inject(SensitiveDataService);
   readonly impersonation = inject(ImpersonationService);
   private readonly destroyRef = inject(DestroyRef);
   readonly ROLE_ADMIN = ROLE_ADMIN;

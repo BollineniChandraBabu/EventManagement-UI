@@ -5,7 +5,7 @@
         <h2 class="page-title mb-1">{{ pageTitle }}</h2>
         <p class="text-muted mb-0">Create personalized events with cleaner inputs and faster admin workflows.</p>
       </div>
-      <a class="btn btn-outline-secondary" routerLink="/events">Back to Events</a>
+      <div class="d-flex gap-2 align-items-center"><app-sensitive-info-toggle /><a class="btn btn-outline-secondary" routerLink="/events">Back to Events</a></div>
     </div>
 
     <div *ngIf="loading" class="text-muted py-3">Loading event data...</div>
@@ -16,7 +16,7 @@
           <label class="form-label">User <span class="text-danger">*</span></label>
           <select class="form-select" formControlName="userId" [disabled]="!isAdmin()">
             <option [ngValue]="0" disabled>Select a user</option>
-            <option *ngFor="let user of allUsers" [ngValue]="user.id">{{ user.name }} ({{ user.email }})</option>
+            <option *ngFor="let user of allUsers" [ngValue]="user.id">{{ user.name }} ({{ user.email | sensitiveEmail }})</option>
           </select>
         </div>
 

@@ -1,14 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { AppUser, WishImage } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
   templateUrl: './wish-images.component.html',
   styleUrl: './wish-images.component.css'
 })
@@ -26,6 +28,8 @@ export class WishImagesComponent {
   filterText = '';
   eventTypeFilter = '';
   activeFilter = 'ALL';
+  sortBy: 'id' | 'eventType' | 'active' | 'createdAt' | 'updatedAt' = 'updatedAt';
+  sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
   saving = false;
   deletingIds = new Set<number>();
@@ -33,6 +37,7 @@ export class WishImagesComponent {
   editing?: WishImage;
   selectedFile?: File;
   previewUrl?: string;
+  selectedImage: WishImage | null = null;
   form = { eventType: '', userId: '', active: true };
 
   constructor() {
@@ -46,12 +51,22 @@ export class WishImagesComponent {
   search(): void { this.page = 0; this.loadImages(); }
   clearSearch(): void { this.filterText = ''; this.search(); }
   changePageSize(value: string): void { this.pageSize = Number(value); this.page = 0; this.loadImages(); }
+  toggleSort(field: typeof this.sortBy): void { this.sortDir = this.sortBy === field ? (this.sortDir === 'asc' ? 'desc' : 'asc') : 'asc'; this.sortBy = field; this.page = 0; this.loadImages(); }
+  isSortedBy(field: typeof this.sortBy): boolean { return this.sortBy === field; }
   previousPage(): void { if (this.page) { this.page--; this.loadImages(); } }
   nextPage(): void { if (this.page + 1 < this.totalPages) { this.page++; this.loadImages(); } }
 
   openCreate(): void { this.editing = undefined; this.form = { eventType: '', userId: '', active: true }; this.selectedFile = undefined; this.previewUrl = undefined; this.editorOpen = true; }
   openEdit(image: WishImage): void { this.editing = image; this.form = { eventType: image.eventType, userId: image.userId ? String(image.userId) : '', active: image.active }; this.selectedFile = undefined; this.previewUrl = image.imageUrl; this.editorOpen = true; }
   closeEditor(): void { if (!this.saving) this.editorOpen = false; }
+
+  openImagePreview(image: WishImage): void { this.selectedImage = image; }
+  closeImagePreview(): void { this.selectedImage = null; }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.selectedImage) this.closeImagePreview();
+  }
 
   onFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -88,7 +103,7 @@ export class WishImagesComponent {
   private loadImages(): void {
     this.loading = true;
     const active = this.activeFilter === 'ALL' ? undefined : this.activeFilter === 'ACTIVE';
-    this.api.wishImages(this.page, this.pageSize, this.filterText.trim(), this.eventTypeFilter.trim(), undefined, active)
+    this.api.wishImages(this.page, this.pageSize, this.filterText.trim(), this.eventTypeFilter.trim(), undefined, active, this.sortBy, this.sortDir)
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (result) => { this.images = result.content ?? []; this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.loading = false; },
         error: () => { this.images = []; this.loading = false; this.toast.error('Unable to load wish images right now.'); }

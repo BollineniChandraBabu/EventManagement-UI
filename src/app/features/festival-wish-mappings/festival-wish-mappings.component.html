@@ -7,7 +7,7 @@
         <p class="page-header-subtitle">Map festivals to users for automatic scheduler-based greeting emails</p>
       </div>
     </div>
-    <div class="page-header-actions">
+    <div class="page-header-actions"><app-sensitive-info-toggle />
       <button *ngIf="mode === 'dashboard'" class="btn btn-primary" type="button" (click)="startCreate()">
         <i class="fa-solid fa-plus me-1"></i>Create / Update Mapping
       </button>
@@ -43,7 +43,7 @@
           <select class="form-select" [(ngModel)]="form.userId" [disabled]="saving || users.length === 0">
             <option [ngValue]="0">Select user</option>
             <option *ngFor="let user of users" [ngValue]="user.id">
-              {{ user.name }} ({{ user.email }})
+              {{ user.name }} ({{ user.email | sensitiveEmail }})
             </option>
           </select>
         </div>

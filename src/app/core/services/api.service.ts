@@ -246,6 +246,14 @@ export class ApiService {
     );
   }
 
+  eventTypeSeedsPaged(
+    page = 0, size = 10, searchKey = '', sortBy = 'displayName', sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<PagedResponse<EventTypeSeed>> {
+    return this.requestWithFallback<ApiResponse<PagedResponse<EventTypeSeed> | EventTypeSeed[]>>((path) => this.http.get<ApiResponse<PagedResponse<EventTypeSeed> | EventTypeSeed[]>>(`${environment.apiUrl}${path}`, {
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+    }), this.eventTypeSeedPaths).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
   eventTypeSeedById(id: number): Observable<EventTypeSeed> {
     return this.requestWithFallback<ApiResponse<EventTypeSeed>>((path) => this.http.get<ApiResponse<EventTypeSeed>>(`${environment.apiUrl}${path}/${id}`), this.eventTypeSeedPaths).pipe(
       map((response) => this.unwrap(response))
@@ -351,7 +359,7 @@ export class ApiService {
     return this.http.post<AiWishResponse>(`${environment.apiUrl}/ai/generate-wish`, payload);
   }
 
-  emailStatuses(page = 0, size = 10, searchKey = '', emailType = ''): Observable<PagedResponse<EmailStatus>> {
+  emailStatuses(page = 0, size = 10, searchKey = '', emailType = '', sortBy = 'id', sortDir: 'asc' | 'desc' = 'desc'): Observable<PagedResponse<EmailStatus>> {
     let url = `${environment.apiUrl}/emails/status`;
     if (emailType === 'OTP') {
       url += '/admin/otp';
@@ -362,7 +370,7 @@ export class ApiService {
     } else if (emailType === 'UNREAD_CHAT_MESSAGE') {
       url += '/unread-chat-messages';
     }
-    const params = this.pagedParams(page, size, searchKey);
+    const params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
     const requestWithEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(url, {
       params: emailType ? params.set('emailType', emailType) : params
     });

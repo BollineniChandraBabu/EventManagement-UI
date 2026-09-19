@@ -40,6 +40,11 @@
             <span class="nav-label">Events</span>
           </a>
 
+          <a class="nav-item" routerLink="/calendar" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Calendar">
+            <span class="nav-icon"><i class="fa-solid fa-calendar-week"></i></span>
+            <span class="nav-label">Calendar</span>
+          </a>
+
           <a class="nav-item" routerLink="/email-status" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()" data-tooltip="Email Status">
             <span class="nav-icon"><i class="fa-solid fa-envelope-circle-check"></i></span>
             <span class="nav-label">Email Status</span>
@@ -154,7 +159,6 @@
         <span class="impersonation-banner-text">
           You are viewing the app as
           <strong>{{ impersonation.impersonatedUser()?.name }}</strong>
-          ({{ impersonation.impersonatedUser()?.email }})
           — all actions use your admin credentials
         </span>
         <button class="impersonation-banner-btn" type="button" (click)="exitImpersonation()">

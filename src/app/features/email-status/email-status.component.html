@@ -9,6 +9,7 @@
       </div>
     </div>
     <div class="page-header-actions">
+      <app-sensitive-info-toggle />
       <span class="badge badge-secondary">{{ totalElements }} records</span>
     </div>
   </div>
@@ -57,14 +58,14 @@
             <tr>
               <th>Recipient</th>
               <th>Subject</th>
-              <th>Status</th>
-              <th>Sent at</th>
+              <th><button class="sort-header" type="button" (click)="toggleSort('status')">Status <i *ngIf="isSortedBy('status')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
+              <th><button class="sort-header" type="button" (click)="toggleSort('sentAt')">Sent at <i *ngIf="isSortedBy('sentAt')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let item of viewItems">
-              <td>{{ item.toEmail }}</td>
+              <td>{{ item.toEmail | sensitiveEmail }}</td>
               <td><span class="email-subject">{{ item.subject || '(no subject)' }}</span></td>
               <td>
                 <span class="badge"
@@ -153,7 +154,7 @@
       <div class="email-shell" [class.email-shell--mobile]="previewMode === 'mobile'">
         <div class="email-meta">
           <div class="email-meta-row"><span class="meta-key">From</span><span class="meta-val">{{ previewFrom }}</span></div>
-          <div class="email-meta-row"><span class="meta-key">To</span><span class="meta-val">{{ selectedItem.toEmail }}</span></div>
+          <div class="email-meta-row"><span class="meta-key">To</span><span class="meta-val">{{ selectedItem.toEmail | sensitiveEmail }}</span></div>
           <div class="email-meta-row"><span class="meta-key">Sent</span><span class="meta-val text-muted">{{ selectedItem.sentAt | date:'full' }}</span></div>
           <div class="email-meta-row email-meta-subject">
             <span class="meta-key">Subject</span>

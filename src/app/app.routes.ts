@@ -23,6 +23,7 @@ export const routes: Routes = [
       { path: 'notifications', canActivate: [adminGuard], loadComponent: () => import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent) },
       { path: 'notifications/new', canActivate: [adminGuard], loadComponent: () => import('./features/notifications/notification-editor.component').then((m) => m.NotificationEditorComponent) },
       { path: 'notifications/:id/edit', canActivate: [adminGuard], loadComponent: () => import('./features/notifications/notification-editor.component').then((m) => m.NotificationEditorComponent) },
+      { path: 'calendar', loadComponent: () => import('./features/calendar/calendar.component').then((m) => m.CalendarComponent) },
       { path: 'events', loadComponent: () => import('./features/events/events.component').then((m) => m.EventsComponent) },
       { path: 'events/new', canActivate: [adminGuard], loadComponent: () => import('./features/events/event-editor.component').then((m) => m.EventEditorComponent) },
       { path: 'events/:id/edit', canActivate: [adminGuard], loadComponent: () => import('./features/events/event-editor.component').then((m) => m.EventEditorComponent) },

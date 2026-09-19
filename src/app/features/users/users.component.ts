@@ -9,10 +9,12 @@ import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
 import { ImpersonationService } from '../../core/services/impersonation.service';
 import { AuthService } from '../../core/services/auth.service';
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SensitiveEmailPipe, SensitiveInfoToggleComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css'
 })
