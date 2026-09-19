@@ -7,10 +7,11 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EmailStatus } from '../../core/models/api.models';
 import { ToastService } from '../../core/services/toast.service';
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe],
   templateUrl: './email-status.component.html',
   styleUrl: './email-status.component.css'
 })

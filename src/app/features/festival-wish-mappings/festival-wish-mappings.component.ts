@@ -6,11 +6,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AppUser, FestivalItem, FestivalWishMapping, SaveFestivalWishMappingPayload } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 
 @Component({
   selector: 'app-festival-wish-mappings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe],
   templateUrl: './festival-wish-mappings.component.html',
   styleUrl: './festival-wish-mappings.component.css'
 })

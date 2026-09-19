@@ -1,3 +1,4 @@
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +9,7 @@ import { ViolatedUserInfo, ViolatedUserMapPoint } from '../../core/models/api.mo
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe],
   templateUrl: './violated-users.component.html',
   styleUrl: './violated-users.component.css'
 })

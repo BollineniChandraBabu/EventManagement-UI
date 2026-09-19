@@ -109,7 +109,7 @@
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Email address</label>
-              <input class="form-control" type="email" formControlName="email" readonly />
+              <input class="form-control" type="text" [value]="sensitive.maskEmail(profileForm.controls.email.value)" readonly />
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Role</label>

@@ -86,7 +86,7 @@
                   {{ user.name }}
                 </div>
               </td>
-              <td><span class="text-muted">{{ user.email }}</span></td>
+              <td><span class="text-muted">{{ user.email | sensitiveEmail }}</span></td>
               <td>{{ userDob(user) ? (userDob(user) | date:'mediumDate') : '—' }}</td>
               <td>
                 <span class="badge" [class.badge-danger]="user.role === ROLE_ADMIN" [class.badge-info]="user.role === ROLE_USER">

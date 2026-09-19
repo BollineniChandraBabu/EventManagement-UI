@@ -16,7 +16,7 @@
           <label class="form-label">User <span class="text-danger">*</span></label>
           <select class="form-select" formControlName="userId" [disabled]="!isAdmin()">
             <option [ngValue]="0" disabled>Select a user</option>
-            <option *ngFor="let user of allUsers" [ngValue]="user.id">{{ user.name }} ({{ user.email }})</option>
+            <option *ngFor="let user of allUsers" [ngValue]="user.id">{{ user.name }} ({{ user.email | sensitiveEmail }})</option>
           </select>
         </div>
 

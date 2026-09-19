@@ -5,10 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { AppUser, WishImage } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe],
   templateUrl: './wish-images.component.html',
   styleUrl: './wish-images.component.css'
 })

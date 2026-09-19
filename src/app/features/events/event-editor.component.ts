@@ -7,10 +7,11 @@ import { AppUser, EventTypeSeed, SaveEventPayload } from '../../core/models/api.
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, SensitiveEmailPipe],
   templateUrl: './event-editor.component.html',
   styleUrl: './event-editor.component.css'
 })

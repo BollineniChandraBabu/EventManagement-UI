@@ -43,7 +43,7 @@
           <select class="form-select" [(ngModel)]="form.userId" [disabled]="saving || users.length === 0">
             <option [ngValue]="0">Select user</option>
             <option *ngFor="let user of users" [ngValue]="user.id">
-              {{ user.name }} ({{ user.email }})
+              {{ user.name }} ({{ user.email | sensitiveEmail }})
             </option>
           </select>
         </div>

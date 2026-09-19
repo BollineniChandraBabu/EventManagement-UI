@@ -64,7 +64,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let item of viewItems">
-              <td>{{ item.toEmail }}</td>
+              <td>{{ item.toEmail | sensitiveEmail }}</td>
               <td><span class="email-subject">{{ item.subject || '(no subject)' }}</span></td>
               <td>
                 <span class="badge"
@@ -153,7 +153,7 @@
       <div class="email-shell" [class.email-shell--mobile]="previewMode === 'mobile'">
         <div class="email-meta">
           <div class="email-meta-row"><span class="meta-key">From</span><span class="meta-val">{{ previewFrom }}</span></div>
-          <div class="email-meta-row"><span class="meta-key">To</span><span class="meta-val">{{ selectedItem.toEmail }}</span></div>
+          <div class="email-meta-row"><span class="meta-key">To</span><span class="meta-val">{{ selectedItem.toEmail | sensitiveEmail }}</span></div>
           <div class="email-meta-row"><span class="meta-key">Sent</span><span class="meta-val text-muted">{{ selectedItem.sentAt | date:'full' }}</span></div>
           <div class="email-meta-row email-meta-subject">
             <span class="meta-key">Subject</span>
