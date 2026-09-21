@@ -1,8 +1,56 @@
 <div class="page calendar-page">
-  <div class="page-header"><div class="page-header-left"><span class="page-header-icon blue"><i class="fa-solid fa-calendar-days"></i></span><div><h1 class="page-header-title">Calendar</h1><p class="page-header-subtitle">See all of your scheduled celebrations at a glance</p></div></div></div>
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon blue"><i class="fa-solid fa-calendar-days"></i></span>
+      <div><h1 class="page-header-title">Calendar</h1><p class="page-header-subtitle">See all of your scheduled celebrations at a glance</p></div>
+    </div>
+  </div>
+
   <section class="calendar card" aria-label="Event calendar">
-    <div class="calendar-toolbar"><div class="calendar-navigation"><button class="btn btn-outline-secondary" (click)="previous()" aria-label="Previous period"><i class="fa-solid fa-chevron-left"></i></button><button class="btn btn-outline-secondary" (click)="today()">Today</button><button class="btn btn-outline-secondary" (click)="next()" aria-label="Next period"><i class="fa-solid fa-chevron-right"></i></button><h2>{{ title }}</h2></div><div class="view-switch" role="group" aria-label="Calendar view"><button *ngFor="let option of ['month','week','day']" class="btn" [class.btn-primary]="view === option" [class.btn-outline-secondary]="view !== option" (click)="setView($any(option))">{{ option | titlecase }}</button></div></div>
-    <div class="calendar-grid" [class.week-view]="view === 'week'" [class.day-view]="view === 'day'"><div class="weekday" *ngFor="let weekday of (view === 'day' ? [] : weekdays)">{{ weekday }}</div><article class="calendar-day" *ngFor="let day of days" [class.outside-month]="!day.inMonth" [class.today]="isToday(day.date)"><div class="day-number">{{ day.date | date:'d' }}</div><div class="calendar-event" *ngFor="let event of day.events" [class.calendar-event--festival]="event.type === 'festival'" [title]="event.title + ': ' + event.detail"><span><i *ngIf="event.type === 'festival'" class="fa-solid fa-sparkles me-1" aria-hidden="true"></i>{{ event.title }}</span><small>{{ event.detail }}</small></div><p class="no-events" *ngIf="!day.events.length && view === 'day'">No events scheduled</p></article></div>
+    <div class="calendar-toolbar">
+      <div class="calendar-navigation">
+        <button class="btn btn-outline-secondary" type="button" (click)="previous()" aria-label="Previous period"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="btn btn-outline-secondary" type="button" (click)="today()">Today</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="next()" aria-label="Next period"><i class="fa-solid fa-chevron-right"></i></button>
+        <h2>{{ title }}</h2>
+      </div>
+      <div class="view-switch" role="group" aria-label="Calendar view">
+        <button *ngFor="let option of ['month', 'week', 'day']" class="btn" type="button" [class.btn-primary]="view === option" [class.btn-outline-secondary]="view !== option" (click)="setView($any(option))">{{ option | titlecase }}</button>
+      </div>
+    </div>
+
+    <div class="calendar-grid" [class.week-view]="view === 'week'" [class.day-view]="view === 'day'">
+      <div class="weekday" *ngFor="let weekday of (view === 'day' ? [] : weekdays)">{{ weekday }}</div>
+      <article class="calendar-day" *ngFor="let day of days" [class.outside-month]="!day.inMonth" [class.today]="isToday(day.date)">
+        <div class="day-number">{{ day.date | date:'d' }}</div>
+        <ng-container *ngFor="let event of day.events">
+          <button *ngIf="event.type === 'festival'; else scheduledEvent" class="calendar-event calendar-event--festival" type="button" (click)="openFestival(event)" [attr.aria-label]="'Show details for ' + event.title">
+            <span><i class="fa-solid fa-sparkles me-1" aria-hidden="true"></i>{{ event.title }}</span>
+            <small>{{ event.detail }}</small>
+          </button>
+          <ng-template #scheduledEvent>
+            <div class="calendar-event" [title]="event.title + ': ' + event.detail"><span>{{ event.title }}</span><small>{{ event.detail }}</small></div>
+          </ng-template>
+        </ng-container>
+        <p class="no-events" *ngIf="!day.events.length && view === 'day'">No events scheduled</p>
+      </article>
+    </div>
     <div class="calendar-loading" *ngIf="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading calendar…</div>
+  </section>
+</div>
+
+<div class="festival-popover-backdrop" *ngIf="selectedFestival" (click)="closeFestival()">
+  <section class="festival-popover" role="dialog" aria-modal="true" [attr.aria-label]="selectedFestival.title + ' details'" (click)="$event.stopPropagation()">
+    <header class="festival-popover__header">
+      <span class="festival-popover__icon"><i class="fa-solid fa-sparkles" aria-hidden="true"></i></span>
+      <button class="btn-close" type="button" (click)="closeFestival()" aria-label="Close festival details"></button>
+    </header>
+    <div class="festival-popover__body">
+      <p class="festival-popover__label">Festival</p>
+      <h2>{{ selectedFestival.title }}</h2>
+      <p class="festival-popover__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selectedFestival.date | date:'EEEE, MMMM d, y' }}</p>
+      <p class="festival-popover__description">Celebrate {{ selectedFestival.title }} on this day.</p>
+    </div>
+    <footer class="festival-popover__footer"><button class="btn btn-primary" type="button" (click)="closeFestival()">Done</button></footer>
   </section>
 </div>
