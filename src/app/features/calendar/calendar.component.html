@@ -24,12 +24,12 @@
       <article class="calendar-day" *ngFor="let day of days" [class.outside-month]="!day.inMonth" [class.today]="isToday(day.date)">
         <div class="day-number">{{ day.date | date:'d' }}</div>
         <ng-container *ngFor="let event of day.events">
-          <button *ngIf="event.type === 'festival'; else scheduledEvent" class="calendar-event calendar-event--festival" type="button" (click)="openFestival(event, $event)" [attr.aria-label]="'Show details for ' + event.title">
-            <span><i class="fa-solid fa-sparkles me-1" aria-hidden="true"></i>{{ event.title }}</span>
-            <small>{{ event.detail }}</small>
+          <button *ngIf="event.eventType === 'Festival'; else scheduledEvent" class="calendar-event calendar-event--festival" type="button" (click)="openFestival(event, $event)" [attr.aria-label]="'Show details for ' + event.eventName">
+            <span><i class="fa-solid fa-sparkles me-1" aria-hidden="true"></i>{{ event.eventType }}</span>
+            <small>{{ event.eventName }}</small>
           </button>
           <ng-template #scheduledEvent>
-            <div class="calendar-event" [title]="event.title + ': ' + event.detail"><span>{{ event.title }}</span><small>{{ event.detail }}</small></div>
+            <div class="calendar-event" [title]="event.eventType + ': ' + event.eventName"><span>{{ event.eventType }}</span><small>{{ event.eventName }}</small></div>
           </ng-template>
         </ng-container>
         <p class="no-events" *ngIf="!day.events.length && view === 'day'">No events scheduled</p>
@@ -40,16 +40,16 @@
 </div>
 
 <div class="festival-popover-backdrop" *ngIf="selectedEvent" (click)="closeFestival()">
-  <section class="festival-popover" role="dialog" aria-modal="true" [attr.aria-label]="selectedEvent.title + ' details'" (click)="$event.stopPropagation()">
+  <section class="festival-popover" role="dialog" aria-modal="true" [attr.aria-label]="selectedEvent.eventType + ' details'" (click)="$event.stopPropagation()">
     <header class="festival-popover__header">
       <span class="festival-popover__icon"><i class="fa-solid fa-sparkles" aria-hidden="true"></i></span>
       <button class="btn-close" type="button" (click)="closeFestival()" aria-label="Close festival details"></button>
     </header>
     <div class="festival-popover__body">
-      <p class="festival-popover__label">Festival</p>
-      <h2>{{ selectedEvent.title }}</h2>
-      <p class="festival-popover__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selectedEvent.date | date:'EEEE, MMMM d, y' }}</p>
-      <p class="festival-popover__description">Celebrate {{ selectedEvent.title }} on this day.</p>
+      <p class="festival-popover__label">{{ selectedEvent.eventType }}</p>
+      <h2>{{ selectedEvent.eventName }}</h2>
+      <p class="festival-popover__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selectedEvent.eventDate | date:'EEEE, MMMM d, y' }}</p>
+      <p class="festival-popover__description">Celebrate {{ selectedEvent.eventType }} on this day.</p>
     </div>
     <footer class="festival-popover__footer"><button class="btn btn-primary" type="button" (click)="closeFestival()">Done</button></footer>
   </section>

@@ -5,17 +5,10 @@ import { BehaviorSubject, distinctUntilChanged, switchMap } from 'rxjs';
 import {CalendarResItem, EventItem, FestivalItem} from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 
-interface CalendarItem {
-  date: string;
-  title: string;
-  detail: string;
-  type: 'event' | 'festival';
-}
-
 interface CalendarDay {
   date: Date;
   inMonth: boolean;
-  events: CalendarItem[];
+  events: CalendarResItem[];
 }
 
 @Component({
@@ -32,7 +25,7 @@ export class CalendarComponent {
   view: 'month' | 'week' | 'day' = 'month';
   cursor = this.startOfDay(new Date());
   events: CalendarResItem[] = [];
-  selectedEvent: CalendarItem | null = null;
+  selectedEvent: CalendarResItem | null = null;
   loadingEvents = true;
   private readonly monthSubject = new BehaviorSubject<number>(this.cursor.getMonth() + 1);
 
@@ -116,7 +109,7 @@ export class CalendarComponent {
     return date.getTime() === this.startOfDay(new Date()).getTime();
   }
 
-  openFestival(festival: CalendarItem, event: MouseEvent): void {
+  openFestival(festival: CalendarResItem, event: MouseEvent): void {
     event.stopPropagation();
     this.selectedEvent = festival;
   }
@@ -130,16 +123,9 @@ export class CalendarComponent {
     this.closeFestival();
   }
 
-  private eventsFor(date: Date): CalendarItem[] {
-    const festivals = this.events.map(festival => ({
-      date: festival.eventDate,
-      title: festival.eventType || 'Festival',
-      name: festival.eventName || '',
-      detail: festival.eventName || '',
-      type: 'festival' as const
-    }));
-    let c =[...festivals].filter(event => this.isSameDate(event.date, date));
-    return [...festivals].filter(event => this.isSameDate(event.date, date));
+  private eventsFor(date: Date): CalendarResItem[] {
+    const events = [ ...this.events ];
+    return [...events].filter(event => this.isSameDate(event.eventDate, date));
   }
 
   private setCursor(date: Date): void {
