@@ -135,7 +135,7 @@ export class CalendarComponent {
       date: festival.eventDate,
       title: festival.eventType || 'Festival',
       name: festival.eventName || '',
-      detail: 'Festival',
+      detail: festival.eventName || '',
       type: 'festival' as const
     }));
     let c =[...festivals].filter(event => this.isSameDate(event.date, date));
