@@ -80,11 +80,20 @@ export class CalendarComponent {
     if (this.view === 'month') {
       const year = this.cursor.getFullYear();
       const month = this.cursor.getMonth();
+      const firstDayOfMonth = new Date(year, month, 1);
       const dayCount = new Date(year, month + 1, 0).getDate();
+      const cellCount = Math.ceil((firstDayOfMonth.getDay() + dayCount) / 7) * 7;
+      const start = new Date(firstDayOfMonth);
+      start.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
 
-      return Array.from({ length: dayCount }, (_, index) => {
-        const date = new Date(year, month, index + 1);
-        return { date, inMonth: true, events: this.eventsFor(date) };
+      return Array.from({ length: cellCount }, (_, index) => {
+        const date = new Date(start);
+        date.setDate(start.getDate() + index);
+        return {
+          date,
+          inMonth: date.getMonth() === month && date.getFullYear() === year,
+          events: this.eventsFor(date)
+        };
       });
     }
 
@@ -117,7 +126,8 @@ export class CalendarComponent {
     return date.getTime() === this.startOfDay(new Date()).getTime();
   }
 
-  openFestival(festival: CalendarItem): void {
+  openFestival(festival: CalendarItem, event: MouseEvent): void {
+    event.stopPropagation();
     this.selectedFestival = festival;
   }
 

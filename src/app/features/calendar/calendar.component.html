@@ -24,7 +24,7 @@
       <article class="calendar-day" *ngFor="let day of days" [class.outside-month]="!day.inMonth" [class.today]="isToday(day.date)">
         <div class="day-number">{{ day.date | date:'d' }}</div>
         <ng-container *ngFor="let event of day.events">
-          <button *ngIf="event.type === 'festival'; else scheduledEvent" class="calendar-event calendar-event--festival" type="button" (click)="openFestival(event)" [attr.aria-label]="'Show details for ' + event.title">
+          <button *ngIf="event.type === 'festival'; else scheduledEvent" class="calendar-event calendar-event--festival" type="button" (click)="openFestival(event, $event)" [attr.aria-label]="'Show details for ' + event.title">
             <span><i class="fa-solid fa-sparkles me-1" aria-hidden="true"></i>{{ event.title }}</span>
             <small>{{ event.detail }}</small>
           </button>
