@@ -37,6 +37,8 @@ export interface DashboardChartResponse {
 }
 
 export interface LoginLocationChartPoint {
+  userName:string,
+  email:string,
   loggedInAt: string;
   loginLocation?: string | null;
   location?: string | null;

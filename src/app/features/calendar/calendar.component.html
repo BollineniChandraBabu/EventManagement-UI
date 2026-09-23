@@ -39,17 +39,17 @@
   </section>
 </div>
 
-<div class="festival-popover-backdrop" *ngIf="selectedFestival" (click)="closeFestival()">
-  <section class="festival-popover" role="dialog" aria-modal="true" [attr.aria-label]="selectedFestival.title + ' details'" (click)="$event.stopPropagation()">
+<div class="festival-popover-backdrop" *ngIf="selectedEvent" (click)="closeFestival()">
+  <section class="festival-popover" role="dialog" aria-modal="true" [attr.aria-label]="selectedEvent.title + ' details'" (click)="$event.stopPropagation()">
     <header class="festival-popover__header">
       <span class="festival-popover__icon"><i class="fa-solid fa-sparkles" aria-hidden="true"></i></span>
       <button class="btn-close" type="button" (click)="closeFestival()" aria-label="Close festival details"></button>
     </header>
     <div class="festival-popover__body">
       <p class="festival-popover__label">Festival</p>
-      <h2>{{ selectedFestival.title }}</h2>
-      <p class="festival-popover__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selectedFestival.date | date:'EEEE, MMMM d, y' }}</p>
-      <p class="festival-popover__description">Celebrate {{ selectedFestival.title }} on this day.</p>
+      <h2>{{ selectedEvent.title }}</h2>
+      <p class="festival-popover__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selectedEvent.date | date:'EEEE, MMMM d, y' }}</p>
+      <p class="festival-popover__description">Celebrate {{ selectedEvent.title }} on this day.</p>
     </div>
     <footer class="festival-popover__footer"><button class="btn btn-primary" type="button" (click)="closeFestival()">Done</button></footer>
   </section>

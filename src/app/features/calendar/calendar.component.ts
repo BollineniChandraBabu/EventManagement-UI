@@ -31,43 +31,33 @@ export class CalendarComponent {
   readonly weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   view: 'month' | 'week' | 'day' = 'month';
   cursor = this.startOfDay(new Date());
-  events: EventItem[] = [];
-  festivals: FestivalItem[] = [];
-  selectedFestival: CalendarItem | null = null;
+  events: FestivalItem[] = [];
+  selectedEvent: CalendarItem | null = null;
   loadingEvents = true;
-  loadingFestivals = true;
   private readonly monthSubject = new BehaviorSubject<number>(this.cursor.getMonth() + 1);
 
   constructor() {
-    this.api.events(0, 250, '', 'eventDate', 'asc').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: response => {
-        this.events = response.content ?? [];
-        this.loadingEvents = false;
-      },
-      error: () => this.loadingEvents = false
-    });
-
     this.monthSubject.pipe(
       distinctUntilChanged(),
       switchMap(month => {
-        this.loadingFestivals = true;
-        return this.api.festivals(month, 0, 200, '', 'eventDate', 'asc');
+        this.loadingEvents = true;
+        return this.api.calendar(month);
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: festivals => {
-        this.festivals = festivals.filter(festival => festival.active !== false);
-        this.loadingFestivals = false;
+        this.events = festivals.filter(festival => festival.active !== false);
+        this.loadingEvents = false;
       },
       error: () => {
-        this.festivals = [];
-        this.loadingFestivals = false;
+        this.events = [];
+        this.loadingEvents = false;
       }
     });
   }
 
   get loading(): boolean {
-    return this.loadingEvents || this.loadingFestivals;
+    return this.loadingEvents;
   }
 
   get title(): string {
@@ -128,11 +118,11 @@ export class CalendarComponent {
 
   openFestival(festival: CalendarItem, event: MouseEvent): void {
     event.stopPropagation();
-    this.selectedFestival = festival;
+    this.selectedEvent = festival;
   }
 
   closeFestival(): void {
-    this.selectedFestival = null;
+    this.selectedEvent = null;
   }
 
   @HostListener('document:keydown.escape')
@@ -141,20 +131,14 @@ export class CalendarComponent {
   }
 
   private eventsFor(date: Date): CalendarItem[] {
-    const scheduledEvents = this.events.map(event => ({
-      date: event.eventDate,
-      title: event.eventType || 'Event',
-      detail: event.userName || 'Celebration',
-      type: 'event' as const
-    }));
-    const festivals = this.festivals.map(festival => ({
+    const festivals = this.events.map(festival => ({
       date: festival.eventDate,
       title: festival.eventName || 'Festival',
       detail: 'Festival',
       type: 'festival' as const
     }));
 
-    return [...scheduledEvents, ...festivals].filter(event => this.isSameDate(event.date, date));
+    return [...festivals].filter(event => this.isSameDate(event.date, date));
   }
 
   private setCursor(date: Date): void {

@@ -120,6 +120,8 @@
           <table class="table table-sm align-middle mb-0 login-locations-table">
             <thead>
               <tr>
+               <th *ngIf="auth.isAdmin">Name</th>
+               <th *ngIf="auth.isAdmin">Email</th>
                 <th>LoggedIn Time</th>
                 <th>Location</th>
                 <th>IP Address</th>
@@ -129,6 +131,8 @@
             </thead>
             <tbody>
               <tr *ngFor="let point of locationChart.points">
+                  <td *ngIf="auth.isAdmin">{{point.userName}}</td>
+                  <td *ngIf="auth.isAdmin">{{point.email}}</td>
                   <td>{{point.loggedInAt | date:'mediumDate'}}</td>
                 <td>{{ point.loginLocation || point.location || 'Unknown' }}</td>
                 <td>{{ point.ipAddress || '—' }}</td>

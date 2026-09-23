@@ -651,6 +651,20 @@ export class ApiService {
     );
   }
 
+  calendar(
+      month?: number
+  ): Observable<FestivalItem[]> {
+    let params = new HttpParams();
+    if (month) {
+      params = params.set('month', month);
+    }
+
+    return this.http.get<ApiResponse<FestivalItem[] | PagedResponse<FestivalItem>>>(`${environment.apiUrl}/calendar`, { params }).pipe(
+        map((response) => this.unwrap(response)),
+        map((payload) => this.normalizeCollection(payload))
+    );
+  }
+
   private readonly relationshipSeedPaths = ['/seed/relationships', '/relation-seeds'] as const;
   private readonly eventTypeSeedPaths = ['/seed/event-types', '/event-types-seeds'] as const;
 
