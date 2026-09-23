@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, switchMap } from 'rxjs';
-import { EventItem, FestivalItem } from '../../core/models/api.models';
+import {CalendarResItem, EventItem, FestivalItem} from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 
 interface CalendarItem {
@@ -31,7 +31,7 @@ export class CalendarComponent {
   readonly weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   view: 'month' | 'week' | 'day' = 'month';
   cursor = this.startOfDay(new Date());
-  events: FestivalItem[] = [];
+  events: CalendarResItem[] = [];
   selectedEvent: CalendarItem | null = null;
   loadingEvents = true;
   private readonly monthSubject = new BehaviorSubject<number>(this.cursor.getMonth() + 1);
@@ -133,11 +133,12 @@ export class CalendarComponent {
   private eventsFor(date: Date): CalendarItem[] {
     const festivals = this.events.map(festival => ({
       date: festival.eventDate,
-      title: festival.eventName || 'Festival',
+      title: festival.eventType || 'Festival',
+      name: festival.eventName || '',
       detail: 'Festival',
       type: 'festival' as const
     }));
-
+    let c =[...festivals].filter(event => this.isSameDate(event.date, date));
     return [...festivals].filter(event => this.isSameDate(event.date, date));
   }
 
@@ -152,8 +153,7 @@ export class CalendarComponent {
 
   private isSameDate(dateValue: string, date: Date): boolean {
     const eventDate = this.parseCalendarDate(dateValue);
-    return eventDate.getFullYear() === date.getFullYear()
-      && eventDate.getMonth() === date.getMonth()
+    return eventDate.getMonth() === date.getMonth()
       && eventDate.getDate() === date.getDate();
   }
 

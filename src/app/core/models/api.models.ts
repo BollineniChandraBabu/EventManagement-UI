@@ -184,6 +184,14 @@ export interface FestivalItem {
   active: boolean;
 }
 
+export interface CalendarResItem {
+  id: number;
+  eventType: string;
+  eventName: string;
+  eventDate: string;
+  active: boolean;
+}
+
 export interface FestivalWishMapping {
   id: number;
   specialEventId: number;

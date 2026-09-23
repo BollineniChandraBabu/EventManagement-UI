@@ -34,7 +34,7 @@ import {
   NotificationItem,
   SaveNotificationPayload,
   ViolatedUsersDashboardResponse,
-  WishImage
+  WishImage, CalendarResItem
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -653,13 +653,13 @@ export class ApiService {
 
   calendar(
       month?: number
-  ): Observable<FestivalItem[]> {
+  ): Observable<CalendarResItem[]> {
     let params = new HttpParams();
     if (month) {
       params = params.set('month', month);
     }
 
-    return this.http.get<ApiResponse<FestivalItem[] | PagedResponse<FestivalItem>>>(`${environment.apiUrl}/calendar`, { params }).pipe(
+    return this.http.get<ApiResponse<CalendarResItem[]>>(`${environment.apiUrl}/calendar`, { params }).pipe(
         map((response) => this.unwrap(response)),
         map((payload) => this.normalizeCollection(payload))
     );
