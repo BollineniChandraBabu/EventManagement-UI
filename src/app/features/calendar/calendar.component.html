@@ -24,8 +24,8 @@
       <article class="calendar-day" *ngFor="let day of days" [class.outside-month]="!day.inMonth" [class.today]="isToday(day.date)">
         <div class="day-number">{{ day.date | date:'d' }}</div>
         <ng-container *ngFor="let event of day.events">
-          <button *ngIf="event.eventType === 'Festival'; else scheduledEvent" class="calendar-event calendar-event--festival" type="button" (click)="openFestival(event, $event)" [attr.aria-label]="'Show details for ' + event.eventName">
-            <span><i class="fa-solid fa-sparkles me-1" aria-hidden="true"></i>{{ event.eventType }}</span>
+          <button *ngIf="isCelebration(event); else scheduledEvent" class="calendar-event calendar-event--celebration" [ngClass]="'calendar-event--' + eventTheme(event)" type="button" (click)="openCelebration(event, $event)" [attr.aria-label]="'Show details for ' + event.eventName">
+            <span><i class="fa-solid me-1" [ngClass]="eventIcon(event)" aria-hidden="true"></i>{{ event.eventType }}</span>
             <small>{{ event.eventName }}</small>
           </button>
           <ng-template #scheduledEvent>
@@ -39,18 +39,18 @@
   </section>
 </div>
 
-<div class="festival-popover-backdrop" *ngIf="selectedEvent" (click)="closeFestival()">
-  <section class="festival-popover" role="dialog" aria-modal="true" [attr.aria-label]="selectedEvent.eventType + ' details'" (click)="$event.stopPropagation()">
-    <header class="festival-popover__header">
-      <span class="festival-popover__icon"><i class="fa-solid fa-sparkles" aria-hidden="true"></i></span>
-      <button class="btn-close" type="button" (click)="closeFestival()" aria-label="Close festival details"></button>
+<div class="celebration-modal-backdrop" *ngIf="selectedEvent" (click)="closeCelebration()">
+  <section class="celebration-modal" [ngClass]="'celebration-modal--' + eventTheme(selectedEvent)" role="dialog" aria-modal="true" [attr.aria-label]="selectedEvent.eventType + ' details'" (click)="$event.stopPropagation()">
+    <header class="celebration-modal__header">
+      <span class="celebration-modal__icon"><i class="fa-solid" [ngClass]="eventIcon(selectedEvent)" aria-hidden="true"></i></span>
+      <button class="btn-close" type="button" (click)="closeCelebration()" [attr.aria-label]="'Close ' + selectedEvent.eventType + ' details'"></button>
     </header>
-    <div class="festival-popover__body">
-      <p class="festival-popover__label">{{ selectedEvent.eventType }}</p>
+    <div class="celebration-modal__body">
+      <p class="celebration-modal__label">{{ selectedEvent.eventType }}</p>
       <h2>{{ selectedEvent.eventName }}</h2>
-      <p class="festival-popover__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selectedEvent.eventDate | date:'EEEE, MMMM d, y' }}</p>
-      <p class="festival-popover__description">Celebrate {{ selectedEvent.eventType }} on this day.</p>
+      <p class="celebration-modal__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selectedEvent.eventDate | date:'EEEE, MMMM d, y' }}</p>
+      <p class="celebration-modal__description">{{ celebrationDescription(selectedEvent) }}</p>
     </div>
-    <footer class="festival-popover__footer"><button class="btn btn-primary" type="button" (click)="closeFestival()">Done</button></footer>
+    <footer class="celebration-modal__footer"><button class="btn btn-primary" type="button" (click)="closeCelebration()">Done</button></footer>
   </section>
 </div>

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, switchMap } from 'rxjs';
-import {CalendarResItem, EventItem, FestivalItem} from '../../core/models/api.models';
+import { CalendarResItem } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 
 interface CalendarDay {
@@ -109,23 +109,52 @@ export class CalendarComponent {
     return date.getTime() === this.startOfDay(new Date()).getTime();
   }
 
-  openFestival(festival: CalendarResItem, event: MouseEvent): void {
-    event.stopPropagation();
-    this.selectedEvent = festival;
+  isCelebration(event: CalendarResItem): boolean {
+    return ['festival', 'birthday', 'anniversary'].includes(this.eventType(event));
   }
 
-  closeFestival(): void {
+  eventIcon(event: CalendarResItem): string {
+    switch (this.eventType(event)) {
+      case 'birthday': return 'fa-cake-candles';
+      case 'anniversary': return 'fa-spa';
+      default: return 'fa-sparkles';
+    }
+  }
+
+  eventTheme(event: CalendarResItem): string {
+    const eventType = this.eventType(event);
+    return ['festival', 'birthday', 'anniversary'].includes(eventType) ? eventType : 'default';
+  }
+
+  celebrationDescription(event: CalendarResItem): string {
+    switch (this.eventType(event)) {
+      case 'birthday': return 'Make their day extra sweet with a thoughtful birthday wish.';
+      case 'anniversary': return 'Celebrate this special milestone and the memories shared together.';
+      default: return 'Celebrate this festival with joy and warm wishes.';
+    }
+  }
+
+  openCelebration(celebration: CalendarResItem, event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedEvent = celebration;
+  }
+
+  closeCelebration(): void {
     this.selectedEvent = null;
   }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    this.closeFestival();
+    this.closeCelebration();
   }
 
   private eventsFor(date: Date): CalendarResItem[] {
     const events = [ ...this.events ];
     return [...events].filter(event => this.isSameDate(event.eventDate, date));
+  }
+
+  private eventType(event: CalendarResItem): string {
+    return event.eventType?.trim().toLowerCase() ?? '';
   }
 
   private setCursor(date: Date): void {

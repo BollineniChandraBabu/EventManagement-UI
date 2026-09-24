@@ -15,10 +15,12 @@
 .calendar-event { display: block; width: 100%; border: 0; text-align: left; background: #e0eaff; border-left: 3px solid var(--c-primary); border-radius: 4px; padding: .2rem .35rem; margin: .2rem 0; color: #173b8f; font: inherit; font-size: .72rem; line-height: 1.25; overflow: hidden; }
 .calendar-event span, .calendar-event small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .calendar-event small { color: #4565a9; }
-.calendar-event--festival { cursor: pointer; background: #fdf4ff; border-left-color: #a855f7; color: #701a75; }
-.calendar-event--festival:hover { background: #fae8ff; }
-.calendar-event--festival:focus-visible { outline: 3px solid #c084fc; outline-offset: 2px; }
-.calendar-event--festival small { color: #a21caf; }
+.calendar-event--celebration { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.calendar-event--celebration:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgb(15 23 42 / 14%); }
+.calendar-event--celebration:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+.calendar-event--festival { background: #fdf4ff; border-left-color: #a855f7; color: #701a75; }.calendar-event--festival small { color: #a21caf; }
+.calendar-event--birthday { background: #fff3e8; border-left-color: #f97316; color: #9a3412; }.calendar-event--birthday small { color: #c2410c; }
+.calendar-event--anniversary { background: #fff1f5; border-left-color: #e11d48; color: #9f1239; }.calendar-event--anniversary small { color: #be123c; }
 .week-view .calendar-day { min-height: 400px; }
 .day-view { display: block; }
 .day-view .calendar-day { min-height: 420px; border-right: 0; }
@@ -27,17 +29,15 @@
 .no-events { color: var(--c-text-muted); text-align: center; margin-top: 5rem; }
 .calendar-loading { position: absolute; inset: auto 1rem 1rem auto; background: #fff; padding: .5rem .75rem; border-radius: var(--r-md); box-shadow: var(--shadow-md); font-size: .8rem; }
 
-.festival-popover-backdrop { position: fixed; inset: 0; z-index: 1060; display: grid; place-items: center; padding: 1rem; background: rgb(15 23 42 / 45%); backdrop-filter: blur(2px); }
-.festival-popover { width: min(100%, 390px); overflow: hidden; border: 0; border-radius: var(--r-xl); background: var(--c-surface); box-shadow: var(--shadow-xl); }
-.festival-popover__header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem 0; }
-.festival-popover__icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #f3e8ff; color: #9333ea; }
-.festival-popover__body { padding: .75rem 1.25rem 1.25rem; }
-.festival-popover__label { margin: 0 0 .35rem; color: #9333ea; font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-.festival-popover h2 { margin: 0; color: var(--c-text); font-size: 1.35rem; font-weight: 800; }
-.festival-popover__date { display: flex; align-items: center; gap: .55rem; margin: 1rem 0 .5rem; color: var(--c-text-secondary); font-size: .9rem; }
-.festival-popover__date i { color: #9333ea; }
-.festival-popover__description { margin: 0; color: var(--c-text-muted); font-size: .9rem; }
-.festival-popover__footer { display: flex; justify-content: flex-end; padding: .85rem 1.25rem; border-top: 1px solid var(--c-border); background: var(--c-surface-alt); }
+.celebration-modal-backdrop { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 1rem; background: rgb(15 23 42 / 55%); backdrop-filter: blur(3px); }
+.celebration-modal { --celebration-color: #9333ea; --celebration-soft: #f3e8ff; width: min(100%, 410px); overflow: hidden; border: 0; border-radius: var(--r-xl); background: var(--c-surface); box-shadow: var(--shadow-xl); animation: celebration-modal-enter .2s ease-out; }
+.celebration-modal--birthday { --celebration-color: #ea580c; --celebration-soft: #ffedd5; }.celebration-modal--anniversary { --celebration-color: #e11d48; --celebration-soft: #ffe4e6; }
+.celebration-modal__header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem 0; }
+.celebration-modal__icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--celebration-soft); color: var(--celebration-color); font-size: 1.2rem; }
+.celebration-modal__body { padding: .85rem 1.25rem 1.35rem; }.celebration-modal__label { margin: 0 0 .35rem; color: var(--celebration-color); font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.celebration-modal h2 { margin: 0; color: var(--c-text); font-size: 1.4rem; font-weight: 800; }.celebration-modal__date { display: flex; align-items: center; gap: .55rem; margin: 1rem 0 .55rem; color: var(--c-text-secondary); font-size: .9rem; }.celebration-modal__date i { color: var(--celebration-color); }.celebration-modal__description { margin: 0; color: var(--c-text-muted); font-size: .9rem; line-height: 1.5; }
+.celebration-modal__footer { display: flex; justify-content: flex-end; padding: .85rem 1.25rem; border-top: 1px solid var(--c-border); background: var(--c-surface-alt); }.celebration-modal__footer .btn { background: var(--celebration-color); border-color: var(--celebration-color); }
+@keyframes celebration-modal-enter { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @media (max-width: 600px) {
   .calendar-toolbar { padding: .85rem; }
@@ -56,6 +56,6 @@
   .day-view .calendar-day { min-height: 360px; padding: .75rem; }
   .day-view .calendar-event { padding: .65rem .7rem; font-size: .88rem; }
   .day-view .calendar-event small { display: block; }
-  .festival-popover-backdrop { padding: .75rem; align-items: end; }
-  .festival-popover { width: 100%; border-radius: var(--r-xl) var(--r-xl) var(--r-md) var(--r-md); }
+  .celebration-modal-backdrop { padding: .75rem; }
+  .celebration-modal { width: 100%; }
 }
