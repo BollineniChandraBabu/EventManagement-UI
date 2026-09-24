@@ -116,8 +116,8 @@ export class CalendarComponent {
   eventIcon(event: CalendarResItem): string {
     switch (this.eventType(event)) {
       case 'birthday': return 'fa-cake-candles';
-      case 'anniversary': return 'fa-spa';
-      default: return 'fa-sparkles';
+      case 'anniversary': return 'fa-party-horn';
+      default: return 'fa-spa';
     }
   }
 
