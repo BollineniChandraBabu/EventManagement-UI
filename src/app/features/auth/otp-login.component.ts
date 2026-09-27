@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -15,6 +15,7 @@ export class OtpLoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
 
   private readonly navState = (history.state ?? {}) as {
@@ -82,7 +83,7 @@ export class OtpLoginComponent implements OnInit {
       latitude: this.navState.latitude,
       longitude: this.navState.longitude
     }).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => void this.auth.navigateAfterLogin(this.route.snapshot.queryParamMap.get('redirectUrl')),
       error: () => {
         this.toast.error('Invalid OTP. Please check the code and try again.');
         this.isVerifying = false;
