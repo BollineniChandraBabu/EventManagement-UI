@@ -121,11 +121,29 @@ export class AuthService {
     this.isAuthed.set(false);
     this.currentRole.set(ROLE_USER);
     this.cancelTimers();
-    this.router.navigate(['/login']);
+    const redirectUrl = this.getSafeRedirectUrl(this.router.url);
+    this.router.navigate(['/login'], {
+      queryParams: redirectUrl ? { redirectUrl } : undefined
+    });
   }
 
   getAccessToken(): string | null {
     return this.getStoredValue(ACCESS_TOKEN);
+  }
+
+  navigateAfterLogin(redirectUrl?: string | null): Promise<boolean> {
+    return this.router.navigateByUrl(this.getSafeRedirectUrl(redirectUrl) ?? '/dashboard');
+  }
+
+  private getSafeRedirectUrl(redirectUrl?: string | null): string | null {
+    if (!redirectUrl || !redirectUrl.startsWith('/') || redirectUrl.startsWith('//')) {
+      return null;
+    }
+
+    const path = redirectUrl.split(/[?#]/, 1)[0];
+    return ['/login', '/otp-login', '/forgot-password', '/reset-password', '/password-reset'].includes(path)
+      ? null
+      : redirectUrl;
   }
 
   private setSession(response: TokenResponse, rememberMe: boolean): void {

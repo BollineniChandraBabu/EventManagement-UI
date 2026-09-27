@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, NgZone } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthSSOClientResponse } from '../../core/models/api.models';
@@ -24,6 +24,7 @@ export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
   private ngZone = inject(NgZone);
   private locationService = inject(LocationService);
@@ -47,7 +48,7 @@ export class LoginComponent implements OnInit {
     const locationMeta = await this.resolveLoginLocation();
 
     this.auth.login({ ...this.form.getRawValue(), ...locationMeta, forceMfa: true }).subscribe({
-      next: () => { this.isSubmitting = false; this.router.navigate(['/dashboard']); },
+      next: () => { this.isSubmitting = false; this.navigateAfterLogin(); },
       error: (error: HttpErrorResponse) => {
         if (this.handleMfaChallenge(error, locationMeta, 'PASSWORD')) return;
         this.toast.error(this.getLoginErrorMessage(error));
@@ -113,7 +114,7 @@ export class LoginComponent implements OnInit {
     this.isSubmitting = true;
     this.resolveLoginLocation().then((locationMeta) =>
       this.auth.googleSsoLogin(idToken, this.form.controls.rememberMe.value, locationMeta.loginLocation, true).subscribe({
-        next: () => this.ngZone.run(() => { this.isSubmitting = false; this.router.navigate(['/dashboard']); }),
+        next: () => this.ngZone.run(() => { this.isSubmitting = false; this.navigateAfterLogin(); }),
         error: (error: HttpErrorResponse) => this.ngZone.run(() => {
           if (this.handleMfaChallenge(error, locationMeta, 'GOOGLE')) return;
           this.toast.error(this.getLoginErrorMessage(error));
@@ -121,6 +122,14 @@ export class LoginComponent implements OnInit {
         })
       })
     );
+  }
+
+  private get redirectUrl(): string | null {
+    return this.route.snapshot.queryParamMap.get('redirectUrl');
+  }
+
+  private navigateAfterLogin(): void {
+    void this.auth.navigateAfterLogin(this.redirectUrl);
   }
 
   private async resolveLoginLocation(): Promise<{ loginLocation?: string; ipAddress?: string; latitude?: number; longitude?: number }> {
@@ -138,7 +147,10 @@ export class LoginComponent implements OnInit {
   private handleMfaChallenge(error: HttpErrorResponse, locationMeta: { loginLocation?: string; ipAddress?: string; latitude?: number; longitude?: number } = {}, provider: 'PASSWORD' | 'GOOGLE' = 'PASSWORD'): boolean {
     const message = (error?.error?.message ?? '').toString();
     if (!message.includes('MFA_OTP_REQUIRED')) return false;
-    this.router.navigate(['/otp-login'], { state: { email: this.form.controls.email.value, rememberMe: this.form.controls.rememberMe.value, provider, mfaRequired: true, ...locationMeta } });
+    this.router.navigate(['/otp-login'], {
+      queryParams: { redirectUrl: this.redirectUrl },
+      state: { email: this.form.controls.email.value, rememberMe: this.form.controls.rememberMe.value, provider, mfaRequired: true, ...locationMeta }
+    });
     this.isSubmitting = false;
     this.toast.info('MFA verification required. Enter the code sent to your email.');
     return true;
