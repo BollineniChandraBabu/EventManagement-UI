@@ -34,6 +34,7 @@ export const routes: Routes = [
       { path: 'email-status/festival-wishes', data: { title: 'Festival Wishes Email Status', emailType: 'FESTIVAL_WISH' }, loadComponent: () => import('./features/email-status/email-status.component').then((m) => m.EmailStatusComponent) },
       { path: 'email-status/unread-chat', data: { title: 'Unread Chat Email Status', emailType: 'UNREAD_CHAT_MESSAGE' }, loadComponent: () => import('./features/email-status/email-status.component').then((m) => m.EmailStatusComponent) },
       { path: 'schedulers', canActivate: [adminGuard], loadComponent: () => import('./features/schedulers/schedulers.component').then((m) => m.SchedulersComponent) },
+      { path: 'agents', canActivate: [adminGuard], loadComponent: () => import('./features/agents/agents.component').then((m) => m.AgentsComponent) },
       { path: 'relationship-seeds', canActivate: [adminGuard], loadComponent: () => import('./features/relationship-seeds/relationship-seeds.component').then((m) => m.RelationshipSeedsComponent) },
       { path: 'relationship-seeds/new', canActivate: [adminGuard], loadComponent: () => import('./features/relationship-seeds/relationship-seed-editor.component').then((m) => m.RelationshipSeedEditorComponent) },
       { path: 'relationship-seeds/:id/edit', canActivate: [adminGuard], loadComponent: () => import('./features/relationship-seeds/relationship-seed-editor.component').then((m) => m.RelationshipSeedEditorComponent) },

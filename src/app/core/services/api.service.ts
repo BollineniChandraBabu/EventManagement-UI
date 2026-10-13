@@ -34,7 +34,10 @@ import {
   NotificationItem,
   SaveNotificationPayload,
   ViolatedUsersDashboardResponse,
-  WishImage, CalendarResItem
+  WishImage, CalendarResItem,
+  AgentStatus,
+  CopilotAnswer,
+  DeliveryOpsRunResult
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -353,6 +356,18 @@ export class ApiService {
 
   deleteFestivalWishMapping(id: number): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/festival-wish-mappings/${id}`);
+  }
+
+  agentStatus(): Observable<AgentStatus> {
+    return this.http.get<AgentStatus>(`${environment.apiUrl}/agent/status`);
+  }
+
+  askAdminCopilot(question: string): Observable<CopilotAnswer> {
+    return this.http.post<CopilotAnswer>(`${environment.apiUrl}/agent/admin/ask`, { question });
+  }
+
+  runDeliveryOpsAgent(): Observable<DeliveryOpsRunResult> {
+    return this.http.post<DeliveryOpsRunResult>(`${environment.apiUrl}/agent/delivery-ops/run`, {});
   }
 
   aiWish(payload: AiWishRequest): Observable<AiWishResponse> {

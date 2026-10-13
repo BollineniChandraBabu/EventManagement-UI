@@ -1,0 +1,128 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon violet"><i class="fa-solid fa-robot"></i></span>
+      <div>
+        <h1 class="page-header-title">AI Agents</h1>
+        <p class="page-header-subtitle">Monitor the agents and ask the admin copilot</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="loadStatus()" [disabled]="statusLoading">
+        <i class="fa-solid fa-arrows-rotate me-1" [class.fa-spin]="statusLoading"></i>Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="alert-info status-error" *ngIf="statusError">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    Could not load agent status. The backend may not have the agent endpoints deployed yet.
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Wish composer -->
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-body agent-card">
+          <div class="agent-card-top">
+            <span class="agent-icon violet"><i class="fa-solid fa-wand-sparkles"></i></span>
+            <span class="badge" *ngIf="status" [ngClass]="status.wishComposer.enabled ? 'badge-success' : 'badge-secondary'">
+              {{ status.wishComposer.enabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </div>
+          <h2 class="agent-title">Wish Composer</h2>
+          <p class="agent-desc">
+            Writes each wish after checking the recipient's profile and recent wishes, and must pass a validator
+            (real name, no placeholders, no repeated subject). Falls back to the standard generator if it fails.
+          </p>
+          <p class="agent-flag" *ngIf="status && !status.wishComposer.enabled">
+            Turn on with <code>AGENT_WISH_ENABLED=true</code>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery ops -->
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-body agent-card">
+          <div class="agent-card-top">
+            <span class="agent-icon amber"><i class="fa-solid fa-envelope-circle-check"></i></span>
+            <span class="agent-badges" *ngIf="status">
+              <span class="badge" [ngClass]="status.deliveryOps.enabled ? 'badge-success' : 'badge-secondary'">
+                {{ status.deliveryOps.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+              <span class="badge badge-warning" *ngIf="status.deliveryOps.enabled && status.deliveryOps.dryRun">Dry run</span>
+            </span>
+          </div>
+          <h2 class="agent-title">Delivery Ops</h2>
+          <p class="agent-desc">
+            Checks failed emails every 30 minutes, retries temporary errors, and sends at most one alert for
+            problems that need your attention.
+          </p>
+          <div class="agent-stat" *ngIf="status">
+            <span class="agent-stat-value" [class.text-danger]="status.deliveryOps.failedEmails > 0">{{ status.deliveryOps.failedEmails }}</span>
+            <span class="agent-stat-label">failed emails &middot;
+              <a routerLink="/email-status">view</a>
+            </span>
+          </div>
+          <p class="agent-flag" *ngIf="status && !status.deliveryOps.enabled">
+            Turn on with <code>AGENT_DELIVERY_OPS_ENABLED=true</code>
+          </p>
+          <p class="agent-flag" *ngIf="status?.deliveryOps?.enabled && status?.deliveryOps?.dryRun">
+            Dry run: it reports what it would do but retries and sends nothing. Set
+            <code>AGENT_DELIVERY_OPS_DRY_RUN=false</code> to let it act.
+          </p>
+          <button class="btn btn-primary w-100 mt-auto" type="button" (click)="runTriage()" [disabled]="!canRunTriage">
+            <i class="fa-solid me-2" [class.fa-play]="!running" [class.fa-spinner]="running" [class.fa-spin]="running"></i>{{ running ? 'Running triage…' : 'Run triage now' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Copilot status -->
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-body agent-card">
+          <div class="agent-card-top">
+            <span class="agent-icon blue"><i class="fa-solid fa-comments"></i></span>
+            <span class="badge" *ngIf="status" [ngClass]="status.copilot.enabled ? 'badge-success' : 'badge-secondary'">
+              {{ status.copilot.enabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </div>
+          <h2 class="agent-title">Admin Copilot</h2>
+          <p class="agent-desc">
+            Answers questions about email delivery, failed logins, birthdays and users in plain English. It is
+            read-only and never sees passwords.
+          </p>
+          <p class="agent-flag" *ngIf="status && !status.copilot.enabled">
+            Turn on with <code>AGENT_COPILOT_ENABLED=true</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Last triage report -->
+  <div class="card mb-4" *ngIf="lastRun || runError">
+    <div class="card-body">
+      <div class="report-head">
+        <h2 class="section-title mb-0">
+          <i class="fa-solid fa-clipboard-list me-2" style="color:var(--c-primary);"></i>Last triage report
+        </h2>
+        <span class="report-time" *ngIf="lastRunAt">{{ lastRunAt | date: 'medium' }}</span>
+      </div>
+
+      <div class="report-note" *ngIf="lastRun?.ran && lastRun?.dryRun">
+        <i class="fa-solid fa-shield-halved me-2"></i>Dry run - no emails were retried and no alert was sent.
+      </div>
+      <pre class="report-body" [class.report-error]="!!runError">{{ runError || lastRun?.report }}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <app-agent-copilot [enabled]="status ? status.copilot.enabled : true"></app-agent-copilot>
+    </div>
+  </div>
+</div>

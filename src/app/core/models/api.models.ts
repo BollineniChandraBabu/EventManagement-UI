@@ -343,3 +343,19 @@ export interface SaveNotificationPayload {
   scheduledFrom?: string | null;
   scheduledTo?: string | null;
 }
+
+export interface AgentStatus {
+  wishComposer: { enabled: boolean };
+  deliveryOps: { enabled: boolean; dryRun: boolean; failedEmails: number };
+  copilot: { enabled: boolean };
+}
+
+export interface CopilotAnswer {
+  answer: string;
+}
+
+export interface DeliveryOpsRunResult {
+  ran: boolean;
+  dryRun: boolean;
+  report: string;
+}

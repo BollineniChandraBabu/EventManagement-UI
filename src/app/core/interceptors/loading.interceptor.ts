@@ -6,8 +6,11 @@ import { LoadingService } from '../services/loading.service';
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   const loading = inject(LoadingService);
   const isChatRequest = req.url.includes('/chat');
+  // Agent calls can take several seconds (multi-step LLM runs); the page shows its own progress UI
+  // instead of blocking the whole screen with the global overlay.
+  const isAgentRequest = req.url.includes('/agent/');
 
-  if (isChatRequest) {
+  if (isChatRequest || isAgentRequest) {
     return next(req);
   }
 

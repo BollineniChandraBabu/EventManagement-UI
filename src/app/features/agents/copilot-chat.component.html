@@ -1,0 +1,64 @@
+<div class="copilot">
+  <div class="copilot-head">
+    <div>
+      <h2 class="section-title mb-1">
+        <i class="fa-solid fa-comments me-2" style="color:var(--c-primary);"></i>Admin Copilot
+      </h2>
+      <p class="copilot-hint mb-0">
+        Read-only answers about emails, failed logins, birthdays and users. Each question is answered independently.
+      </p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm" type="button" (click)="clear()" [disabled]="!turns.length || pending">
+      <i class="fa-solid fa-eraser me-1"></i>Clear
+    </button>
+  </div>
+
+  <div class="alert-info copilot-disabled" *ngIf="!enabled">
+    <i class="fa-solid fa-circle-info me-2"></i>
+    The copilot is turned off on the server. Set <code>AGENT_COPILOT_ENABLED=true</code> and redeploy to use it.
+  </div>
+
+  <div class="copilot-scroll" #scroller aria-live="polite">
+    <div class="copilot-empty" *ngIf="!turns.length">
+      <i class="fa-solid fa-robot copilot-empty-icon"></i>
+      <p>Ask a question, or try one of these:</p>
+      <div class="suggestion-list">
+        <button *ngFor="let s of suggestions" type="button" class="suggestion" (click)="useSuggestion(s)" [disabled]="!enabled || pending">
+          {{ s }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngFor="let turn of turns; trackBy: trackByIndex" class="turn" [class.turn-user]="turn.role === 'user'" [class.turn-error]="turn.error">
+      <span class="turn-avatar" aria-hidden="true">
+        <i class="fa-solid" [class.fa-user]="turn.role === 'user'" [class.fa-robot]="turn.role === 'assistant'"></i>
+      </span>
+      <div class="turn-bubble">{{ turn.text }}</div>
+    </div>
+
+    <div class="turn" *ngIf="pending">
+      <span class="turn-avatar" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+      <div class="turn-bubble typing" aria-label="Copilot is working">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="copilot-input">
+    <textarea
+      class="form-control"
+      rows="2"
+      [(ngModel)]="draft"
+      [maxlength]="maxLength"
+      [disabled]="!enabled"
+      (keydown.enter)="onEnter($event)"
+      placeholder="Ask about failed emails, logins, birthdays…"
+      aria-label="Question for the admin copilot"></textarea>
+    <div class="copilot-input-row">
+      <span class="copilot-count" [class.near-limit]="draft.length > maxLength - 50">{{ draft.length }}/{{ maxLength }}</span>
+      <button class="btn btn-primary" type="button" (click)="send()" [disabled]="!canSend">
+        <i class="fa-solid me-2" [class.fa-paper-plane]="!pending" [class.fa-spinner]="pending" [class.fa-spin]="pending"></i>{{ pending ? 'Thinking…' : 'Ask' }}
+      </button>
+    </div>
+  </div>
+</div>
