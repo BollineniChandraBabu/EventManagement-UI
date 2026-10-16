@@ -22,7 +22,7 @@ export class EmailStatusComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
-
+  deletingIds = new Set<number>();
   readonly isAdmin = this.auth.isAdmin;
   readonly pageTitle: string;
   readonly emailTypeFilter: string;
@@ -204,5 +204,24 @@ export class EmailStatusComponent {
     const normalizedExpected = expectedType.replace(/[-_\s]/g, '').toUpperCase();
 
     return normalizedActual === normalizedExpected;
+  }
+
+  deleteEmail(id: number): void {
+    this.deletingIds.add(id);
+    this.api.deleteEmail(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.toast.success('Email info deleted successfully.');
+        this.deletingIds.delete(id);
+        this.loadItems();
+      },
+      error: () => {
+        this.toast.error('Unable to delete email info right now.');
+        this.deletingIds.delete(id);
+      }
+    });
+  }
+
+  isDeleting(id: number): boolean {
+    return this.deletingIds.has(id);
   }
 }

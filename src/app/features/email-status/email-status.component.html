@@ -84,6 +84,10 @@
                 <button class="btn btn-sm btn-outline-primary" *ngIf="canPreview(item)" (click)="openPreview(item)" [disabled]="loading">
                   <i class="fa-regular fa-eye me-1"></i>Preview
                 </button>
+
+                  <button *ngIf="isAdmin" class="btn btn-sm btn-link text-danger" type="button" (click)="deleteEmail(item.id)" [disabled]="loading || isDeleting(item.id)">
+                      <i class="fa-solid fa-trash-can me-1"></i>{{ isDeleting(item.id) ? 'Deleting…' : 'Delete' }}
+                  </button>
               </td>
             </tr>
             <tr *ngIf="loading" class="table-loading">

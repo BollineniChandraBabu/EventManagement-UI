@@ -406,6 +406,10 @@ export class ApiService {
     );
   }
 
+  deleteEmail(id: number): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/emails/status/${id}`);
+  }
+
   sendTestEmail(html: string) {
     return this.http.post(`${environment.apiUrl}/emails/test`, { html });
   }
