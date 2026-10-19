@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 import { ImpersonationService } from './core/services/impersonation.service';
 import { ToastContainerComponent } from './shared/toast-container.component';
+import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
 import { LoadingOverlayComponent } from './shared/loading-overlay.component';
 import { ChatWidgetComponent } from './shared/chat-widget/chat-widget.component';
 import { ToastService } from './core/services/toast.service';
@@ -18,7 +19,7 @@ const PUBLISHED_NOTIFICATION_DISMISSED_KEY = 'fw_published_notification_dismisse
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastContainerComponent, LoadingOverlayComponent, ChatWidgetComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastContainerComponent, ConfirmDialogComponent, LoadingOverlayComponent, ChatWidgetComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

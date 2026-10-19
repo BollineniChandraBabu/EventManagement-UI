@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import {AppUser, UserStatusUpdateRequest} from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { ImpersonationService } from '../../core/services/impersonation.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
@@ -21,6 +23,7 @@ import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle
 export class UsersComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
   private readonly impersonation = inject(ImpersonationService);
   private readonly router = inject(Router);
@@ -64,6 +67,24 @@ export class UsersComponent {
   }
 
   deactivate(id: number, status: boolean): void {
+    if (status) {
+      this.updateUserStatus(id, status); // activating needs no confirmation
+      return;
+    }
+    const name = this.viewUsers.find((user) => user.id === id)?.name;
+    this.confirmDialog
+      .confirm({
+        title: 'Deactivate this user?',
+        message: `${name ? `“${name}”` : 'This user'} will be deactivated. You can activate the account again later.`,
+        confirmText: 'Deactivate',
+        tone: 'danger',
+        icon: 'fa-user-slash'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateUserStatus(id, status));
+  }
+
+  private updateUserStatus(id: number, status: boolean): void {
     this.deactivatingIds.add(id);
     let payload={
       active:status

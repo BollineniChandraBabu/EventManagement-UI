@@ -1,0 +1,97 @@
+:host { display: contents; }
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100; /* above modals (1300), chat widget and the loading overlay (2000) */
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 55%);
+  backdrop-filter: blur(3px);
+}
+
+.confirm-dialog {
+  --confirm-accent: var(--c-primary);
+  --confirm-accent-soft: var(--c-primary-light);
+  width: min(100%, 420px);
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-xl);
+  animation: confirm-enter 0.18s ease-out;
+}
+.confirm-dialog--danger {
+  --confirm-accent: var(--c-error);
+  --confirm-accent-soft: var(--c-error-bg);
+}
+
+.confirm-body { display: flex; gap: 0.9rem; padding: 1.25rem 1.25rem 1rem; }
+.confirm-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--confirm-accent-soft);
+  color: var(--confirm-accent);
+  font-size: 1.1rem;
+}
+.confirm-text { min-width: 0; }
+.confirm-title { margin: 0 0 0.35rem; font-size: 1.1rem; font-weight: 800; color: var(--c-text); }
+.confirm-message { margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--c-text-secondary); overflow-wrap: anywhere; }
+.confirm-detail { margin: 0.5rem 0 0; font-size: 0.82rem; line-height: 1.45; color: var(--c-text-muted); overflow-wrap: anywhere; }
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface-alt);
+}
+.confirm-btn {
+  min-height: 40px;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-border);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast), box-shadow var(--t-fast);
+}
+.confirm-btn--cancel { background: var(--c-surface); color: var(--c-text-secondary); }
+.confirm-btn--cancel:hover { background: var(--c-surface-hover); }
+.confirm-btn--confirm { background: var(--confirm-accent); border-color: var(--confirm-accent); color: #fff; }
+.confirm-btn--confirm:hover { filter: brightness(0.93); }
+.confirm-btn:focus-visible { outline: 3px solid var(--c-primary-ring); outline-offset: 2px; }
+
+@keyframes confirm-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog { animation: none; }
+}
+
+/* Phones: bottom sheet, full-width stacked buttons with large tap targets. */
+@media (max-width: 575px) {
+  .confirm-backdrop { align-items: end; padding: 0; }
+  .confirm-dialog {
+    width: 100%;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    animation-name: confirm-sheet-enter;
+  }
+  .confirm-body { padding: 1.25rem 1rem 0.9rem; }
+  .confirm-actions {
+    flex-direction: column-reverse;
+    padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  }
+  .confirm-btn { width: 100%; min-height: 46px; font-size: 0.95rem; }
+}
+@keyframes confirm-sheet-enter {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}

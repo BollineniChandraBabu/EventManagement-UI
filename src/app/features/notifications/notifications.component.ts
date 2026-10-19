@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NotificationItem } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   standalone: true,
@@ -17,6 +19,7 @@ export class NotificationsComponent {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   notifications: NotificationItem[] = [];
   loading = false;
@@ -65,6 +68,13 @@ export class NotificationsComponent {
   }
 
   remove(item: NotificationItem): void {
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `the notification “${item.title}”` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performRemove(item));
+  }
+
+  private performRemove(item: NotificationItem): void {
     this.api.deleteNotification(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.toast.success('Notification deleted.'); this.load(); },
       error: () => this.toast.error('Unable to delete notification.')

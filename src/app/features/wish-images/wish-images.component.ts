@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { AppUser, WishImage } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
@@ -17,6 +19,7 @@ import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle
 export class WishImagesComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
 
   images: WishImage[] = [];
@@ -92,7 +95,13 @@ export class WishImagesComponent {
   }
 
   deleteImage(image: WishImage): void {
-    if (!confirm(`Delete the ${image.eventType} wish image? This cannot be undone.`)) return;
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `the ${image.eventType} wish image` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performDeleteImage(image));
+  }
+
+  private performDeleteImage(image: WishImage): void {
     this.deletingIds.add(image.id);
     this.api.deleteWishImage(image.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.deletingIds.delete(image.id); this.toast.success('Wish image deleted.'); this.loadImages(); },

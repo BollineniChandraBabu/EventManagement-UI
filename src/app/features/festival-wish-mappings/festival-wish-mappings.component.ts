@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppUser, FestivalItem, FestivalWishMapping, SaveFestivalWishMappingPayload } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
@@ -19,6 +21,7 @@ import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle
 export class FestivalWishMappingsComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -219,6 +222,13 @@ export class FestivalWishMappingsComponent {
   }
 
   deleteMapping(mapping: FestivalWishMapping): void {
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `the wish mapping for “${mapping.festivalName}” (${mapping.userName})` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performDeleteMapping(mapping));
+  }
+
+  private performDeleteMapping(mapping: FestivalWishMapping): void {
     this.deletingIds.add(mapping.id);
     this.api.deleteFestivalWishMapping(mapping.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {

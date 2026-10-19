@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EmailStatus } from '../../core/models/api.models';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 
@@ -16,10 +18,11 @@ import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle
   templateUrl: './email-status.component.html',
   styleUrl: './email-status.component.css'
 })
-export class EmailStatusComponent {
+export class EmailStatusComponent implements OnDestroy {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   deletingIds = new Set<number>();
@@ -43,6 +46,12 @@ export class EmailStatusComponent {
   selectedItem: EmailStatus | null = null;
   previewMode: 'desktop' | 'mobile' = 'desktop';
   isImageExpanded = false;
+  imageState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+
+  /** Object URLs of images already fetched, by email id (oldest first). */
+  private readonly imageUrls = new Map<number, string>();
+  private static readonly MAX_CACHED_IMAGES = 20;
+  private imageRequestToken = 0;
   readonly previewFrom = 'Event Management <no-reply@eventmanagement.app>';
 
   constructor() {
@@ -69,13 +78,32 @@ export class EmailStatusComponent {
 
 
   canPreview(item: EmailStatus): boolean {
-    return Boolean(item.body?.trim() || item.imgData?.trim());
+    return Boolean(item.body?.trim() || item.hasImage);
+  }
+
+  get selectedImageUrl(): string | null {
+    return this.selectedItem ? this.imageUrls.get(this.selectedItem.id) ?? null : null;
+  }
+
+  ngOnDestroy(): void {
+    this.imageUrls.forEach((url) => URL.revokeObjectURL(url));
+    this.imageUrls.clear();
   }
 
   openPreview(item: EmailStatus): void {
     this.selectedItem = item;
     this.previewMode = 'desktop';
     this.isImageExpanded = false;
+    this.imageState = 'idle';
+    if (item.hasImage) {
+      this.loadImage(item.id);
+    }
+  }
+
+  retryImage(): void {
+    if (this.selectedItem?.hasImage) {
+      this.loadImage(this.selectedItem.id);
+    }
   }
 
   setPreviewMode(mode: 'desktop' | 'mobile'): void {
@@ -85,6 +113,7 @@ export class EmailStatusComponent {
   closePreview(): void {
     this.selectedItem = null;
     this.isImageExpanded = false;
+    this.imageRequestToken++; // ignore an image response that is still in flight
   }
 
   openImagePreview(): void {
@@ -166,12 +195,6 @@ export class EmailStatusComponent {
         this.totalElements = response.totalElements ?? this.allItems.length;
         this.totalPages = response.totalPages ?? 0;
 
-        this.allItems.forEach((item: EmailStatus) => {
-          if (item.imgData?.trim() && !item.imgData.startsWith('data:image')) {
-            item.imgData = `data:image/png;base64,${item.imgData}`;
-          }
-        });
-
         this.applyStatusFilter();
         this.loading = false;
       },
@@ -180,6 +203,37 @@ export class EmailStatusComponent {
         this.loading = false;
       }
     });
+  }
+
+  private loadImage(id: number): void {
+    if (this.imageUrls.has(id)) {
+      this.imageState = 'ready';
+      return;
+    }
+    const token = ++this.imageRequestToken;
+    this.imageState = 'loading';
+    this.api.emailImage(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (blob) => {
+        this.rememberImage(id, URL.createObjectURL(blob));
+        if (token === this.imageRequestToken) {
+          this.imageState = 'ready';
+        }
+      },
+      error: () => {
+        if (token === this.imageRequestToken) {
+          this.imageState = 'error';
+        }
+      }
+    });
+  }
+
+  private rememberImage(id: number, url: string): void {
+    this.imageUrls.set(id, url);
+    if (this.imageUrls.size > EmailStatusComponent.MAX_CACHED_IMAGES) {
+      const oldestId = this.imageUrls.keys().next().value as number;
+      URL.revokeObjectURL(this.imageUrls.get(oldestId) as string);
+      this.imageUrls.delete(oldestId);
+    }
   }
 
   private applyStatusFilter(): void {
@@ -207,6 +261,13 @@ export class EmailStatusComponent {
   }
 
   deleteEmail(id: number): void {
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `${this.emailLabel(id)}`, detail: 'Any attached image is removed from storage as well.' })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performDeleteEmail(id));
+  }
+
+  private performDeleteEmail(id: number): void {
     this.deletingIds.add(id);
     this.api.deleteEmail(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
@@ -223,5 +284,10 @@ export class EmailStatusComponent {
 
   isDeleting(id: number): boolean {
     return this.deletingIds.has(id);
+  }
+
+  private emailLabel(id: number): string {
+    const item = this.allItems.find((email) => email.id === id);
+    return item?.subject ? `the email “${item.subject}”` : 'this email record';
   }
 }

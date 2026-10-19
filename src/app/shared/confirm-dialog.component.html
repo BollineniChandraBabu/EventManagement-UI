@@ -1,0 +1,28 @@
+<div class="confirm-backdrop" *ngIf="dialog.request() as request" (click)="cancel()">
+  <section
+    class="confirm-dialog"
+    [class.confirm-dialog--danger]="request.options.tone === 'danger'"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirm-dialog-title"
+    aria-describedby="confirm-dialog-message"
+    (click)="$event.stopPropagation()"
+    (keydown)="onKeydown($event)">
+    <div class="confirm-body">
+      <span class="confirm-icon" aria-hidden="true"><i class="fa-solid" [ngClass]="request.options.icon"></i></span>
+      <div class="confirm-text">
+        <h2 id="confirm-dialog-title" class="confirm-title">{{ request.options.title }}</h2>
+        <p id="confirm-dialog-message" class="confirm-message">{{ request.options.message }}</p>
+        <p class="confirm-detail" *ngIf="request.options.detail">{{ request.options.detail }}</p>
+      </div>
+    </div>
+    <footer class="confirm-actions">
+      <button #cancelButton type="button" class="confirm-btn confirm-btn--cancel" (click)="cancel()">
+        {{ request.options.cancelText }}
+      </button>
+      <button #confirmButton type="button" class="confirm-btn confirm-btn--confirm" (click)="confirm()">
+        {{ request.options.confirmText }}
+      </button>
+    </footer>
+  </section>
+</div>

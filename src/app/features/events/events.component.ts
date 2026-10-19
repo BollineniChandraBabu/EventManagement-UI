@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { EventItem } from '../../core/models/api.models';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {AuthService} from "../../core/services/auth.service";
 
 @Component({
@@ -18,6 +20,7 @@ export class EventsComponent {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly auth = inject(AuthService);
   readonly isAdmin = this.auth.isAdmin;
   events: EventItem[] = [];
@@ -151,6 +154,13 @@ export class EventsComponent {
   }
 
   deleteEvent(event: EventItem): void {
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `the ${event.eventType || 'event'} event for ${event.userName}` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performDeleteEvent(event));
+  }
+
+  private performDeleteEvent(event: EventItem): void {
     this.deletingIds.add(event.id);
     this.api.deleteEvent(event.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {

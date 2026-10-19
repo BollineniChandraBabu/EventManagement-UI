@@ -12,7 +12,7 @@ import {
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, filter } from 'rxjs';
 import {
   ChatConversation,
   ChatDeleteEvent,
@@ -24,6 +24,7 @@ import {
   ChatUser,
 } from '../../core/models/chat.models';
 import { ChatService } from '../../core/services/chat.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 interface ChatTimelineEntry {
   kind: 'day' | 'message';
@@ -46,6 +47,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i;
 export class ChatWidgetComponent {
   private readonly chat = inject(ChatService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly ngZone = inject(NgZone);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -417,6 +419,13 @@ export class ChatWidgetComponent {
 
   deleteMessage(message: ChatMessage): void {
     if (!this.canDelete(message)) return;
+    this.confirmDialog
+      .confirmDelete({ itemLabel: 'this message' })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performDeleteMessage(message));
+  }
+
+  private performDeleteMessage(message: ChatMessage): void {
     this.clearActiveMessageState();
     this.chat.deleteMessageById(message.messageId)
         .pipe(takeUntilDestroyed(this.destroyRef))

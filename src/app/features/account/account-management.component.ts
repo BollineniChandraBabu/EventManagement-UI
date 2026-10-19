@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ImpersonationService } from '../../core/services/impersonation.service';
 import { ROLE_ADMIN, ROLE_USER } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SensitiveDataService } from '../../core/services/sensitive-data.service';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { AppUser } from '../../core/models/api.models';
@@ -29,6 +31,7 @@ export class AccountManagementComponent {
   readonly sensitive = inject(SensitiveDataService);
   readonly impersonation = inject(ImpersonationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   readonly ROLE_ADMIN = ROLE_ADMIN;
   readonly ROLE_USER = ROLE_USER;
   readonly isAdmin = this.auth.isAdmin;
@@ -151,6 +154,19 @@ export class AccountManagementComponent {
       return;
     }
 
+    this.confirmDialog
+      .confirm({
+        title: 'Remove profile picture?',
+        message: 'Your profile picture will be removed. You can upload a new one at any time.',
+        confirmText: 'Remove',
+        tone: 'danger',
+        icon: 'fa-trash-can'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performRemoveProfilePicture());
+  }
+
+  private performRemoveProfilePicture(): void {
     this.isRemovingProfilePicture = true;
     this.api.removeMyProfilePicture().subscribe({
       next: (profile) => {

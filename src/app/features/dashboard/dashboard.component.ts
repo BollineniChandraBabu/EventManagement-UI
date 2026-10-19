@@ -1,25 +1,23 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
 import { CanvasJsLineChartComponent } from './canvasjs-line-chart.component';
+import { LoginLocationsComponent } from './login-locations/login-locations.component';
 
 type LineChartData = Array<{ name: string; series: Array<{ name: string; value: number }> }>;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AsyncPipe, CanvasJsLineChartComponent],
+  imports: [CommonModule, AsyncPipe, CanvasJsLineChartComponent, LoginLocationsComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent {
   private readonly api = inject(ApiService);
-  private readonly sanitizer = inject(DomSanitizer);
   readonly auth = inject(AuthService);
-  selectedMapPoint: { location: string; latitude: number; longitude: number } | null = null;
 
   readonly maildata$ = this.api.getDashboard();
   readonly igdata$ = this.api.getIGDashboard();
@@ -56,10 +54,6 @@ export class DashboardComponent {
   readonly instaChart$ = this.selectedDateRange$.pipe(
     switchMap(({ startDate, endDate }) => this.api.getInstaChart(startDate, endDate)),
     map((response) => this.toLineChartData(response.points))
-  );
-
-  readonly loginLocationChart$ = this.selectedDateRange$.pipe(
-    switchMap(({ startDate, endDate }) => this.api.getLoginLocationChart(startDate, endDate))
   );
 
   onStartDateChange(dateValue: string): void {
@@ -207,26 +201,5 @@ export class DashboardComponent {
     const date = new Date();
     date.setDate(date.getDate() - days);
     return date;
-  }
-
-  openLocationMap(location: string, latitude: number | null | undefined, longitude: number | null | undefined): void {
-    if (latitude == null || longitude == null) {
-      return;
-    }
-    this.selectedMapPoint = { location: location || 'Unknown', latitude, longitude };
-  }
-
-  closeLocationMap(): void {
-    this.selectedMapPoint = null;
-  }
-
-  mapEmbedUrl(): SafeResourceUrl | null {
-    if (!this.selectedMapPoint) {
-      return null;
-    }
-
-    const { latitude, longitude } = this.selectedMapPoint;
-    const mapUrl = `https://maps.google.com/maps?q=${latitude},${longitude}&z=14&output=embed`;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(mapUrl);
   }
 }

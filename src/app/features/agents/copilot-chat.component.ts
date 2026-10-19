@@ -97,7 +97,8 @@ export class CopilotChatComponent {
 
   private errorText(err: HttpErrorResponse): string {
     if (err.status === 503) {
-      return err.error?.answer || 'The admin copilot is disabled on the server.';
+      // answer = copilot disabled; message = AI providers busy (all fallback models exhausted)
+      return err.error?.answer || err.error?.message || 'The admin copilot is unavailable right now.';
     }
     if (err.status === 400) {
       return 'That question could not be processed. Keep it under 500 characters.';

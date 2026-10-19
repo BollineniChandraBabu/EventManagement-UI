@@ -166,22 +166,33 @@
           </div>
         </div>
         <div class="email-body" *ngIf="selectedItem.body" [innerHTML]="selectedItem.body"></div>
-        <div class="email-image-wrap" *ngIf="selectedItem.imgData">
-          <button class="btn btn-sm btn-outline-primary mb-3" type="button" (click)="openImagePreview()">
-            <i class="fa-solid fa-expand me-1"></i>View full screen
-          </button>
-          <img class="email-preview-img" [src]="selectedItem.imgData" alt="Email image" (click)="openImagePreview()" />
+        <div class="email-image-wrap" *ngIf="selectedItem.hasImage">
+          <div class="email-image-placeholder" *ngIf="imageState === 'loading'" role="status" aria-live="polite">
+            <i class="fa-solid fa-spinner fa-spin me-2"></i>Loading image…
+          </div>
+          <div class="email-image-placeholder email-image-placeholder--error" *ngIf="imageState === 'error'" role="alert">
+            <span><i class="fa-solid fa-triangle-exclamation me-2"></i>The image could not be loaded.</span>
+            <button class="btn btn-sm btn-outline-primary" type="button" (click)="retryImage()">
+              <i class="fa-solid fa-rotate-right me-1"></i>Retry
+            </button>
+          </div>
+          <ng-container *ngIf="imageState === 'ready' && selectedImageUrl as imageUrl">
+            <button class="btn btn-sm btn-outline-primary mb-3" type="button" (click)="openImagePreview()">
+              <i class="fa-solid fa-expand me-1"></i>View full screen
+            </button>
+            <img class="email-preview-img" [src]="imageUrl" alt="Email image" (click)="openImagePreview()" />
+          </ng-container>
         </div>
       </div>
     </div>
 
     <!-- Fullscreen image viewer -->
-    <div class="image-viewer" *ngIf="isImageExpanded" (click)="closeImagePreview()">
+    <div class="image-viewer" *ngIf="isImageExpanded && selectedImageUrl" (click)="closeImagePreview()">
       <div class="image-viewer-content" (click)="$event.stopPropagation()">
         <button class="btn btn-sm image-viewer-close" type="button" (click)="closeImagePreview()">
           <i class="fa-solid fa-arrow-left me-1"></i>Back to preview
         </button>
-        <img class="image-viewer-img" [src]="selectedItem.imgData" alt="Full view" />
+        <img class="image-viewer-img" [src]="selectedImageUrl" alt="Full view" />
       </div>
     </div>
   </div>

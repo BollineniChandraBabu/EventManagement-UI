@@ -62,9 +62,6 @@
   min-width: 170px;
 }
 
-.login-locations-table th {
-  white-space: nowrap;
-}
 
 .mail-flow-grid {
   display: grid;
@@ -87,49 +84,4 @@
   .chart-host { height: 240px; }
 
   .chart-date-control .form-control { max-width: 100%; }
-}
-
-.map-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(3px);
-  z-index: 1050;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.map-modal {
-  width: min(820px, 100%);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-xl);
-}
-
-.map-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--c-border-subtle);
-}
-
-.map-modal-title {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.map-modal-body {
-  padding: 1rem;
-}
-
-.location-map-frame {
-  width: 100%;
-  height: 420px;
-  border: 1px solid var(--c-border-subtle);
-  border-radius: var(--r-md);
 }

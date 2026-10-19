@@ -72,6 +72,7 @@ export class AgentsComponent {
         this.lastRun = null;
         this.runError =
           err.error?.report ||
+          err.error?.message ||
           (err.status === 409 ? 'A triage run is already in progress.' : 'Triage could not be run right now.');
         this.toast.error(this.runError);
       }

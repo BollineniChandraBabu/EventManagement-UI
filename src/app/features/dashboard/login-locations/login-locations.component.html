@@ -1,0 +1,160 @@
+<section class="login-locations card">
+  <header class="ll-header">
+    <div class="ll-title-block">
+      <h2 class="ll-title"><i class="fa-solid fa-location-dot me-2"></i>Login locations</h2>
+      <p class="ll-subtitle">{{ startDate | date: 'mediumDate' }} – {{ endDate | date: 'mediumDate' }}</p>
+    </div>
+    <div class="ll-actions">
+      <app-sensitive-info-toggle />
+      <button class="btn btn-outline-secondary" type="button" (click)="exportCsv()" [disabled]="!filtered.length" title="Download the filtered list as CSV">
+        <i class="fa-solid fa-file-csv me-1"></i><span class="d-none d-sm-inline">Export CSV</span>
+      </button>
+      <button class="btn btn-outline-secondary" type="button" (click)="reload()" [disabled]="loading" aria-label="Refresh login locations">
+        <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="loading"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="ll-state ll-state--error" *ngIf="loadFailed" role="alert">
+    <span><i class="fa-solid fa-triangle-exclamation me-2"></i>Login locations could not be loaded.</span>
+    <button class="btn btn-sm btn-outline-danger" type="button" (click)="reload()">Try again</button>
+  </div>
+
+  <div class="ll-state" *ngIf="loading && !points.length" role="status"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading login locations…</div>
+
+  <div class="ll-state ll-state--empty" *ngIf="!loading && !loadFailed && !points.length">
+    <i class="fa-regular fa-compass ll-empty-icon"></i>
+    <p>No logins were recorded in this date range.</p>
+  </div>
+
+  <ng-container *ngIf="points.length">
+    <div class="ll-note" *ngIf="truncated" role="status">
+      <i class="fa-solid fa-circle-info me-2"></i>Only the most recent logins are listed. Narrow the date range to see older ones.
+    </div>
+
+    <!-- Summary numbers -->
+    <div class="ll-kpis">
+      <div class="ll-kpi"><span class="ll-kpi-value">{{ kpis.logins }}</span><span class="ll-kpi-label">Logins</span></div>
+      <div class="ll-kpi"><span class="ll-kpi-value">{{ kpis.users }}</span><span class="ll-kpi-label">Users</span></div>
+      <div class="ll-kpi"><span class="ll-kpi-value">{{ kpis.locations }}</span><span class="ll-kpi-label">Locations</span></div>
+      <div class="ll-kpi"><span class="ll-kpi-value">{{ kpis.ipAddresses }}</span><span class="ll-kpi-label">IP addresses</span></div>
+    </div>
+
+    <!-- Top locations -->
+    <div class="ll-top" *ngIf="topLocationList.length">
+      <h3 class="ll-section-title">Top locations</h3>
+      <ul class="ll-top-list">
+        <li *ngFor="let item of topLocationList">
+          <button type="button" class="ll-top-row" [class.is-active]="filters.search === item.location" (click)="filterByLocation(item.location)" [attr.aria-pressed]="filters.search === item.location">
+            <span class="ll-top-name">{{ item.location }}</span>
+            <span class="ll-top-bar" aria-hidden="true"><span class="ll-top-fill" [style.width.%]="item.share"></span></span>
+            <span class="ll-top-count">{{ item.count }} <small>({{ item.share | number: '1.0-0' }}%)</small></span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Filters -->
+    <div class="ll-controls">
+      <label class="ll-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input class="form-control" type="search" placeholder="Search name, email, location or IP" [ngModel]="filters.search" (ngModelChange)="onSearch($event)" aria-label="Search logins" />
+      </label>
+      <select class="form-select" [ngModel]="filters.userEmail" (ngModelChange)="onUserChange($event)" aria-label="Filter by user">
+        <option value="">All users</option>
+        <option *ngFor="let user of users" [value]="user.email">{{ user.name }} ({{ user.logins }})</option>
+      </select>
+      <select class="form-select" [ngModel]="sortKey" (ngModelChange)="onSortChange($event)" aria-label="Sort logins">
+        <option *ngFor="let option of sortOptions" [value]="option.id">{{ option.label }}</option>
+      </select>
+    </div>
+    <div class="ll-chips">
+      <button type="button" class="ll-chip" [class.is-active]="filters.multipleLocationsOnly" (click)="toggleMultipleLocations()" [attr.aria-pressed]="filters.multipleLocationsOnly" [disabled]="!multiLocationUserCount && !filters.multipleLocationsOnly" title="Users who signed in from two or more locations">
+        <i class="fa-solid fa-shuffle me-1"></i>Multiple locations <span class="ll-chip-count">{{ multiLocationUserCount }}</span>
+      </button>
+      <button type="button" class="ll-chip ll-chip--clear" *ngIf="hasActiveFilters" (click)="clearFilters()"><i class="fa-solid fa-xmark me-1"></i>Clear filters</button>
+      <span class="ll-result-count">{{ filtered.length }} of {{ kpis.logins }} logins</span>
+    </div>
+
+    <div class="ll-state ll-state--empty" *ngIf="!filtered.length">
+      <p>No logins match your filters.</p>
+      <button class="btn btn-sm btn-outline-primary" type="button" (click)="clearFilters()">Clear filters</button>
+    </div>
+
+    <ng-container *ngIf="filtered.length">
+      <!-- Desktop / tablet: table -->
+      <div class="table-responsive d-none d-md-block">
+        <table class="table ll-table">
+          <thead>
+            <tr><th>User</th><th>When</th><th>Location</th><th>IP address</th><th class="text-end">Map</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let point of currentPage.items; trackBy: trackByPoint">
+              <td><div class="ll-user">{{ point.userName }}</div><div class="ll-muted">{{ point.email | sensitiveEmail }}</div></td>
+              <td><div>{{ point.loggedInAt | date: 'medium' }}</div><div class="ll-muted">{{ relativeTime(point) }}</div></td>
+              <td>{{ location(point) }}</td>
+              <td class="ll-mono">{{ point.ipAddress || '—' }}</td>
+              <td class="text-end">
+                <ng-container *ngIf="canShowMap(point); else noMap">
+                  <button class="btn btn-sm btn-outline-primary me-1" type="button" (click)="openMap(point)"><i class="fa-solid fa-map-location-dot me-1"></i>View</button>
+                  <a class="btn btn-sm btn-outline-secondary" [href]="externalMapUrl(point)" target="_blank" rel="noopener noreferrer" aria-label="Open in Google Maps"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                </ng-container>
+                <ng-template #noMap><span class="ll-muted">No coordinates</span></ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Phones: cards -->
+      <ul class="ll-cards d-md-none">
+        <li class="ll-card" *ngFor="let point of currentPage.items; trackBy: trackByPoint">
+          <div class="ll-card-top">
+            <div class="ll-card-user"><strong>{{ point.userName }}</strong><span class="ll-muted">{{ point.email | sensitiveEmail }}</span></div>
+            <span class="ll-muted ll-card-when">{{ relativeTime(point) || (point.loggedInAt | date: 'MMM d') }}</span>
+          </div>
+          <div class="ll-card-row"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>{{ location(point) }}</div>
+          <div class="ll-card-row ll-muted"><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ point.loggedInAt | date: 'medium' }}</div>
+          <div class="ll-card-row ll-mono ll-muted"><i class="fa-solid fa-network-wired" aria-hidden="true"></i>{{ point.ipAddress || '—' }}</div>
+          <div class="ll-card-actions" *ngIf="canShowMap(point)">
+            <button class="btn btn-outline-primary" type="button" (click)="openMap(point)"><i class="fa-solid fa-map-location-dot me-1"></i>View map</button>
+            <a class="btn btn-outline-secondary" [href]="externalMapUrl(point)" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Open</a>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Pagination -->
+      <footer class="ll-pager">
+        <span class="ll-muted">{{ currentPage.from }}–{{ currentPage.to }} of {{ filtered.length }}</span>
+        <label class="ll-page-size">
+          <span class="visually-hidden">Rows per page</span>
+          <select class="form-select" [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page">
+            <option *ngFor="let size of pageSizes" [value]="size">{{ size }} / page</option>
+          </select>
+        </label>
+        <div class="ll-pager-buttons">
+          <button class="btn btn-outline-secondary" type="button" (click)="goToPage(currentPage.page - 1)" [disabled]="currentPage.page === 0" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="ll-page-label">{{ currentPage.page + 1 }} / {{ currentPage.totalPages }}</span>
+          <button class="btn btn-outline-secondary" type="button" (click)="goToPage(currentPage.page + 1)" [disabled]="currentPage.page + 1 >= currentPage.totalPages" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </footer>
+    </ng-container>
+  </ng-container>
+</section>
+
+<!-- Map dialog (bottom sheet on phones) -->
+<div class="ll-map-backdrop" *ngIf="selectedPoint && mapFrameUrl" (click)="closeMap()">
+  <div class="ll-map" role="dialog" aria-modal="true" aria-label="Login location map" (click)="$event.stopPropagation()">
+    <div class="ll-map-header">
+      <div class="ll-map-title">
+        <strong>{{ selectedPoint.userName }}</strong>
+        <span class="ll-muted">{{ location(selectedPoint) }} · {{ selectedPoint.loggedInAt | date: 'medium' }}</span>
+      </div>
+      <button class="btn-close" type="button" (click)="closeMap()" aria-label="Close map"></button>
+    </div>
+    <iframe class="ll-map-frame" [src]="mapFrameUrl" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Login location map"></iframe>
+    <div class="ll-map-footer">
+      <a class="btn btn-outline-primary" [href]="externalMapUrl(selectedPoint)" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Open in Google Maps</a>
+    </div>
+  </div>
+</div>

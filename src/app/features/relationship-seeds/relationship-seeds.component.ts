@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { RelationshipSeed } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   standalone: true,
@@ -16,6 +18,7 @@ import { ToastService } from '../../core/services/toast.service';
 export class RelationshipSeedsComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
 
   relationshipSeeds: RelationshipSeed[] = [];
@@ -98,6 +101,13 @@ export class RelationshipSeedsComponent {
   }
 
   deleteSeed(seed: RelationshipSeed): void {
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `the relationship “${seed.displayName || seed.code}”` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performDeleteSeed(seed));
+  }
+
+  private performDeleteSeed(seed: RelationshipSeed): void {
     this.deletingIds.add(seed.id);
     this.api.deleteRelationshipSeed(seed.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {

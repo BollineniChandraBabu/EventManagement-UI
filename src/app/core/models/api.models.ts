@@ -50,6 +50,8 @@ export interface LoginLocationChartPoint {
 
 export interface LoginLocationChartResponse {
   points: LoginLocationChartPoint[];
+  /** true when older logins in the range were left out; narrow the date range to see them. */
+  truncated?: boolean;
 }
 
 
@@ -190,6 +192,10 @@ export interface CalendarResItem {
   eventName: string;
   eventDate: string;
   active: boolean;
+  /** false = happens only on eventDate; missing/true = repeats every year (older API versions omit it). */
+  recurring?: boolean;
+  /** Person the event belongs to (events and birthdays). */
+  ownerName?: string | null;
 }
 
 export interface FestivalWishMapping {
@@ -259,7 +265,8 @@ export interface EmailStatus {
   toEmail: string;
   subject: string;
   body: string;
-  imgData: string;
+  /** The image itself is not part of the list; fetch it on demand with ApiService.emailImage(). */
+  hasImage: boolean;
   status: string;
   emailType?: string;
   sentAt: string;

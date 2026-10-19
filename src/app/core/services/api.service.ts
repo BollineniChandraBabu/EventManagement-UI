@@ -374,6 +374,11 @@ export class ApiService {
     return this.http.post<AiWishResponse>(`${environment.apiUrl}/ai/generate-wish`, payload);
   }
 
+  /** Fetches one email's image on demand (the list endpoints no longer include image data). */
+  emailImage(id: number): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}/emails/status/${id}/image`, { responseType: 'blob' });
+  }
+
   emailStatuses(page = 0, size = 10, searchKey = '', emailType = '', sortBy = 'id', sortDir: 'asc' | 'desc' = 'desc'): Observable<PagedResponse<EmailStatus>> {
     let url = `${environment.apiUrl}/emails/status`;
     if (emailType === 'OTP') {
