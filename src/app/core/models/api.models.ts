@@ -95,6 +95,22 @@ export interface ViolatedUserChartPoint {
 
 export interface ViolatedUserMapPoint extends Omit<ViolatedUserInfo, 'password'> {}
 
+/** One IP address and how often it failed to log in (many different emails = guessing). */
+export interface ViolatedUserIpSummary {
+  ipAddress: string;
+  attempts: number;
+  distinctEmails: number;
+  lastAttemptAt: string;
+}
+
+/** One email address and how often someone failed to log in as it. */
+export interface ViolatedUserEmailSummary {
+  email: string;
+  attempts: number;
+  distinctIps: number;
+  lastAttemptAt: string;
+}
+
 export interface ViolatedUsersDashboardResponse {
   startDate: string;
   endDate: string;
@@ -108,6 +124,11 @@ export interface ViolatedUsersDashboardResponse {
   totalPages: number;
   hasNext: boolean;
   hasPrevious: boolean;
+  /** Added in the newer API; older servers omit these. */
+  uniqueIps?: number;
+  uniqueEmails?: number;
+  topIps?: ViolatedUserIpSummary[];
+  topEmails?: ViolatedUserEmailSummary[];
 }
 
 export interface AuthSSOClientResponse {
@@ -128,6 +149,8 @@ export interface AppUser {
   isGoodMorningEnabled?: boolean;
   isGoodNightEnabled?: boolean;
   isBirthdayEnabled?: boolean;
+  /** Optional link to a custom birthday wishes page, added to the birthday email. */
+  birthdayWishesUrl?: string | null;
 }
 
 export interface SaveUserPayload {
@@ -141,6 +164,8 @@ export interface SaveUserPayload {
   isGoodMorningEnabled?: boolean;
   isGoodNightEnabled?: boolean;
   isBirthdayEnabled?: boolean;
+  /** Send '' to remove the link. */
+  birthdayWishesUrl?: string;
 }
 
 /** An administrator-uploaded image used as a fallback for a generated wish. */
@@ -206,12 +231,41 @@ export interface FestivalWishMapping {
   userName: string;
   active: boolean;
   eventDate: string;
+  /** Personal note added to the festival email. */
+  customMessage?: string | null;
+  lastWishSentOn?: string | null;
+  /** true = the last attempt to send this wish failed. */
+  error?: boolean;
 }
 
 export interface SaveFestivalWishMappingPayload {
   specialEventId: number;
   userId: number;
   active: boolean;
+  customMessage?: string;
+}
+
+export type FestivalMappingStatus = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'FAILED';
+
+export interface BulkFestivalWishMappingPayload {
+  specialEventId: number;
+  userIds: number[];
+  active: boolean;
+  customMessage?: string;
+}
+
+export interface BulkFestivalWishMappingResult {
+  created: number;
+  updated: number;
+}
+
+export interface FestivalWishMappingSummary {
+  total: number;
+  active: number;
+  inactive: number;
+  /** Active mappings whose festival falls in the next 30 days. */
+  upcoming: number;
+  failed: number;
 }
 
 export interface SaveEventTypeSeedPayload {
@@ -226,6 +280,9 @@ export interface EventItem {
   recurring: boolean;
   userName: string;
   active?: boolean;
+  userId?: number;
+  /** Optional link to a custom wishes page, added to the event's email. */
+  wishesUrl?: string | null;
 }
 
 export interface SaveEventPayload {
@@ -234,6 +291,8 @@ export interface SaveEventPayload {
   eventDate: string;
   recurring: boolean;
   userId: number;
+  /** Send '' to remove the link. */
+  wishesUrl?: string;
 }
 
 export interface AiWishRequest {

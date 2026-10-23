@@ -11,7 +11,11 @@ import {
   DashboardStats,
   LoginLocationChartResponse,
   FestivalItem,
+  BulkFestivalWishMappingPayload,
+  BulkFestivalWishMappingResult,
+  FestivalMappingStatus,
   FestivalWishMapping,
+  FestivalWishMappingSummary,
   MailFlowStats,
   EmailStatus,
   EventTypeSeed,
@@ -107,14 +111,16 @@ export class ApiService {
     endDate: string,
     page = 0,
     size = 50,
-    includeIpInfo = true
+    includeIpInfo = true,
+    searchKey = ''
   ): Observable<ViolatedUsersDashboardResponse> {
     const params = new HttpParams()
       .set('startDate', startDate)
       .set('endDate', endDate)
       .set('page', page)
       .set('size', size)
-      .set('includeIpInfo', includeIpInfo);
+      .set('includeIpInfo', includeIpInfo)
+      .set('searchKey', searchKey.trim());
 
     return this.http.get<ApiResponse<ViolatedUsersDashboardResponse>>(`${environment.apiUrl}/dashboard/violated-users`, { params })
       .pipe(map((response) => this.unwrap(response)));
@@ -341,11 +347,25 @@ export class ApiService {
     size = 10,
     searchKey = '',
     sortBy = 'id',
-    sortDir: 'asc' | 'desc' = 'desc'
+    sortDir: 'asc' | 'desc' = 'desc',
+    status: FestivalMappingStatus = 'ALL'
   ): Observable<PagedResponse<FestivalWishMapping>> {
     return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`, {
-      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+      params: this.pagedParams(page, size, searchKey, sortBy, sortDir).set('status', status)
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  /** Maps one festival to many users at once; existing mappings are updated. */
+  saveFestivalWishMappingsBulk(payload: BulkFestivalWishMappingPayload): Observable<BulkFestivalWishMappingResult> {
+    return this.http.post<ApiResponse<BulkFestivalWishMappingResult>>(`${environment.apiUrl}/festival-wish-mappings/bulk`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  festivalWishMappingSummary(): Observable<FestivalWishMappingSummary> {
+    return this.http.get<ApiResponse<FestivalWishMappingSummary>>(`${environment.apiUrl}/festival-wish-mappings/summary`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   saveFestivalWishMapping(payload: SaveFestivalWishMappingPayload): Observable<FestivalWishMapping> {

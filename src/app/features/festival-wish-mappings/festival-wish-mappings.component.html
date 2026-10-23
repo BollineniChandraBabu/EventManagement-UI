@@ -1,175 +1,176 @@
-<div class="page">
+<div class="page festival-wishes">
   <div class="page-header">
     <div class="page-header-left">
-      <span class="page-header-icon amber"><i class="fa-solid fa-gifts"></i></span>
+      <span class="page-header-icon violet"><i class="fa-solid fa-gifts"></i></span>
       <div>
         <h1 class="page-header-title">Festival Wishes</h1>
-        <p class="page-header-subtitle">Map festivals to users for automatic scheduler-based greeting emails</p>
+        <p class="page-header-subtitle">Choose who receives a wish for each festival</p>
       </div>
     </div>
-    <div class="page-header-actions"><app-sensitive-info-toggle />
-      <button *ngIf="mode === 'dashboard'" class="btn btn-primary" type="button" (click)="startCreate()">
-        <i class="fa-solid fa-plus me-1"></i>Create / Update Mapping
-      </button>
-      <button *ngIf="mode === 'editor'" class="btn btn-outline-secondary" type="button" (click)="goToDashboardMode()">
-        <i class="fa-solid fa-arrow-left me-1"></i>Back to Festival Wishes
-      </button>
+    <div class="page-header-actions">
+      <app-sensitive-info-toggle />
+      <button class="btn btn-outline-secondary" type="button" (click)="refresh()" [disabled]="loading" aria-label="Refresh"><i class="fa-solid fa-arrows-rotate" [class.fa-spin]="loading"></i></button>
+      <button class="btn btn-primary" type="button" (click)="openCreate()"><i class="fa-solid fa-plus me-1"></i><span>Add recipients</span></button>
     </div>
   </div>
 
-  <div class="card mb-4" *ngIf="mode === 'editor'">
-    <div class="card-body">
-      <h2 class="section-title mb-3">{{ editingMappingId ? 'Update Mapping' : 'Create Mapping' }}</h2>
-      <div class="row g-3 align-items-end">
-        <div class="col-md-3">
-          <label class="form-label">Month</label>
-          <select class="form-select" [ngModel]="selectedMonth" (ngModelChange)="onMonthChange($event)" [disabled]="loadingFestivals || saving">
-            <option *ngFor="let month of months" [ngValue]="month.value">{{ month.label }}</option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Festival</label>
-          <select class="form-select" [(ngModel)]="form.specialEventId" [disabled]="loadingFestivals || saving || festivals.length === 0">
-            <option [ngValue]="0">Select festival</option>
-            <option *ngFor="let festival of festivals" [ngValue]="festival.id">
-              {{ festival.eventName }} ({{ festival.eventDate | date:'mediumDate' }})
-            </option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">User</label>
-          <select class="form-select" [(ngModel)]="form.userId" [disabled]="saving || users.length === 0">
-            <option [ngValue]="0">Select user</option>
-            <option *ngFor="let user of users" [ngValue]="user.id">
-              {{ user.name }} ({{ user.email | sensitiveEmail }})
-            </option>
-          </select>
-        </div>
-
-        <div class="col-md-2 d-grid">
-          <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving || loadingFestivals">
-            {{ saving ? 'Saving…' : (editingMappingId ? 'Update' : 'Create') }}
-          </button>
-        </div>
-
-        <div class="col-md-2 d-grid">
-          <button class="btn btn-outline-secondary" type="button" (click)="goToDashboardMode()" [disabled]="saving">
-            Cancel
-          </button>
-        </div>
-
-        <div class="col-12">
-          <label class="checkbox-row">
-            <input class="form-check-input" type="checkbox" [(ngModel)]="form.active" [disabled]="saving" />
-            <span>Active</span>
-          </label>
-        </div>
-      </div>
-    </div>
+  <!-- Summary (each tile also filters the list) -->
+  <div class="fw-kpis" *ngIf="summary">
+    <button type="button" class="fw-kpi" [class.is-active]="status === 'ALL'" (click)="setStatus('ALL')"><span class="fw-kpi-value">{{ summary.total }}</span><span class="fw-kpi-label">Mappings</span></button>
+    <button type="button" class="fw-kpi fw-kpi--ok" [class.is-active]="status === 'ACTIVE'" (click)="setStatus('ACTIVE')"><span class="fw-kpi-value">{{ summary.active }}</span><span class="fw-kpi-label">Active</span></button>
+    <button type="button" class="fw-kpi" [class.is-active]="status === 'INACTIVE'" (click)="setStatus('INACTIVE')"><span class="fw-kpi-value">{{ summary.inactive }}</span><span class="fw-kpi-label">Inactive</span></button>
+    <div class="fw-kpi fw-kpi--info" title="Active mappings whose festival is in the next 30 days"><span class="fw-kpi-value">{{ summary.upcoming }}</span><span class="fw-kpi-label">Next 30 days</span></div>
+    <button type="button" class="fw-kpi" [class.fw-kpi--danger]="summary.failed > 0" [class.is-active]="status === 'FAILED'" (click)="setStatus('FAILED')"><span class="fw-kpi-value">{{ summary.failed }}</span><span class="fw-kpi-label">Failed</span></button>
   </div>
 
-  <div class="card" *ngIf="mode === 'dashboard'">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-        <h2 class="section-title mb-0">Mapped Users Info</h2>
-        <button *ngIf="mode === 'dashboard'" class="btn btn-sm btn-outline-primary" type="button" (click)="startCreate()">
-          <i class="fa-solid fa-pen-to-square me-1"></i>Create / Update
-        </button>
+  <!-- Filters -->
+  <section class="card fw-filters">
+    <label class="fw-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input class="form-control" type="search" placeholder="Search festival, person or note" [ngModel]="search" (ngModelChange)="onSearchInput($event)" aria-label="Search festival wishes" />
+    </label>
+    <div class="fw-tabs" role="group" aria-label="Status">
+      <button *ngFor="let tab of statusTabs" type="button" class="btn" [class.btn-primary]="status === tab.id" [class.btn-outline-secondary]="status !== tab.id" [attr.aria-pressed]="status === tab.id" (click)="setStatus(tab.id)">{{ tab.label }}</button>
+    </div>
+    <select class="form-select fw-sort" [ngModel]="sortId" (ngModelChange)="onSortChange($event)" aria-label="Sort"><option *ngFor="let option of sortOptions" [value]="option.id">{{ option.label }}</option></select>
+  </section>
+
+  <div class="state-card state-card--error" *ngIf="loadFailed" role="alert"><span><i class="fa-solid fa-triangle-exclamation me-2"></i>The mappings could not be loaded.</span><button class="btn btn-sm btn-outline-danger" type="button" (click)="load()">Try again</button></div>
+  <div class="state-card" *ngIf="loading && !mappings.length" role="status"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading…</div>
+
+  <div class="state-card state-card--empty" *ngIf="!loading && !loadFailed && !mappings.length">
+    <i class="fa-regular fa-calendar-plus fw-empty-icon"></i>
+    <p class="mb-2">{{ hasFilters ? 'No mappings match your filters.' : 'No one is set up to receive festival wishes yet.' }}</p>
+    <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="hasFilters" (click)="clearFilters()">Clear filters</button>
+    <button class="btn btn-primary btn-sm" type="button" *ngIf="!hasFilters" (click)="openCreate()"><i class="fa-solid fa-plus me-1"></i>Add recipients</button>
+  </div>
+
+  <section class="card fw-list" *ngIf="mappings.length">
+    <!-- Desktop / tablet -->
+    <div class="table-responsive d-none d-md-block">
+      <table class="table fw-table">
+        <thead><tr><th>Festival</th><th>Recipient</th><th>Status</th><th>Last sent</th><th class="text-center">Active</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
+            <td>
+              <div class="fw-name">{{ mapping.festivalName }}</div>
+              <div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div>
+            </td>
+            <td>
+              <div class="fw-name">{{ mapping.userName }}</div>
+              <div class="fw-sub fw-note" *ngIf="mapping.customMessage" [title]="mapping.customMessage"><i class="fa-regular fa-comment-dots me-1"></i>{{ mapping.customMessage }}</div>
+            </td>
+            <td><span class="fw-badge" [ngClass]="'fw-badge--' + statusOf(mapping)" [title]="statusOf(mapping) === 'failed' ? 'The last attempt to send this wish failed. It is tried again on the next run.' : ''">{{ statusLabel(mapping) }}</span></td>
+            <td class="fw-sub">{{ lastSent(mapping) }}</td>
+            <td class="text-center">
+              <div class="form-check form-switch d-inline-block m-0"><input class="form-check-input" type="checkbox" role="switch" [checked]="mapping.active" [disabled]="togglingIds.has(mapping.id)" (change)="toggleActive(mapping)" [attr.aria-label]="(mapping.active ? 'Deactivate ' : 'Activate ') + mapping.festivalName + ' for ' + mapping.userName" /></div>
+            </td>
+            <td class="text-end text-nowrap">
+              <button class="btn btn-sm btn-outline-primary me-1" type="button" (click)="openEdit(mapping)"><i class="fa-solid fa-pen-to-square me-1"></i>Edit</button>
+              <button class="btn btn-sm btn-outline-danger" type="button" (click)="deleteMapping(mapping)" [disabled]="deletingIds.has(mapping.id)" aria-label="Delete mapping"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Phones -->
+    <ul class="fw-cards d-md-none">
+      <li class="fw-card" *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
+        <div class="fw-card-top">
+          <div class="min-w-0"><div class="fw-name">{{ mapping.festivalName }}</div><div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} · <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div></div>
+          <span class="fw-badge" [ngClass]="'fw-badge--' + statusOf(mapping)">{{ statusLabel(mapping) }}</span>
+        </div>
+        <div class="fw-card-row"><i class="fa-solid fa-user" aria-hidden="true"></i>{{ mapping.userName }}</div>
+        <div class="fw-card-row fw-note" *ngIf="mapping.customMessage"><i class="fa-regular fa-comment-dots" aria-hidden="true"></i>{{ mapping.customMessage }}</div>
+        <div class="fw-card-row fw-sub"><i class="fa-regular fa-paper-plane" aria-hidden="true"></i>Last sent: {{ lastSent(mapping) }}</div>
+        <div class="fw-card-actions">
+          <div class="form-check form-switch m-0 fw-card-switch"><input class="form-check-input" type="checkbox" role="switch" [id]="'toggle-' + mapping.id" [checked]="mapping.active" [disabled]="togglingIds.has(mapping.id)" (change)="toggleActive(mapping)" /><label class="form-check-label" [for]="'toggle-' + mapping.id">{{ mapping.active ? 'Active' : 'Inactive' }}</label></div>
+          <button class="btn btn-outline-primary" type="button" (click)="openEdit(mapping)"><i class="fa-solid fa-pen-to-square me-1"></i>Edit</button>
+          <button class="btn btn-outline-danger" type="button" (click)="deleteMapping(mapping)" [disabled]="deletingIds.has(mapping.id)" aria-label="Delete mapping"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+      </li>
+    </ul>
+
+    <footer class="fw-pager">
+      <span class="fw-sub">{{ firstRow }}–{{ lastRow }} of {{ totalElements }}</span>
+      <select class="form-select fw-size" [ngModel]="size" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page"><option *ngFor="let option of pageSizes" [value]="option">{{ option }} / page</option></select>
+      <div class="fw-pager-buttons">
+        <button class="btn btn-outline-secondary" type="button" (click)="load(page - 1)" [disabled]="page === 0 || loading" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button>
+        <span class="fw-page-label">{{ page + 1 }} / {{ totalPages }}</span>
+        <button class="btn btn-outline-secondary" type="button" (click)="load(page + 1)" [disabled]="page + 1 >= totalPages || loading" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button>
       </div>
-      <div class="filter-bar mb-3">
-        <div>
-          <label class="form-label">Search mappings</label>
-          <div class="input-group">
-            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-            <input class="form-control border-start-0 ps-1" type="text" placeholder="User, festival, date..."
-              [ngModel]="searchText" (ngModelChange)="onSearchInput($event)" (keyup.enter)="applySearch()" [disabled]="loadingMappings" style="border-left:none!important;" />
-            <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" [disabled]="loadingMappings" *ngIf="searchText"><i class="fa-solid fa-xmark"></i></button>
-            <button class="btn btn-outline-secondary" type="button" (click)="applySearch()" [disabled]="loadingMappings">Search</button>
+    </footer>
+  </section>
+</div>
+
+<!-- Editor -->
+<div class="fw-backdrop" *ngIf="editorOpen" (click)="closeEditor()">
+  <section class="fw-editor" role="dialog" aria-modal="true" aria-labelledby="fw-editor-title" (click)="$event.stopPropagation()">
+    <header class="fw-editor-head">
+      <div>
+        <h2 id="fw-editor-title">{{ isEditing ? 'Edit festival wish' : 'Add recipients' }}</h2>
+        <p>{{ isEditing ? 'Change whether this wish is sent and add a personal note.' : 'Pick a festival, then everyone who should receive its wish.' }}</p>
+      </div>
+      <button class="btn-close" type="button" (click)="closeEditor()" aria-label="Close"></button>
+    </header>
+
+    <div class="fw-editor-body">
+      <div class="state-card state-card--error" *ngIf="referenceFailed && !isEditing" role="alert"><span>Festivals and people could not be loaded.</span><button class="btn btn-sm btn-outline-danger" type="button" (click)="retryReferenceData()">Try again</button></div>
+      <div class="state-card" *ngIf="referenceLoading && !isEditing"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading…</div>
+
+      <!-- Editing one mapping: festival and person are fixed -->
+      <div class="fw-fixed" *ngIf="editingMapping as mapping">
+        <div><span class="fw-fixed-label">Festival</span><strong>{{ mapping.festivalName }}</strong><span class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} · {{ timing(mapping).label }}</span></div>
+        <div><span class="fw-fixed-label">Recipient</span><strong>{{ mapping.userName }}</strong></div>
+      </div>
+
+      <!-- Creating: festival + recipients -->
+      <ng-container *ngIf="!isEditing && referenceLoaded">
+        <label class="form-label fw-label" for="fw-festival">Festival</label>
+        <select id="fw-festival" class="form-select" [(ngModel)]="selectedFestivalId" (ngModelChange)="onFestivalChanged()">
+          <option [ngValue]="null" disabled>Select a festival…</option>
+          <option *ngFor="let festival of pickerFestivals" [ngValue]="festival.id">{{ festival.eventName }} · {{ festival.eventDate | date: 'MMM d, y' }} ({{ festivalTimingOf(festival).label }})</option>
+        </select>
+        <div class="form-check mt-2"><input class="form-check-input" id="fw-past" type="checkbox" [(ngModel)]="showPastFestivals" /><label class="form-check-label small" for="fw-past">Show festivals that have passed</label></div>
+
+        <div class="fw-recipients-head">
+          <label class="form-label fw-label mb-0" for="fw-user-search">Recipients <span class="fw-count" *ngIf="selectedUserIds.size">{{ selectedUserIds.size }} selected</span></label>
+          <div class="fw-recipients-actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleAllVisible()" [disabled]="!selectableVisibleIds.length">{{ allVisibleSelected ? 'Unselect shown' : 'Select all shown' }}</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearSelection()" [disabled]="!selectedUserIds.size">Clear</button>
           </div>
         </div>
-        <div>
-          <label class="form-label">Per page</label>
-          <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loadingMappings">
-            <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
-          </select>
-        </div>
-      </div>
+        <input id="fw-user-search" class="form-control mb-2" type="search" placeholder="Search by name or email" [(ngModel)]="userQuery" autocomplete="off" />
+        <ul class="fw-user-list" role="listbox" aria-multiselectable="true" aria-label="Recipients">
+          <li *ngFor="let user of visibleUsers">
+            <label class="fw-user" [class.is-selected]="isSelected(user.id)" [class.is-added]="isAlreadyMapped(user.id)">
+              <input class="form-check-input" type="checkbox" [checked]="isSelected(user.id)" (change)="toggleUser(user.id)" />
+              <span class="fw-user-text"><strong>{{ user.name }}</strong><span class="fw-sub">{{ user.email | sensitiveEmail }}</span></span>
+              <span class="fw-added" *ngIf="isAlreadyMapped(user.id)">Already added</span>
+            </label>
+          </li>
+          <li class="fw-user-empty" *ngIf="!visibleUsers.length">No one matches “{{ userQuery }}”.</li>
+        </ul>
+        <p class="fw-hint" *ngIf="loadingMapped"><i class="fa-solid fa-spinner fa-spin me-1"></i>Checking who already has this festival…</p>
+        <p class="fw-hint" *ngIf="selectedFestivalId && alreadyMappedIds.size && !loadingMapped">{{ alreadyMappedIds.size }} {{ alreadyMappedIds.size === 1 ? 'person already has' : 'people already have' }} this festival. Tick them only if you want to change their note or status.</p>
+      </ng-container>
 
-      <div class="table-responsive">
-        <table class="table table-hover">
-          <thead>
-            <tr>
-              <th>
-                <button class="sort-header" type="button" (click)="toggleSort('userName')" [disabled]="loadingMappings">
-                  User
-                  <i *ngIf="isSortedBy('userName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
-                </button>
-              </th>
-              <th>
-                <button class="sort-header" type="button" (click)="toggleSort('festivalName')" [disabled]="loadingMappings">
-                  Festival
-                  <i *ngIf="isSortedBy('festivalName')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
-                </button>
-              </th>
-              <th>Date</th>
-              <th>
-                <button class="sort-header" type="button" (click)="toggleSort('active')" [disabled]="loadingMappings">
-                  Status
-                  <i *ngIf="isSortedBy('active')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
-                </button>
-              </th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let mapping of pagedMappings">
-              <td>{{ mapping.userName }}</td>
-              <td>{{ mapping.festivalName }}</td>
-              <td>{{ (mapping.eventDate | date:'mediumDate') }}</td>
-              <td>
-                <span class="badge" [class.badge-success]="mapping.active" [class.badge-danger]="!mapping.active">
-                  {{ mapping.active ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-link" type="button" (click)="startEdit(mapping)" [disabled]="loadingMappings || isDeleting(mapping.id)">
-                  <i class="fa-solid fa-pen-to-square me-1"></i>Edit
-                </button>
-                <button class="btn btn-sm btn-link text-danger" type="button" (click)="deleteMapping(mapping)" [disabled]="loadingMappings || isDeleting(mapping.id)">
-                  <i class="fa-solid fa-trash-can me-1"></i>{{ isDeleting(mapping.id) ? 'Deleting…' : 'Delete' }}
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="loadingMappings" class="table-loading">
-              <td colspan="5">
-                <div class="loading-dots"><span></span><span></span><span></span></div>
-              </td>
-            </tr>
-            <tr *ngIf="!loadingMappings && pagedMappings.length === 0" class="table-empty">
-              <td colspan="5">
-                <div class="empty-state">
-                  <div class="empty-state-icon"><i class="fa-solid fa-gifts"></i></div>
-                  <p class="empty-state-title">No mappings found</p>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="pagination-bar">
-        <span class="pagination-info">Showing {{ startRow }}–{{ endRow }} of {{ totalElements }} mappings</span>
-        <div class="btn-group pagination-controls">
-          <button class="btn btn-sm btn-outline-primary" type="button" (click)="prevPage()" [disabled]="loadingMappings || page === 0">
-            <i class="fa-solid fa-chevron-left me-1"></i>Prev
-          </button>
-          <button class="btn btn-sm btn-primary" type="button" disabled>{{ displayPage }} / {{ totalPages }}</button>
-          <button class="btn btn-sm btn-outline-primary" type="button" (click)="nextPage()" [disabled]="loadingMappings || page >= totalPages - 1">
-            Next<i class="fa-solid fa-chevron-right ms-1"></i>
-          </button>
+      <!-- Settings -->
+      <div class="fw-settings" *ngIf="isEditing || referenceLoaded">
+        <div class="fw-switch-card" [class.is-on]="active">
+          <div class="form-check form-switch m-0"><input class="form-check-input" id="fw-active" type="checkbox" role="switch" [(ngModel)]="active" /></div>
+          <label for="fw-active"><strong>{{ active ? 'Send this wish' : 'Do not send' }}</strong><span>{{ active ? 'The email goes out on the festival day.' : 'Saved, but no email is sent.' }}</span></label>
         </div>
+        <label class="form-label fw-label" for="fw-note">Personal note <span class="text-muted fw-normal">(optional)</span></label>
+        <textarea id="fw-note" class="form-control" rows="3" [maxlength]="noteMaxLength" [(ngModel)]="note" placeholder="Shown at the end of the email, e.g. “Wishing you and the family a very happy Diwali!”"></textarea>
+        <div class="fw-note-meta"><span class="fw-sub">{{ isEditing ? 'Clear it to send no note.' : 'The same note is used for everyone you add.' }}</span><span class="fw-sub">{{ note.length }}/{{ noteMaxLength }}</span></div>
       </div>
     </div>
-  </div>
+
+    <footer class="fw-editor-foot">
+      <button class="btn btn-outline-secondary" type="button" (click)="closeEditor()" [disabled]="saving">Cancel</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="!canSave"><i class="fa-solid me-1" [class.fa-floppy-disk]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>{{ saveLabel }}</button>
+    </footer>
+  </section>
 </div>

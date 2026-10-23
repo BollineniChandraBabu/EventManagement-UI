@@ -1,72 +1,181 @@
-<div class="page">
+<div class="page violated-users">
   <div class="page-header">
     <div class="page-header-left">
       <span class="page-header-icon danger"><i class="fa-solid fa-user-shield"></i></span>
       <div>
-        <h1 class="page-header-title">Violated User Attempts</h1>
-        <p class="page-header-subtitle">Review unknown-user login attempts captured by the audit dashboard.</p>
+        <h1 class="page-header-title">Violated Users</h1>
+        <p class="page-header-subtitle">Failed login attempts, where they came from, and who is being targeted</p>
       </div>
     </div>
-    <div class="page-header-actions"><app-sensitive-info-toggle /></div>
-  </div>
-
-  <div class="card mb-3">
-    <div class="card-body filters-grid">
-      <label>Start date<input class="form-control" type="date" [(ngModel)]="startDate" [max]="endDate" /></label>
-      <label>End date<input class="form-control" type="date" [(ngModel)]="endDate" [min]="startDate" [max]="maxDate" /></label>
-      <label>Page size<select class="form-select" [(ngModel)]="size"><option [ngValue]="10">10</option><option [ngValue]="25">25</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option></select></label>
-      <label class="form-check include-ip"><input class="form-check-input" type="checkbox" [(ngModel)]="includeIpInfo" /> Include IP lookup</label>
-      <button class="btn btn-primary" type="button" (click)="applyFilters()" [disabled]="loading"><i class="fa-solid fa-rotate me-1"></i>Refresh</button>
+    <div class="page-header-actions">
+      <app-sensitive-info-toggle />
+      <button class="btn btn-outline-secondary" type="button" (click)="exportCsv()" [disabled]="!users.length" title="Download the rows on this page as CSV">
+        <i class="fa-solid fa-file-csv"></i><span class="d-none d-sm-inline ms-1">Export</span>
+      </button>
+      <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading" aria-label="Refresh">
+        <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="loading"></i>
+      </button>
     </div>
   </div>
 
-  <div class="kpi-grid mb-3">
-    <div class="kpi-card"><div class="kpi-label">Attempts in range</div><div class="kpi-value">{{ totalAttempts }}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Rows loaded</div><div class="kpi-value">{{ users.length }}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Map points</div><div class="kpi-value">{{ mapPoints.length }}</div></div>
-  </div>
+  <p class="privacy-note"><i class="fa-solid fa-lock me-2"></i>Emails and typed passwords are hidden by default. Typed passwords can belong to real accounts (a typo in the email), so reveal them only when you need to.</p>
 
-  <div class="card mb-3">
-    <div class="card-body">
-      <h3 class="section-title mb-3"><i class="fa-solid fa-chart-simple me-2"></i>Daily Attempts</h3>
-      <div class="attempt-bars" *ngIf="chartPoints.length; else noChart">
-        <div class="attempt-bar-row" *ngFor="let point of chartPoints">
-          <span class="attempt-date">{{ point.date | date:'mediumDate' }}</span>
-          <div class="attempt-bar-track"><span class="attempt-bar" [style.width.%]="totalAttempts ? (point.total / totalAttempts) * 100 : 0"></span></div>
-          <strong>{{ point.total }}</strong>
+  <!-- Filters -->
+  <section class="card vu-filters">
+    <div class="preset-group" role="group" aria-label="Date range">
+      <button *ngFor="let preset of presets" type="button" class="btn" [class.btn-primary]="activePreset === preset.id" [class.btn-outline-secondary]="activePreset !== preset.id" [attr.aria-pressed]="activePreset === preset.id" (click)="pickPreset(preset.id)">{{ preset.label }}</button>
+    </div>
+    <div class="date-pair">
+      <label><span>From</span><input class="form-control" type="date" [(ngModel)]="startDate" [max]="maxDate" (change)="onDatesChanged()" /></label>
+      <label><span>To</span><input class="form-control" type="date" [(ngModel)]="endDate" [min]="startDate" [max]="maxDate" (change)="onDatesChanged()" /></label>
+    </div>
+    <label class="search-box">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input class="form-control" type="search" placeholder="Search email or IP address" [ngModel]="search" (ngModelChange)="onSearchInput($event)" aria-label="Search failed logins" />
+    </label>
+    <label class="form-check form-switch ip-switch">
+      <input class="form-check-input" type="checkbox" [(ngModel)]="includeIpInfo" (change)="load(0)" />
+      <span class="form-check-label">Look up IP location</span>
+    </label>
+  </section>
+
+  <div class="state-card state-card--error" *ngIf="loadFailed" role="alert">
+    <span><i class="fa-solid fa-triangle-exclamation me-2"></i>Failed login attempts could not be loaded.</span>
+    <button class="btn btn-sm btn-outline-danger" type="button" (click)="load()">Try again</button>
+  </div>
+  <div class="state-card" *ngIf="loading && !data" role="status"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading…</div>
+
+  <ng-container *ngIf="data">
+    <!-- Numbers -->
+    <div class="vu-kpis">
+      <div class="vu-kpi vu-kpi--danger"><span class="vu-kpi-value">{{ totalAttempts }}</span><span class="vu-kpi-label">Failed attempts</span></div>
+      <div class="vu-kpi" *ngIf="hasSummary"><span class="vu-kpi-value">{{ data.uniqueIps }}</span><span class="vu-kpi-label">Different IPs</span></div>
+      <div class="vu-kpi" *ngIf="hasSummary"><span class="vu-kpi-value">{{ data.uniqueEmails }}</span><span class="vu-kpi-label">Different emails</span></div>
+      <div class="vu-kpi" [class.vu-kpi--warning]="suspiciousIpCount > 0"><span class="vu-kpi-value">{{ suspiciousIpCount }}</span><span class="vu-kpi-label">Suspicious IPs</span></div>
+    </div>
+
+    <div class="vu-grid">
+      <!-- Daily chart -->
+      <section class="card vu-card">
+        <h2 class="vu-card-title"><i class="fa-solid fa-chart-column me-2"></i>Attempts per day</h2>
+        <div class="bar-scroll" *ngIf="bars.length; else noChart">
+          <div class="bar-chart" role="img" [attr.aria-label]="'Failed attempts per day, ' + bars.length + ' days'">
+            <div class="bar-col" *ngFor="let bar of bars" [title]="(bar.date | date: 'mediumDate') + ': ' + bar.total + ' attempts'">
+              <span class="bar-value" *ngIf="showBarLabels">{{ bar.total }}</span>
+              <span class="bar-fill" [style.height.%]="bar.percent" [class.is-empty]="!bar.total"></span>
+              <span class="bar-label" *ngIf="showBarLabels">{{ bar.date | date: 'd MMM' }}</span>
+            </div>
+          </div>
+          <div class="bar-range" *ngIf="!showBarLabels"><span>{{ bars[0].date | date: 'mediumDate' }}</span><span>{{ bars[bars.length - 1].date | date: 'mediumDate' }}</span></div>
         </div>
-      </div>
-      <ng-template #noChart><p class="text-muted mb-0">No attempts found for this date range.</p></ng-template>
-    </div>
-  </div>
+        <ng-template #noChart><p class="vu-empty">No attempts in this range.</p></ng-template>
+      </section>
 
-  <div class="card">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h3 class="section-title mb-0"><i class="fa-solid fa-list-check me-2"></i>Attempt Details</h3>
-        <span class="text-muted small">Page {{ page + 1 }} of {{ totalPages || 1 }} · {{ totalElements }} total</span>
+      <!-- Top IPs -->
+      <section class="card vu-card" *ngIf="topIps.length">
+        <h2 class="vu-card-title"><i class="fa-solid fa-network-wired me-2"></i>Most active IPs</h2>
+        <ul class="top-list">
+          <li *ngFor="let ip of topIps">
+            <button type="button" class="top-row" [class.is-active]="isFilteredBy(ip.ipAddress)" (click)="filterBy(ip.ipAddress)" [attr.aria-pressed]="isFilteredBy(ip.ipAddress)">
+              <span class="top-name top-mono">{{ ip.ipAddress }}</span>
+              <span class="top-meter" aria-hidden="true"><span class="top-fill" [style.width.%]="(ip.attempts / maxIpAttempts) * 100"></span></span>
+              <span class="top-count">{{ ip.attempts }}</span>
+              <span class="badge-risk" [ngClass]="'badge-risk--' + suspicionOf(ip)" *ngIf="ip.distinctEmails > 1" [title]="'Tried ' + ip.distinctEmails + ' different emails'">{{ ip.distinctEmails }} emails</span>
+            </button>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Top emails -->
+    <section class="card vu-card" *ngIf="topEmails.length">
+      <h2 class="vu-card-title"><i class="fa-solid fa-bullseye me-2"></i>Most targeted emails</h2>
+      <ul class="top-list top-list--two">
+        <li *ngFor="let item of topEmails">
+          <button type="button" class="top-row" [class.is-active]="isFilteredBy(item.email)" (click)="filterBy(item.email)" [attr.aria-pressed]="isFilteredBy(item.email)">
+            <span class="top-name">{{ item.email | sensitiveEmail }}</span>
+            <span class="top-meter" aria-hidden="true"><span class="top-fill" [style.width.%]="(item.attempts / maxEmailAttempts) * 100"></span></span>
+            <span class="top-count">{{ item.attempts }}</span>
+            <span class="badge-risk badge-risk--low" *ngIf="item.distinctIps > 1" [title]="'Attempted from ' + item.distinctIps + ' different IPs'">{{ item.distinctIps }} IPs</span>
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Attempts -->
+    <section class="card vu-card">
+      <div class="vu-list-head">
+        <h2 class="vu-card-title mb-0"><i class="fa-solid fa-list me-2"></i>Attempts</h2>
+        <span class="vu-count">{{ totalElements }} found</span>
+        <button class="btn btn-sm btn-outline-secondary ms-auto" type="button" *ngIf="hasFilters" (click)="clearSearch()"><i class="fa-solid fa-xmark me-1"></i>Clear search</button>
       </div>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle violated-users-table">
-          <thead><tr><th>Time</th><th>Email</th><th>Password</th><th>Location</th><th>IP Address</th><th>Network</th><th>Risk</th></tr></thead>
+
+      <div class="state-card state-card--plain" *ngIf="!users.length && !loading">
+        <i class="fa-regular fa-circle-check vu-ok-icon"></i>
+        <p class="mb-0">{{ hasFilters ? 'No attempts match your search.' : 'No failed login attempts in this range.' }}</p>
+      </div>
+
+      <!-- Desktop / tablet -->
+      <div class="table-responsive d-none d-md-block" *ngIf="users.length">
+        <table class="table vu-table">
+          <thead><tr><th>Email</th><th>Typed password</th><th>When</th><th>IP address</th><th>Location</th><th class="text-end">Map</th></tr></thead>
           <tbody>
-            <tr *ngFor="let user of users">
-              <td>{{ user.loggedInAt | date:'medium' }}</td>
-              <td>{{ (user.email || '—') | sensitiveEmail }}</td>
-              <td><code>{{ user.password || '—' }}</code></td>
-              <td>{{ cityLabel(user) }}</td>
-              <td>{{ user.ipAddress || '—' }}</td>
-              <td>{{ user.ipInfo?.isp || user.ipInfo?.organization || '—' }}</td>
-              <td><span class="badge badge-warning me-1" *ngFor="let badge of riskBadges(user)">{{ badge }}</span><span *ngIf="!riskBadges(user).length">—</span></td>
+            <tr *ngFor="let user of users; trackBy: trackByRow">
+              <td class="vu-email">{{ user.email || '—' | sensitiveEmail }}</td>
+              <td><code class="vu-password">{{ maskPassword(user) }}</code></td>
+              <td><div>{{ user.loggedInAt | date: 'medium' }}</div></td>
+              <td>
+                <div class="top-mono">{{ user.ipAddress || '—' }}</div>
+                <div class="vu-flags"><span class="flag" *ngFor="let flag of riskOf(user)">{{ flag }}</span><span class="flag flag--muted" *ngIf="lookupFailed(user)" title="The IP lookup service had no answer for this address">No IP details</span></div>
+              </td>
+              <td><div>{{ locationOf(user) }}</div><div class="text-muted small" *ngIf="user.ipInfo?.isp">{{ user.ipInfo?.isp }}</div></td>
+              <td class="text-end">
+                <ng-container *ngIf="canShowMap(user); else noMap">
+                  <button class="btn btn-sm btn-outline-primary me-1" type="button" (click)="openMap(user)"><i class="fa-solid fa-map-location-dot me-1"></i>View</button>
+                  <a class="btn btn-sm btn-outline-secondary" [href]="externalMapUrl(user)" target="_blank" rel="noopener noreferrer" aria-label="Open in Google Maps"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                </ng-container>
+                <ng-template #noMap><span class="text-muted small">—</span></ng-template>
+              </td>
             </tr>
-            <tr *ngIf="!loading && users.length === 0"><td colspan="7" class="text-center text-muted">No violated user attempts found.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="pagination-actions">
-        <button class="btn btn-outline-secondary" type="button" (click)="load(page - 1)" [disabled]="loading || !hasPrevious">Previous</button>
-        <button class="btn btn-outline-secondary" type="button" (click)="load(page + 1)" [disabled]="loading || !hasNext">Next</button>
-      </div>
+
+      <!-- Phones -->
+      <ul class="vu-cards d-md-none" *ngIf="users.length">
+        <li class="vu-card-item" *ngFor="let user of users; trackBy: trackByRow">
+          <div class="vu-card-top"><strong class="vu-email">{{ user.email || '—' | sensitiveEmail }}</strong><span class="text-muted small">{{ user.loggedInAt | date: 'MMM d, h:mm a' }}</span></div>
+          <div class="vu-card-row"><i class="fa-solid fa-key" aria-hidden="true"></i><code class="vu-password">{{ maskPassword(user) }}</code></div>
+          <div class="vu-card-row"><i class="fa-solid fa-network-wired" aria-hidden="true"></i><span class="top-mono">{{ user.ipAddress || '—' }}</span><span class="flag" *ngFor="let flag of riskOf(user)">{{ flag }}</span></div>
+          <div class="vu-card-row"><i class="fa-solid fa-location-dot" aria-hidden="true"></i><span>{{ locationOf(user) }}</span></div>
+          <div class="vu-card-actions" *ngIf="canShowMap(user)">
+            <button class="btn btn-outline-primary" type="button" (click)="openMap(user)"><i class="fa-solid fa-map-location-dot me-1"></i>View map</button>
+            <a class="btn btn-outline-secondary" [href]="externalMapUrl(user)" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Open</a>
+          </div>
+        </li>
+      </ul>
+
+      <footer class="vu-pager" *ngIf="totalElements">
+        <span class="text-muted small">{{ firstRow }}–{{ lastRow }} of {{ totalElements }}</span>
+        <select class="form-select vu-size" [ngModel]="size" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page"><option *ngFor="let option of pageSizes" [value]="option">{{ option }} / page</option></select>
+        <div class="vu-pager-buttons">
+          <button class="btn btn-outline-secondary" type="button" (click)="load(page - 1)" [disabled]="!data.hasPrevious || loading" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="vu-page-label">{{ page + 1 }} / {{ totalPages }}</span>
+          <button class="btn btn-outline-secondary" type="button" (click)="load(page + 1)" [disabled]="!data.hasNext || loading" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </footer>
+    </section>
+  </ng-container>
+</div>
+
+<!-- Map (bottom sheet on phones) -->
+<div class="vu-map-backdrop" *ngIf="selectedPoint && mapFrameUrl" (click)="closeMap()">
+  <div class="vu-map" role="dialog" aria-modal="true" aria-label="Attempt location map" (click)="$event.stopPropagation()">
+    <div class="vu-map-header">
+      <div class="vu-map-title"><strong class="top-mono">{{ selectedPoint.ipAddress || 'Unknown IP' }}</strong><span class="text-muted small">{{ locationOf(selectedPoint) }} · {{ selectedPoint.loggedInAt | date: 'medium' }}</span></div>
+      <button class="btn-close" type="button" (click)="closeMap()" aria-label="Close map"></button>
     </div>
+    <iframe class="vu-map-frame" [src]="mapFrameUrl" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Attempt location map"></iframe>
+    <div class="vu-map-footer"><a class="btn btn-outline-primary" [href]="externalMapUrl(selectedPoint)" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Open in Google Maps</a></div>
   </div>
 </div>

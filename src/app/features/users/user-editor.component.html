@@ -112,6 +112,38 @@
               </div>
             </div>
           </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="birthdayWishesUrl">
+              <i class="fa-solid fa-link me-1"></i>Birthday wishes page <span class="text-muted fw-normal">(optional)</span>
+            </label>
+            <div class="input-group">
+              <input
+                class="form-control"
+                id="birthdayWishesUrl"
+                type="url"
+                inputmode="url"
+                autocomplete="off"
+                placeholder="https://example.com/birthday/asha.html"
+                formControlName="birthdayWishesUrl"
+                [maxlength]="wishesUrlMaxLength"
+                [class.is-invalid]="form.controls.birthdayWishesUrl.invalid && form.controls.birthdayWishesUrl.touched"
+                aria-describedby="birthdayWishesUrlHelp" />
+              <a
+                class="btn btn-outline-secondary"
+                [class.disabled]="!canTestWishesUrl"
+                [attr.aria-disabled]="!canTestWishesUrl"
+                [attr.href]="canTestWishesUrl ? form.controls.birthdayWishesUrl.value.trim() : null"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open the page in a new tab">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="d-none d-sm-inline ms-1">Test link</span>
+              </a>
+            </div>
+            <div class="invalid-feedback d-block" *ngIf="form.controls.birthdayWishesUrl.touched && wishesUrlMessage">{{ wishesUrlMessage }}</div>
+            <div class="form-text" id="birthdayWishesUrlHelp">
+              If filled in, the birthday email includes a button to this page. Leave it empty and no link is added for this user.
+            </div>
+          </div>
         </form>
       </div>
     </div>

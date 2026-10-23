@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,6 +8,8 @@ import { ApiService } from '../../core/services/api.service';
 import { AppUser, RelationshipSeed } from '../../core/models/api.models';
 import { ROLE_ADMIN, ROLE_USER, UserRole } from '../../core/constants/roles.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { WISHES_URL_MAX_LENGTH, wishesUrlError } from '../../core/utils/wishes-url';
+import { wishesUrlValidator } from '../../core/utils/wishes-url.validator';
 
 @Component({
   standalone: true,
@@ -41,8 +44,11 @@ export class UserEditorComponent {
     relationShip: ['', [Validators.required]],
     isBirthdayEnabled: [false],
     isGoodMorningEnabled: [false],
-    isGoodNightEnabled: [false]
+    isGoodNightEnabled: [false],
+    birthdayWishesUrl: ['', [wishesUrlValidator]]
   });
+
+  readonly wishesUrlMaxLength = WISHES_URL_MAX_LENGTH;
 
   constructor() {
     this.loadRelationshipSeeds();
@@ -67,6 +73,16 @@ export class UserEditorComponent {
     return this.editingUserId ? 'Edit User' : 'Create User';
   }
 
+  get wishesUrlMessage(): string | null {
+    return wishesUrlError(this.form.controls.birthdayWishesUrl.value);
+  }
+
+  /** The link can be tried only when it is filled in and valid. */
+  get canTestWishesUrl(): boolean {
+    const value = this.form.controls.birthdayWishesUrl.value.trim();
+    return value.length > 0 && !this.wishesUrlMessage;
+  }
+
   get submitLabel(): string {
     return this.editingUserId ? 'Update User' : 'Create User';
   }
@@ -77,7 +93,9 @@ export class UserEditorComponent {
       return;
     }
 
-    const { id, ...payload } = this.form.getRawValue();
+    const { id, ...values } = this.form.getRawValue();
+    // '' removes the link, so the birthday email simply has no link for this user
+    const payload = { ...values, birthdayWishesUrl: values.birthdayWishesUrl.trim() };
     const request = id ? this.api.updateUser(id, payload) : this.api.saveUser(payload);
 
     this.saving = true;
@@ -87,8 +105,8 @@ export class UserEditorComponent {
         this.saving = false;
         this.router.navigateByUrl('/users');
       },
-      error: () => {
-        this.toast.error('Unable to save user. Please try again.');
+      error: (error: HttpErrorResponse) => {
+        this.toast.error(error.error?.message || 'Unable to save user. Please try again.');
         this.saving = false;
       }
     });
@@ -146,7 +164,8 @@ export class UserEditorComponent {
       relationShip: user.relationShip.toLowerCase() || '',
       isBirthdayEnabled: !!user.isBirthdayEnabled,
       isGoodMorningEnabled: !!user.isGoodMorningEnabled,
-      isGoodNightEnabled: !!user.isGoodNightEnabled
+      isGoodNightEnabled: !!user.isGoodNightEnabled,
+      birthdayWishesUrl: user.birthdayWishesUrl ?? ''
     });
   }
 
@@ -161,7 +180,8 @@ export class UserEditorComponent {
       relationShip: '',
       isBirthdayEnabled: false,
       isGoodMorningEnabled: false,
-      isGoodNightEnabled: false
+      isGoodNightEnabled: false,
+      birthdayWishesUrl: ''
     });
   }
 

@@ -1,52 +1,113 @@
-<div class="page">
-  <section class="panel event-editor-panel">
-    <div class="d-flex justify-content-between align-items-center mb-4 gap-2 flex-wrap">
+<div class="page event-editor">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a class="btn btn-outline-secondary btn-sm back-btn" routerLink="/events" aria-label="Back to events"><i class="fa-solid fa-arrow-left"></i></a>
+      <span class="page-header-icon blue"><i class="fa-solid fa-calendar-days"></i></span>
       <div>
-        <h2 class="page-title mb-1">{{ pageTitle }}</h2>
-        <p class="text-muted mb-0">Create personalized events with cleaner inputs and faster admin workflows.</p>
+        <h1 class="page-header-title">{{ pageTitle }}</h1>
+        <p class="page-header-subtitle">Choose who the event is for, when it happens and what is sent</p>
       </div>
-      <div class="d-flex gap-2 align-items-center"><app-sensitive-info-toggle /><a class="btn btn-outline-secondary" routerLink="/events">Back to Events</a></div>
+    </div>
+    <div class="page-header-actions"><app-sensitive-info-toggle /></div>
+  </div>
+
+  <div class="state-card" *ngIf="loading" role="status"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading…</div>
+
+  <div class="state-card state-card--error" *ngIf="!loading && loadFailed" role="alert">
+    <span><i class="fa-solid fa-triangle-exclamation me-2"></i>The event could not be loaded.</span>
+    <button class="btn btn-sm btn-outline-danger" type="button" (click)="load()">Try again</button>
+  </div>
+
+  <form *ngIf="!loading && !loadFailed" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="editor-layout">
+      <div class="editor-main">
+
+        <!-- 1. Who -->
+        <section class="card editor-card">
+          <h2 class="editor-card__title"><span class="step">1</span>Who is it for?</h2>
+          <label class="form-label" for="userSearch">Find a person</label>
+          <input id="userSearch" class="form-control mb-2" type="search" placeholder="Search by name or email" autocomplete="off" [value]="userSearch" (input)="userSearch = $any($event.target).value" />
+          <select class="form-select" formControlName="userId" aria-label="Person" [class.is-invalid]="showError('userId')">
+            <option [ngValue]="0" disabled>Select a person…</option>
+            <option *ngFor="let user of filteredUsers" [ngValue]="user.id">{{ user.name }} · {{ user.email | sensitiveEmail }}</option>
+          </select>
+          <div class="form-text" *ngIf="userSearch.trim() && filteredUsers.length === 0">No one matches “{{ userSearch }}”.</div>
+          <div class="invalid-feedback d-block" *ngIf="showError('userId')">Choose the person this event is for.</div>
+        </section>
+
+        <!-- 2. What -->
+        <section class="card editor-card">
+          <h2 class="editor-card__title"><span class="step">2</span>What kind of event?</h2>
+          <div class="type-grid" role="radiogroup" aria-label="Event type">
+            <label class="type-card" *ngFor="let type of eventTypes; trackBy: trackByType" [class.is-selected]="form.controls.eventType.value === typeCode(type)">
+              <input class="visually-hidden" type="radio" formControlName="eventType" [value]="typeCode(type)" />
+              <i class="fa-solid type-card__icon" [ngClass]="typeIcon(type)" aria-hidden="true"></i>
+              <span class="type-card__label">{{ type.displayName }}</span>
+            </label>
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="showError('eventType')">Choose an event type.</div>
+          <p class="form-text mb-0" *ngIf="!eventTypes.length">No event types are available. Add one under Event Types first.</p>
+        </section>
+
+        <!-- 3. When -->
+        <section class="card editor-card">
+          <h2 class="editor-card__title"><span class="step">3</span>When?</h2>
+          <label class="form-label" for="eventDate">Date</label>
+          <input id="eventDate" class="form-control" type="date" formControlName="eventDate" [class.is-invalid]="showError('eventDate')" />
+          <div class="invalid-feedback d-block" *ngIf="showError('eventDate')">A date is required so the wish is sent on the right day.</div>
+
+          <div class="repeat-card" [class.is-on]="form.controls.recurring.value">
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" id="recurring" type="checkbox" role="switch" formControlName="recurring" />
+            </div>
+            <label class="repeat-card__text" for="recurring">
+              <strong>Repeat every year</strong>
+              <span>{{ form.controls.recurring.value ? 'Sent every year on this day and month.' : 'Sent only once, on the date above.' }}</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- 4. Link -->
+        <section class="card editor-card">
+          <h2 class="editor-card__title"><span class="step">4</span>Custom wishes page <small class="text-muted fw-normal">(optional)</small></h2>
+          <label class="form-label" for="wishesUrl">Link to your page</label>
+          <div class="input-group">
+            <input id="wishesUrl" class="form-control" type="url" inputmode="url" autocomplete="off" placeholder="https://example.com/anniversary/ravi.html" formControlName="wishesUrl" [maxlength]="wishesUrlMaxLength" [class.is-invalid]="form.controls.wishesUrl.invalid && form.controls.wishesUrl.touched" aria-describedby="wishesUrlHelp" />
+            <a class="btn btn-outline-secondary" [class.disabled]="!canTestWishesUrl" [attr.aria-disabled]="!canTestWishesUrl" [attr.href]="canTestWishesUrl ? form.controls.wishesUrl.value.trim() : null" target="_blank" rel="noopener noreferrer" title="Open the page in a new tab">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="d-none d-sm-inline ms-1">Test link</span>
+            </a>
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="form.controls.wishesUrl.touched && wishesUrlMessage">{{ wishesUrlMessage }}</div>
+          <div class="form-text" id="wishesUrlHelp">If filled in, the email includes a button to this page. Leave it empty and no link is added.</div>
+        </section>
+      </div>
+
+      <!-- Summary -->
+      <aside class="editor-side">
+        <section class="card summary-card" aria-live="polite">
+          <h2 class="summary-card__title"><i class="fa-regular fa-eye me-2"></i>What will happen</h2>
+          <ul class="summary-list">
+            <li><i class="fa-solid fa-user" aria-hidden="true"></i><span>{{ selectedUser ? selectedUser.name : 'Choose a person' }}</span></li>
+            <li><i class="fa-solid" [ngClass]="selectedType ? typeIcon(selectedType) : 'fa-calendar-day'" aria-hidden="true"></i><span>{{ selectedType ? selectedType.displayName : 'Choose an event type' }}</span></li>
+            <li>
+              <i class="fa-solid fa-repeat" aria-hidden="true"></i>
+              <span>{{ form.controls.recurring.value ? 'Repeats every year' : 'One time only' }}</span>
+            </li>
+            <li *ngIf="next" class="summary-next"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>Next email: <strong>{{ nextText }}</strong></span></li>
+            <li *ngIf="isPastOneTimeEvent" class="summary-warning"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>This date has passed and it does not repeat, so no email will be sent.</span></li>
+            <li><i class="fa-solid fa-link" aria-hidden="true"></i><span>{{ form.controls.wishesUrl.value.trim() && !wishesUrlMessage ? 'Email includes your wishes page' : 'No wishes page link' }}</span></li>
+          </ul>
+          <p class="summary-note"><i class="fa-regular fa-image me-1"></i>The email uses an image you uploaded for this event type, otherwise one is created automatically. <a routerLink="/wish-images">Manage images</a></p>
+        </section>
+      </aside>
     </div>
 
-    <div *ngIf="loading" class="text-muted py-3">Loading event data...</div>
-
-    <ng-container *ngIf="!loading">
-      <form [formGroup]="form" class="form-grid card card-body border-0 bg-light-subtle">
-        <div>
-          <label class="form-label">User <span class="text-danger">*</span></label>
-          <select class="form-select" formControlName="userId" [disabled]="!isAdmin()">
-            <option [ngValue]="0" disabled>Select a user</option>
-            <option *ngFor="let user of allUsers" [ngValue]="user.id">{{ user.name }} ({{ user.email | sensitiveEmail }})</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Type <span class="text-danger">*</span></label>
-          <select class="form-select" formControlName="type" [disabled]="!isAdmin()">
-            <option *ngFor="let type of types" [value]="type">{{ type }}</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Date</label>
-          <input class="form-control" type="date" formControlName="eventDate" [readonly]="!isAdmin()" />
-          <small class="text-muted">Optional for recurring/event-type driven reminders.</small>
-        </div>
-
-        <div class="d-flex align-items-end">
-          <div class="form-check form-switch mt-3">
-            <input class="form-check-input" type="checkbox" id="recurringSwitch" formControlName="recurring" [disabled]="!isAdmin()" />
-            <label class="form-check-label" for="recurringSwitch">Recurring Event</label>
-          </div>
-        </div>
-      </form>
-
-      <div class="d-flex flex-wrap gap-2 mt-4" *ngIf="isAdmin()">
-        <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving">{{ submitLabel }}</button>
-        <a class="btn btn-outline-secondary" routerLink="/events">Cancel</a>
-      </div>
-
-      <div class="alert alert-info mt-3" *ngIf="!isAdmin()">Read-only access: only admins can create or update events.</div>
-    </ng-container>
-  </section>
+    <div class="editor-actions">
+      <span class="dirty-hint" *ngIf="form.dirty && !saving"><i class="fa-solid fa-circle me-1"></i>Unsaved changes</span>
+      <a class="btn btn-outline-secondary" routerLink="/events">Cancel</a>
+      <button class="btn btn-primary" type="submit" [disabled]="saving">
+        <i class="fa-solid me-1" [class.fa-floppy-disk]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>{{ submitLabel }}
+      </button>
+    </div>
+  </form>
 </div>

@@ -147,19 +147,6 @@ export function timeAgo(iso: string, now: Date = new Date()): string {
   return days < 30 ? `${days} day${days === 1 ? '' : 's'} ago` : '';
 }
 
-// ---------------------------------------------------------------- CSV
-
-/** A cell is either text (guarded against spreadsheet formula injection) or a plain number. */
-export type CsvCell = string | number | null | undefined;
-
-export function csvCell(value: CsvCell): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '';
-  // Excel/Sheets run cells that start with these characters as formulas.
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
-
-export function toCsv(header: string[], rows: CsvCell[][]): string {
-  return [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
-}
+// CSV helpers live in core/utils/csv.ts; re-exported so existing imports keep working.
+export { csvCell, toCsv } from '../../../core/utils/csv';
+export type { CsvCell } from '../../../core/utils/csv';
