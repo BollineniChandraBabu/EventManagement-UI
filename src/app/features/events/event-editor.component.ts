@@ -159,9 +159,9 @@ export class EventEditorComponent {
     return field.invalid && (field.touched || field.dirty);
   }
 
-  trackByType(_: number, type: EventTypeSeed): string {
+  trackByType = (_: number, type: EventTypeSeed): string => {
     return this.typeCode(type);
-  }
+  };
 
   // ------------------------------------------------------------------ saving
 
