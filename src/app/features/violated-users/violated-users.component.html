@@ -22,21 +22,29 @@
 
   <!-- Filters -->
   <section class="card vu-filters">
-    <div class="preset-group" role="group" aria-label="Date range">
-      <button *ngFor="let preset of presets" type="button" class="btn" [class.btn-primary]="activePreset === preset.id" [class.btn-outline-secondary]="activePreset !== preset.id" [attr.aria-pressed]="activePreset === preset.id" (click)="pickPreset(preset.id)">{{ preset.label }}</button>
+    <div class="preset-group-wrap">
+      <span class="filter-label">Quick range</span>
+      <div class="preset-group" role="group" aria-label="Date range">
+        <button *ngFor="let preset of presets" type="button" class="btn" [class.btn-primary]="activePreset === preset.id" [class.btn-outline-secondary]="activePreset !== preset.id" [attr.aria-pressed]="activePreset === preset.id" (click)="pickPreset(preset.id)">{{ preset.label }}</button>
+      </div>
     </div>
     <div class="date-pair">
       <label><span>From</span><input class="form-control" type="date" [(ngModel)]="startDate" [max]="maxDate" (change)="onDatesChanged()" /></label>
       <label><span>To</span><input class="form-control" type="date" [(ngModel)]="endDate" [min]="startDate" [max]="maxDate" (change)="onDatesChanged()" /></label>
     </div>
-    <label class="search-box">
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-      <input class="form-control" type="search" placeholder="Search email or IP address" [ngModel]="search" (ngModelChange)="onSearchInput($event)" aria-label="Search failed logins" />
-    </label>
-    <label class="form-check form-switch ip-switch">
-      <input class="form-check-input" type="checkbox" [(ngModel)]="includeIpInfo" (change)="load(0)" />
-      <span class="form-check-label">Look up IP location</span>
-    </label>
+    <div class="search-box-wrap">
+      <span class="filter-label">Search</span>
+      <label class="search-box">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input class="form-control" type="search" placeholder="Search email or IP address" [ngModel]="search" (ngModelChange)="onSearchInput($event)" aria-label="Search failed logins" />
+      </label>
+    </div>
+    <div class="ip-switch-wrap">
+      <label class="form-check form-switch ip-switch">
+        <input class="form-check-input" type="checkbox" [(ngModel)]="includeIpInfo" (change)="load(0)" />
+        <span class="form-check-label">Look up IP location</span>
+      </label>
+    </div>
   </section>
 
   <div class="state-card state-card--error" *ngIf="loadFailed" role="alert">

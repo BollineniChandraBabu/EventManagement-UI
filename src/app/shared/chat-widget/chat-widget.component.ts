@@ -9,7 +9,7 @@ import {
   NgZone,
   ChangeDetectorRef,
 } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin, filter } from 'rxjs';
@@ -78,6 +78,9 @@ export class ChatWidgetComponent {
   readonly quickReactions = ['❤️', '😂', '😮', '😢', '😡', '👍'];
   messageReactions: Record<number, ChatMessageReaction[]> = {};
 
+  // Inline image attachment cache
+  inlineImageUrls = new Map<number, SafeResourceUrl>();
+
   // Attachment preview
   attachmentPreviewUrl: string | null = null;
   attachmentPreviewSafeUrl: SafeResourceUrl | null = null;
@@ -86,6 +89,24 @@ export class ChatWidgetComponent {
   attachmentPreviewLoading = false;
   attachmentPreviewOpen = false;
   highlightedMessageId: number | null = null;
+
+  // In-Thread Search (WhatsApp/Teams feature)
+  threadSearchOpen = false;
+  threadSearchQuery = '';
+
+  // Starred / Pinned messages (WhatsApp/Teams feature)
+  starredMessageIds = new Set<number>();
+  showStarredOnly = false;
+
+  // Emoji Picker (WhatsApp/Instagram feature)
+  showEmojiPicker = false;
+  readonly emojiCategories = [
+    { name: 'Frequently Used', emojis: ['👍', '❤️', '😂', '🔥', '🎉', '😊', '🙏', '😍', '👏', '✨'] },
+    { name: 'Smileys', emojis: ['😀', '😃', '😄', '😁', '😅', '🤣', '🙃', '😉', '😇', '🥰', '😍', '🤩', '😘'] },
+    { name: 'Gestures', emojis: ['👍', '👎', '👏', '🙌', '👐', '🤲', '🤝', '👊', '✊', '🤛', '✌️', '🤞', '💪'] },
+    { name: 'Hearts & Symbols', emojis: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💔', '❣️', '💕', '💞', '💯'] },
+    { name: 'Celebration', emojis: ['🎉', '🎊', '🎈', '🎂', '🎁', '🏆', '🥇', '⭐', '🌟', '💥', '🔥', '⚡', '🚀'] },
+  ];
 
   // Scroll
   showScrollButton = false;
@@ -125,7 +146,21 @@ export class ChatWidgetComponent {
   get timelineEntries(): ChatTimelineEntry[] {
     const timeline: ChatTimelineEntry[] = [];
     let previousDayKey: string | null = null;
+    const query = this.threadSearchQuery.trim().toLowerCase();
+
     this.messages.forEach((message) => {
+      if (this.showStarredOnly && !this.starredMessageIds.has(message.messageId)) {
+        return;
+      }
+
+      if (query) {
+        const textMatch = (message.messageText || '').toLowerCase().includes(query);
+        const fileMatch = (message.attachmentFileName || '').toLowerCase().includes(query);
+        if (!textMatch && !fileMatch) {
+          return;
+        }
+      }
+
       const dayKey = this.dayKey(message.sentAt);
       if (dayKey && dayKey !== previousDayKey) {
         timeline.push({ kind: 'day', dayKey, dayLabel: this.formatDayLabel(message.sentAt) });
@@ -298,6 +333,10 @@ export class ChatWidgetComponent {
     this.activeConversation = null;
     this.messages = [];
     this.showNewChatPicker = false;
+    this.threadSearchOpen = false;
+    this.threadSearchQuery = '';
+    this.showStarredOnly = false;
+    this.showEmojiPicker = false;
     this.replyingToMessage = null;
     this.clearActiveMessageState();
     this.showScrollButton = false;
@@ -307,6 +346,10 @@ export class ChatWidgetComponent {
   chooseConversation(conversation: ChatConversation): void {
     this.activeConversation = conversation;
     this.showNewChatPicker = false;
+    this.threadSearchOpen = false;
+    this.threadSearchQuery = '';
+    this.showStarredOnly = false;
+    this.showEmojiPicker = false;
     this.replyingToMessage = null;
     this.clearActiveMessageState();
     this.showScrollButton = false;
@@ -335,6 +378,10 @@ export class ChatWidgetComponent {
     this.activeConversation = draft;
     this.messages = [];
     this.showNewChatPicker = false;
+    this.threadSearchOpen = false;
+    this.threadSearchQuery = '';
+    this.showStarredOnly = false;
+    this.showEmojiPicker = false;
   }
 
   // ── Send ──────────────────────────────────────────────────────────────────
@@ -437,6 +484,86 @@ export class ChatWidgetComponent {
 
   canDelete(message: ChatMessage): boolean {
     return !!message.messageId;
+  }
+
+  // ── Teams / WhatsApp / Instagram Feature Helpers ──────────────────────────
+  toggleStarMessage(message: ChatMessage): void {
+    if (this.starredMessageIds.has(message.messageId)) {
+      this.starredMessageIds.delete(message.messageId);
+    } else {
+      this.starredMessageIds.add(message.messageId);
+      this.vibrateLight();
+    }
+    this.clearActiveMessageState();
+  }
+
+  isMessageStarred(messageId: number): boolean {
+    return this.starredMessageIds.has(messageId);
+  }
+
+  toggleThreadSearch(): void {
+    this.threadSearchOpen = !this.threadSearchOpen;
+    if (!this.threadSearchOpen) {
+      this.threadSearchQuery = '';
+    }
+  }
+
+  toggleStarredFilter(): void {
+    this.showStarredOnly = !this.showStarredOnly;
+  }
+
+  toggleEmojiPicker(): void {
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  insertEmoji(emoji: string): void {
+    this.composer += emoji;
+  }
+
+  formatMessageContent(text: string | null): SafeHtml {
+    if (!text) return '';
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    escaped = escaped.replace(/`([^`]+)`/g, '<code class="cw-inline-code">$1</code>');
+    escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    escaped = escaped.replace(/(^|[^\*])\*([^\*]+)\*([^\*]|$)/g, '$1<em>$2</em>$3');
+    escaped = escaped.replace(/~([^~]+)~/g, '<del>$1</del>');
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    return this.sanitizer.bypassSecurityTrustHtml(escaped);
+  }
+
+  getInlineImageUrl(message: ChatMessage): SafeResourceUrl | null {
+    if (!this.isImageAttachment(message)) return null;
+    if (this.inlineImageUrls.has(message.messageId)) {
+      return this.inlineImageUrls.get(message.messageId) ?? null;
+    }
+    this.loadInlineImage(message);
+    return null;
+  }
+
+  private loadInlineImage(message: ChatMessage): void {
+    if (!message.messageId || this.inlineImageUrls.has(message.messageId)) return;
+    this.inlineImageUrls.set(message.messageId, ''); // mark loading
+    this.chat.downloadAttachment(message.messageId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          const normalized = this.normalizeAttachmentBlob(blob, message);
+          const url = URL.createObjectURL(normalized);
+          const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+          this.inlineImageUrls.set(message.messageId, safeUrl);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.inlineImageUrls.delete(message.messageId);
+        }
+      });
   }
 
   // ── Reactions ─────────────────────────────────────────────────────────────

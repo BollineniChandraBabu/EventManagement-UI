@@ -1,25 +1,27 @@
 :host { display: block; }
 .min-w-0 { min-width: 0; }
 
-.fw-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
-.fw-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; padding: 0.75rem 1rem; border: 1px solid var(--c-border); border-radius: var(--r-lg); background: var(--c-surface); font: inherit; text-align: left; }
+.fw-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.85rem; margin-bottom: 1rem; }
+.fw-kpi { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.15rem; min-height: 72px; padding: 0.85rem 1.1rem; border: 1px solid var(--c-border); border-radius: var(--r-lg); background: var(--c-surface); font: inherit; text-align: left; box-shadow: var(--shadow-xs); box-sizing: border-box; width: 100%; }
 button.fw-kpi { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
 button.fw-kpi:hover { border-color: var(--c-primary-muted); }
 button.fw-kpi:focus-visible { outline: 3px solid var(--c-primary-ring); outline-offset: 2px; }
 .fw-kpi.is-active { border-color: var(--c-primary); box-shadow: 0 0 0 1px var(--c-primary); }
-.fw-kpi-value { font-size: 1.5rem; font-weight: 800; line-height: 1.1; color: var(--c-text); }
-.fw-kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--c-text-muted); }
+.fw-kpi-value { font-size: 1.55rem; font-weight: 800; line-height: 1.1; color: var(--c-text); }
+.fw-kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-text-muted); }
 .fw-kpi--ok .fw-kpi-value { color: #16a34a; }
 .fw-kpi--info .fw-kpi-value { color: var(--c-primary); }
 .fw-kpi--danger { background: var(--c-error-bg); border-color: var(--c-error-border); }
 .fw-kpi--danger .fw-kpi-value { color: var(--c-error); }
 
-.fw-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.85rem 1.25rem; margin-bottom: 1rem; }
+.fw-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; padding: 0.9rem 1.25rem; margin-bottom: 1rem; }
 .fw-search { position: relative; flex: 1 1 240px; margin: 0; }
 .fw-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--c-text-muted); pointer-events: none; }
-.fw-search input { padding-left: 2.3rem; }
+.fw-search input { padding-left: 2.3rem; height: 38px; }
 .fw-tabs { display: flex; gap: 0.35rem; }
-.fw-sort, .fw-size { width: auto; }
+.fw-tabs .btn { height: 38px; padding: 0.4rem 0.8rem; font-size: 0.82rem; }
+.fw-sort { width: auto; height: 38px; }
+.fw-size { width: auto; }
 
 .state-card { display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; padding: 1.5rem 1rem; margin-bottom: 1rem; border: 1px solid var(--c-border); border-radius: var(--r-lg); background: var(--c-surface); color: var(--c-text-secondary); text-align: center; }
 .state-card--error { justify-content: space-between; background: var(--c-error-bg); border-color: var(--c-error-border); color: var(--c-error); }
@@ -90,18 +92,21 @@ button.fw-kpi:focus-visible { outline: 3px solid var(--c-primary-ring); outline-
 .fw-switch-card label span { font-size: 0.8rem; color: var(--c-text-secondary); }
 .fw-note-meta { display: flex; justify-content: space-between; gap: 0.5rem; margin-top: 0.3rem; }
 
-@media (max-width: 991px) {
+@media (max-width: 1199px) {
   .fw-kpis { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 767px) {
+  .fw-kpis { grid-template-columns: repeat(2, 1fr); }
+  .fw-filters { padding: 0.9rem; flex-direction: column; align-items: stretch; }
+  .fw-tabs { width: 100%; }
+  .fw-tabs .btn { flex: 1; min-height: 42px; justify-content: center; padding-inline: 0.3rem; }
+  .fw-filters .form-control, .fw-filters .form-select { min-height: 42px; }
+  .fw-sort { width: 100%; min-height: 42px; }
 }
 
 @media (max-width: 575px) {
   .page-header-actions .btn span { display: none; }
-  .fw-kpis { grid-template-columns: repeat(2, 1fr); }
-  .fw-filters { padding: 0.85rem; }
-  .fw-tabs { width: 100%; }
-  .fw-tabs .btn { flex: 1; min-height: 44px; justify-content: center; padding-inline: 0.3rem; }
-  .fw-filters .form-control, .fw-filters .form-select { min-height: 44px; }
-  .fw-sort { width: 100%; }
   .fw-pager > .fw-sub { flex-basis: 100%; }
   .fw-pager .btn { min-width: 44px; min-height: 44px; }
 
