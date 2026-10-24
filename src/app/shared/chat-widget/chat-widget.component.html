@@ -145,10 +145,25 @@
                     </div>
 
                     <div class="header-actions">
+                        <button type="button" class="icon-btn" [class.active]="showStarredOnly" (click)="toggleStarredFilter()" title="Pinned / Starred messages">
+                            <i class="fa-solid fa-star" [style.color]="showStarredOnly ? '#eab308' : ''"></i>
+                        </button>
+                        <button type="button" class="icon-btn" [class.active]="threadSearchOpen" (click)="toggleThreadSearch()" title="Search conversation">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
                         <button type="button" class="icon-btn" (click)="toggle()" title="Close">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
+                </div>
+
+                <!-- Thread Search Bar -->
+                <div class="thread-search-bar" *ngIf="threadSearchOpen">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" placeholder="Search in chat..." [(ngModel)]="threadSearchQuery" autofocus />
+                    <button type="button" class="clear-btn" *ngIf="threadSearchQuery" (click)="threadSearchQuery = ''">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
 
                 <!-- Messages area -->
@@ -214,6 +229,9 @@
                                     <button type="button" class="action-btn" (click)="startReply(message)">
                                         <i class="fa-solid fa-reply"></i> Reply
                                     </button>
+                                    <button type="button" class="action-btn" (click)="toggleStarMessage(message)" [class.starred]="isMessageStarred(message.messageId)">
+                                        <i class="fa-solid fa-star"></i> {{ isMessageStarred(message.messageId) ? 'Unstar' : 'Star' }}
+                                    </button>
                                     <button type="button" class="action-btn"
                                             *ngIf="canEdit(message) && editingMessageId !== message.messageId"
                                             (click)="startEdit(message)">
@@ -250,17 +268,28 @@
                                     </ng-container>
 
                                     <ng-template #msgContent>
-                                        <p class="msg-text" *ngIf="message.messageText && !isEmojiOnly(message)">{{ message.messageText }}</p>
-                                        <p class="msg-emoji-only" *ngIf="isEmojiOnly(message)">{{ message.messageText || message.reactionEmoji }}</p>
+                                        <!-- Inline Image Attachment Preview -->
+                                        <div class="msg-inline-image" *ngIf="isImageAttachment(message)" (click)="openAttachment(message); $event.stopPropagation()">
+                                            <img *ngIf="getInlineImageUrl(message) as imgUrl" [src]="imgUrl" [alt]="message.attachmentFileName" />
+                                            <div class="image-loading-placeholder" *ngIf="!getInlineImageUrl(message)">
+                                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                            </div>
+                                        </div>
 
+                                        <!-- Non-image Attachment Chip -->
                                         <button class="attachment-chip" type="button"
-                                                *ngIf="message.attachmentFileName"
+                                                *ngIf="message.attachmentFileName && !isImageAttachment(message)"
                                                 (click)="openAttachment(message); $event.stopPropagation()">
                                             <i class="fa-solid fa-paperclip"></i>
                                             {{ message.attachmentFileName }}
                                         </button>
 
+                                        <!-- Formatted Text -->
+                                        <p class="msg-text" *ngIf="message.messageText && !isEmojiOnly(message)" [innerHTML]="formatMessageContent(message.messageText)"></p>
+                                        <p class="msg-emoji-only" *ngIf="isEmojiOnly(message)">{{ message.messageText || message.reactionEmoji }}</p>
+
                                         <div class="msg-meta">
+                                            <i class="fa-solid fa-star starred-icon" *ngIf="isMessageStarred(message.messageId)" title="Starred message"></i>
                                             <span class="msg-time">{{ formatMessageDisplayTime(message.sentAt) }}</span>
                                             <span class="msg-ticks"
                                                   *ngIf="message.mine"
@@ -331,8 +360,30 @@
                         </div>
                     </div>
 
+                    <!-- Emoji Picker Popover -->
+                    <div class="emoji-picker-popover" *ngIf="showEmojiPicker">
+                        <div class="emoji-picker-header">
+                            <span>Emojis</span>
+                            <button type="button" class="btn-close-mini" (click)="showEmojiPicker = false"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="emoji-picker-body">
+                            <div class="emoji-category" *ngFor="let cat of emojiCategories">
+                                <div class="emoji-cat-title">{{ cat.name }}</div>
+                                <div class="emoji-grid">
+                                    <button type="button" class="emoji-btn" *ngFor="let emoji of cat.emojis" (click)="insertEmoji(emoji)">{{ emoji }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="composer-row">
                         <div class="composer-input-wrap">
+                            <button type="button" class="composer-attach-btn"
+                                    (click)="toggleEmojiPicker()"
+                                    [disabled]="!canSendToActiveUser"
+                                    title="Choose emoji">
+                                <i class="fa-regular fa-face-smile"></i>
+                            </button>
                             <button type="button" class="composer-attach-btn"
                                     (click)="triggerAttachment()"
                                     [disabled]="!canSendToActiveUser"
@@ -343,7 +394,7 @@
                                     class="composer-textarea"
                                     [(ngModel)]="composer"
                                     rows="1"
-                                    placeholder="Type a message"
+                                    placeholder="Type a message... (supports **bold**, *italic*, `code`)"
                                     (keydown.enter)="onEnterKey($event)"
                                     (input)="onComposerInput()"
                                     [disabled]="!canSendToActiveUser"

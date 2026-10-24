@@ -20,6 +20,32 @@
 .type-card__icon { font-size: 1.3rem; }
 .type-card__label { font-size: 0.85rem; font-weight: 700; overflow-wrap: anywhere; }
 
+.invalid-feedback {
+  display: block !important;
+  width: 100%;
+  margin-top: 0.35rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--c-error, #dc2626);
+  position: static !important;
+  clear: both;
+}
+
+.form-text {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--c-text-muted);
+}
+
+.input-group + .invalid-feedback {
+  margin-top: 0.4rem;
+}
+
+.invalid-feedback + .repeat-card {
+  margin-top: 0.6rem;
+}
+
 .repeat-card { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.9rem; padding: 0.75rem 0.9rem; border: 1px solid var(--c-border); border-radius: var(--r-lg); background: var(--c-surface-alt); }
 .repeat-card.is-on { border-color: var(--c-primary-muted); background: var(--c-primary-light); }
 .repeat-card__text { display: flex; flex-direction: column; margin: 0; cursor: pointer; }
