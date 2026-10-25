@@ -131,11 +131,26 @@ export class ApiService {
     size = 10,
     searchKey = '',
     sortBy = 'createdAt',
-    sortDir: 'asc' | 'desc' = 'desc'
+    sortDir: 'asc' | 'desc' = 'desc',
+    roles?: string[],
+    genders?: string[],
+    relationships?: string[],
+    active?: boolean
   ): Observable<PagedResponse<AppUser>> {
-    return this.http.get<ApiResponse<PagedResponse<AppUser> | AppUser[]>>(`${environment.apiUrl}/users`, {
-      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
-    }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (roles?.length) roles.forEach(r => params = params.append('roles', r));
+    if (genders?.length) genders.forEach(g => params = params.append('genders', g));
+    if (relationships?.length) relationships.forEach(rel => params = params.append('relationships', rel));
+    if (active !== undefined && active !== null) params = params.set('active', active);
+
+    return this.http.get<ApiResponse<PagedResponse<AppUser> | AppUser[]>>(`${environment.apiUrl}/users`, { params })
+      .pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  getUsersFilterValues(): Observable<{ roles?: string[]; genders?: string[]; active?: boolean[] }> {
+    return this.http.get<ApiResponse<{ roles?: string[]; genders?: string[]; active?: boolean[] }>>(`${environment.apiUrl}/users/filter-values`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   saveUser(payload: SaveUserPayload) {
@@ -164,14 +179,25 @@ export class ApiService {
     userId?: number,
     active?: boolean,
     sortBy = 'id',
-    sortDir: 'asc' | 'desc' = 'desc'
+    sortDir: 'asc' | 'desc' = 'desc',
+    eventTypes?: string[],
+    userIds?: number[]
   ): Observable<PagedResponse<WishImage>> {
-    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir).set('eventType', eventType);
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (eventType) params = params.set('eventType', eventType);
     if (userId !== undefined) params = params.set('userId', userId);
     if (active !== undefined) params = params.set('active', active);
+    if (eventTypes?.length) eventTypes.forEach(et => params = params.append('eventTypes', et));
+    if (userIds?.length) userIds.forEach(u => params = params.append('userIds', u));
 
     return this.http.get<ApiResponse<PagedResponse<WishImage> | WishImage[]>>(`${environment.apiUrl}/admin/wish-images`, { params })
       .pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  getWishImagesFilterValues(): Observable<{ active?: boolean[] }> {
+    return this.http.get<ApiResponse<{ active?: boolean[] }>>(`${environment.apiUrl}/admin/wish-images/filter-values`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   createWishImage(file: File, eventType: string, active: boolean, userId?: number): Observable<WishImage> {
@@ -286,11 +312,24 @@ export class ApiService {
     size = 10,
     searchKey = '',
     sortBy = 'eventDate',
-    sortDir: 'asc' | 'desc' = 'desc'
+    sortDir: 'asc' | 'desc' = 'desc',
+    eventTypes?: string[],
+    userIds?: number[],
+    active?: boolean
   ): Observable<PagedResponse<EventItem>> {
-    return this.http.get<ApiResponse<PagedResponse<EventItem> | EventItem[]>>(`${environment.apiUrl}/events`, {
-      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
-    }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (eventTypes?.length) eventTypes.forEach(et => params = params.append('eventTypes', et));
+    if (userIds?.length) userIds.forEach(u => params = params.append('userIds', u));
+    if (active !== undefined && active !== null) params = params.set('active', active);
+
+    return this.http.get<ApiResponse<PagedResponse<EventItem> | EventItem[]>>(`${environment.apiUrl}/events`, { params })
+      .pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  getEventsFilterValues(): Observable<{ active?: boolean[] }> {
+    return this.http.get<ApiResponse<{ active?: boolean[] }>>(`${environment.apiUrl}/events/filter-values`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   saveEvent(payload: SaveEventPayload) {
@@ -348,11 +387,48 @@ export class ApiService {
     searchKey = '',
     sortBy = 'id',
     sortDir: 'asc' | 'desc' = 'desc',
-    status: FestivalMappingStatus = 'ALL'
+    status: FestivalMappingStatus = 'ALL',
+    specialEventIds?: number[],
+    userIds?: number[],
+    statuses?: string[]
   ): Observable<PagedResponse<FestivalWishMapping>> {
-    return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`, {
-      params: this.pagedParams(page, size, searchKey, sortBy, sortDir).set('status', status)
-    }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (status) params = params.set('status', status);
+    if (specialEventIds?.length) specialEventIds.forEach(id => params = params.append('specialEventIds', id));
+    if (userIds?.length) userIds.forEach(id => params = params.append('userIds', id));
+    if (statuses?.length) statuses.forEach(s => params = params.append('statuses', s));
+
+    return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings`, { params })
+      .pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  getFestivalWishMappingsFilterValues(): Observable<{ statuses?: string[] }> {
+    return this.http.get<ApiResponse<{ statuses?: string[] }>>(`${environment.apiUrl}/festival-wish-mappings/filter-values`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  saveFestivalWishMappingWithImage(
+    specialEventId: number,
+    userId: number,
+    active: boolean,
+    customMessage?: string,
+    image?: File
+  ): Observable<FestivalWishMapping> {
+    const formData = new FormData();
+    formData.append('specialEventId', String(specialEventId));
+    formData.append('userId', String(userId));
+    formData.append('active', String(active));
+    if (customMessage !== undefined && customMessage !== null) {
+      formData.append('customMessage', customMessage);
+    }
+    if (image) {
+      formData.append('image', image);
+    }
+
+    return this.http.post<ApiResponse<FestivalWishMapping>>(`${environment.apiUrl}/festival-wish-mappings/with-image`, formData).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   /** Maps one festival to many users at once; existing mappings are updated. */
@@ -399,7 +475,16 @@ export class ApiService {
     return this.http.get(`${environment.apiUrl}/emails/status/${id}/image`, { responseType: 'blob' });
   }
 
-  emailStatuses(page = 0, size = 10, searchKey = '', emailType = '', sortBy = 'id', sortDir: 'asc' | 'desc' = 'desc'): Observable<PagedResponse<EmailStatus>> {
+  emailStatuses(
+    page = 0,
+    size = 10,
+    searchKey = '',
+    emailType = '',
+    sortBy = 'id',
+    sortDir: 'asc' | 'desc' = 'desc',
+    statuses?: string[],
+    emailTypes?: string[]
+  ): Observable<PagedResponse<EmailStatus>> {
     let url = `${environment.apiUrl}/emails/status`;
     if (emailType === 'OTP') {
       url += '/admin/otp';
@@ -410,14 +495,14 @@ export class ApiService {
     } else if (emailType === 'UNREAD_CHAT_MESSAGE') {
       url += '/unread-chat-messages';
     }
-    const params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
-    const requestWithEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(url, {
-      params: emailType ? params.set('emailType', emailType) : params
-    });
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (emailType) params = params.set('emailType', emailType);
+    if (statuses?.length) statuses.forEach(s => params = params.append('statuses', s));
+    if (emailTypes?.length) emailTypes.forEach(et => params = params.append('emailTypes', et));
 
-    const requestWithoutEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(`${environment.apiUrl}/emails/status`, {
-      params
-    });
+    const requestWithEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(url, { params });
+
+    const requestWithoutEmailType = () => this.http.get<ApiResponse<PagedResponse<EmailStatus> | EmailStatus[]>>(`${environment.apiUrl}/emails/status`, { params });
 
     return requestWithEmailType().pipe(
       catchError((error) => {
@@ -428,6 +513,12 @@ export class ApiService {
         return requestWithoutEmailType();
       }),
       map((response) => this.normalizePaged(this.unwrap(response), page, size))
+    );
+  }
+
+  getEmailStatusesFilterValues(): Observable<{ statuses?: string[]; emailTypes?: string[] }> {
+    return this.http.get<ApiResponse<{ statuses?: string[]; emailTypes?: string[] }>>(`${environment.apiUrl}/emails/status/filter-values`).pipe(
+      map((response) => this.unwrap(response))
     );
   }
 

@@ -37,9 +37,15 @@
           <label class="form-label">Status</label>
           <select class="form-select" (change)="onStatusFilter($any($event.target).value)" [disabled]="loading">
             <option value="ALL">All statuses</option>
-            <option value="SENT">Sent</option>
-            <option value="QUEUED">Queued</option>
-            <option value="FAILED">Failed</option>
+            <option *ngFor="let status of (statusOptions.length ? statusOptions : ['SENT', 'QUEUED', 'FAILED'])" [value]="status">{{ status }}</option>
+          </select>
+        </div>
+
+        <div *ngIf="emailTypeOptions.length">
+          <label class="form-label">Email Type</label>
+          <select class="form-select" (change)="onEmailTypeFilter($any($event.target).value)" [disabled]="loading">
+            <option value="ALL">All email types</option>
+            <option *ngFor="let type of emailTypeOptions" [value]="type">{{ type }}</option>
           </select>
         </div>
 
