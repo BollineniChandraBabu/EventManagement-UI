@@ -35,6 +35,10 @@ export class EmailStatusComponent implements OnDestroy {
 
   filterText = '';
   filterStatus = 'ALL';
+  selectedStatuses: string[] = [];
+  selectedEmailTypes: string[] = [];
+  statusOptions: string[] = [];
+  emailTypeOptions: string[] = [];
   sortBy: 'id' | 'toEmail' | 'status' | 'sentAt' = 'id';
   sortDir: 'asc' | 'desc' = 'desc';
   page = 0;
@@ -57,7 +61,18 @@ export class EmailStatusComponent implements OnDestroy {
   constructor() {
     this.pageTitle = this.route.snapshot.data['title'] ?? 'Email Status';
     this.emailTypeFilter = (this.route.snapshot.data['emailType'] ?? '').toString();
+    this.loadFilterValues();
     this.loadItems();
+  }
+
+  loadFilterValues(): void {
+    this.api.getEmailStatusesFilterValues().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        if (res.statuses) this.statusOptions = res.statuses;
+        if (res.emailTypes) this.emailTypeOptions = res.emailTypes;
+      },
+      error: () => {}
+    });
   }
 
   get displayPage(): number {
@@ -150,7 +165,15 @@ export class EmailStatusComponent implements OnDestroy {
 
   onStatusFilter(value: string): void {
     this.filterStatus = value;
-    this.applyStatusFilter();
+    this.selectedStatuses = value === 'ALL' ? [] : [value];
+    this.page = 0;
+    this.loadItems();
+  }
+
+  onEmailTypeFilter(value: string): void {
+    this.selectedEmailTypes = value === 'ALL' ? [] : [value];
+    this.page = 0;
+    this.loadItems();
   }
 
   toggleSort(field: typeof this.sortBy): void {
@@ -189,13 +212,24 @@ export class EmailStatusComponent implements OnDestroy {
     this.totalElements = 0;
     this.totalPages = 0;
 
-    this.api.emailStatuses(this.page, this.pageSize, this.filterText, this.emailTypeFilter, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const statusesParam = this.selectedStatuses.length ? this.selectedStatuses : undefined;
+    const emailTypesParam = this.selectedEmailTypes.length ? this.selectedEmailTypes : undefined;
+
+    this.api.emailStatuses(
+      this.page,
+      this.pageSize,
+      this.filterText,
+      this.emailTypeFilter,
+      this.sortBy,
+      this.sortDir,
+      statusesParam,
+      emailTypesParam
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.allItems = response.content ?? [];
+        this.viewItems = [...this.allItems];
         this.totalElements = response.totalElements ?? this.allItems.length;
         this.totalPages = response.totalPages ?? 0;
-
-        this.applyStatusFilter();
         this.loading = false;
       },
       error: () => {

@@ -39,6 +39,15 @@
         </div>
 
         <div>
+          <label class="form-label">Status</label>
+          <select class="form-select" (change)="onActiveFilter($any($event.target).value)" [disabled]="loading">
+            <option value="ALL">All statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
+        <div>
           <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>

@@ -28,6 +28,8 @@ export class EventsComponent {
   eventTypeOptions: string[] = [];
   filterText = '';
   filterType = 'ALL';
+  selectedEventTypes: string[] = [];
+  filterActive: boolean | null = null;
   page = 0;
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
@@ -61,12 +63,24 @@ export class EventsComponent {
 
   loadEvents(): void {
     this.loading = true;
-    this.api.events(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const eventTypesParam = this.selectedEventTypes.length ? this.selectedEventTypes : undefined;
+    const activeParam = this.filterActive !== null ? this.filterActive : undefined;
+
+    this.api.events(
+      this.page,
+      this.pageSize,
+      this.filterText,
+      this.sortBy,
+      this.sortDir,
+      eventTypesParam,
+      undefined,
+      activeParam
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.events = response.content ?? [];
+        this.viewEvents = [...this.events];
         this.totalElements = response.totalElements ?? this.events.length;
         this.totalPages = response.totalPages ?? 0;
-        this.applyTypeFilter();
         this.loading = false;
       },
       error: () => {
@@ -78,7 +92,19 @@ export class EventsComponent {
 
   onTypeFilter(value: string): void {
     this.filterType = value;
-    this.applyTypeFilter();
+    this.selectedEventTypes = value === 'ALL' ? [] : [value];
+    this.page = 0;
+    this.loadEvents();
+  }
+
+  onActiveFilter(value: string): void {
+    if (value === 'ALL') {
+      this.filterActive = null;
+    } else {
+      this.filterActive = value === 'true';
+    }
+    this.page = 0;
+    this.loadEvents();
   }
 
   onSearchInput(value: string): void {

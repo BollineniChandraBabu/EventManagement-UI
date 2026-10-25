@@ -53,8 +53,13 @@
         <tbody>
           <tr *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
             <td>
-              <div class="fw-name">{{ mapping.festivalName }}</div>
-              <div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div>
+              <div class="d-flex align-items-center gap-2">
+                <img *ngIf="mapping.imageUrl" [src]="mapping.imageUrl" [alt]="mapping.festivalName" class="rounded" style="width: 40px; height: 40px; object-fit: cover;" />
+                <div>
+                  <div class="fw-name">{{ mapping.festivalName }}</div>
+                  <div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div>
+                </div>
+              </div>
             </td>
             <td>
               <div class="fw-name">{{ mapping.userName }}</div>
@@ -78,7 +83,13 @@
     <ul class="fw-cards d-md-none">
       <li class="fw-card" *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
         <div class="fw-card-top">
-          <div class="min-w-0"><div class="fw-name">{{ mapping.festivalName }}</div><div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} · <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div></div>
+          <div class="min-w-0 d-flex align-items-center gap-2">
+            <img *ngIf="mapping.imageUrl" [src]="mapping.imageUrl" [alt]="mapping.festivalName" class="rounded" style="width: 36px; height: 36px; object-fit: cover;" />
+            <div>
+              <div class="fw-name">{{ mapping.festivalName }}</div>
+              <div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} · <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div>
+            </div>
+          </div>
           <span class="fw-badge" [ngClass]="'fw-badge--' + statusOf(mapping)">{{ statusLabel(mapping) }}</span>
         </div>
         <div class="fw-card-row"><i class="fa-solid fa-user" aria-hidden="true"></i>{{ mapping.userName }}</div>
@@ -165,6 +176,18 @@
         <label class="form-label fw-label" for="fw-note">Personal note <span class="text-muted fw-normal">(optional)</span></label>
         <textarea id="fw-note" class="form-control" rows="3" [maxlength]="noteMaxLength" [(ngModel)]="note" placeholder="Shown at the end of the email, e.g. “Wishing you and the family a very happy Diwali!”"></textarea>
         <div class="fw-note-meta"><span class="fw-sub">{{ isEditing ? 'Clear it to send no note.' : 'The same note is used for everyone you add.' }}</span><span class="fw-sub">{{ note.length }}/{{ noteMaxLength }}</span></div>
+
+        <!-- Custom Image Upload -->
+        <div class="mt-3">
+          <label class="form-label fw-label" for="fw-image">Custom wish image <span class="text-muted fw-normal">(optional)</span></label>
+          <div *ngIf="imagePreviewUrl" class="mb-2 d-flex align-items-center gap-2">
+            <img [src]="imagePreviewUrl" alt="Custom wish image" class="rounded border" style="max-height: 100px; max-width: 150px; object-fit: cover;" />
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeSelectedImage()"><i class="fa-solid fa-trash-can me-1"></i>Remove image</button>
+          </div>
+          <input id="fw-image" class="form-control form-control-sm" type="file" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onImageSelected($event)" />
+          <div class="form-text text-danger" *ngIf="imageError">{{ imageError }}</div>
+          <div class="form-text" *ngIf="!imageError">Upload a custom image to override AI generated image. PNG, JPEG, GIF or WebP up to 5 MB.</div>
+        </div>
       </div>
     </div>
 

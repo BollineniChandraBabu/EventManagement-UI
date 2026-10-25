@@ -39,8 +39,24 @@
           <label class="form-label">Role</label>
           <select class="form-select" (change)="onRoleFilter($any($event.target).value)" [disabled]="loading">
             <option value="ALL">All roles</option>
-            <option [value]="ROLE_USER">{{ ROLE_USER }}</option>
-            <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
+            <option *ngFor="let role of (roleOptions.length ? roleOptions : [ROLE_USER, ROLE_ADMIN])" [value]="role">{{ role }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Gender</label>
+          <select class="form-select" (change)="onGenderFilter($any($event.target).value)" [disabled]="loading">
+            <option value="ALL">All genders</option>
+            <option *ngFor="let gender of (genderOptions.length ? genderOptions : ['MALE', 'FEMALE', 'OTHER'])" [value]="gender">{{ gender }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Status</label>
+          <select class="form-select" (change)="onActiveFilter($any($event.target).value)" [disabled]="loading">
+            <option value="ALL">All statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
           </select>
         </div>
 

@@ -38,6 +38,8 @@ export class WishImagesComponent implements OnDestroy {
   filterText = '';
   eventTypeFilter = '';
   activeFilter = 'ALL';
+  selectedEventTypes: string[] = [];
+  selectedUserIds: number[] = [];
   sortBy: 'id' | 'eventType' | 'active' | 'createdAt' | 'updatedAt' = 'updatedAt';
   sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
@@ -164,7 +166,21 @@ export class WishImagesComponent implements OnDestroy {
   private loadImages(): void {
     this.loading = true;
     const active = this.activeFilter === 'ALL' ? undefined : this.activeFilter === 'ACTIVE';
-    this.api.wishImages(this.page, this.pageSize, this.filterText.trim(), this.eventTypeFilter.trim(), undefined, active, this.sortBy, this.sortDir)
+    const eventTypesParam = this.selectedEventTypes.length ? this.selectedEventTypes : undefined;
+    const userIdsParam = this.selectedUserIds.length ? this.selectedUserIds : undefined;
+
+    this.api.wishImages(
+      this.page,
+      this.pageSize,
+      this.filterText.trim(),
+      this.eventTypeFilter.trim(),
+      undefined,
+      active,
+      this.sortBy,
+      this.sortDir,
+      eventTypesParam,
+      userIdsParam
+    )
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (result) => { this.images = result.content ?? []; this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.loading = false; },
         error: () => { this.images = []; this.loading = false; this.toast.error('Unable to load wish images right now.'); }

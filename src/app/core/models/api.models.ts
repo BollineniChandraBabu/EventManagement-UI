@@ -233,6 +233,7 @@ export interface FestivalWishMapping {
   eventDate: string;
   /** Personal note added to the festival email. */
   customMessage?: string | null;
+  imageUrl?: string | null;
   lastWishSentOn?: string | null;
   /** true = the last attempt to send this wish failed. */
   error?: boolean;

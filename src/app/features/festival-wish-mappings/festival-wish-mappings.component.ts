@@ -107,6 +107,11 @@ export class FestivalWishMappingsComponent {
   note = '';
   saving = false;
 
+  // ---- image upload in editor
+  selectedImageFile?: File;
+  imagePreviewUrl?: string;
+  imageError = '';
+
   private readonly load$ = new Subject<number>();
   private readonly search$ = new Subject<string>();
 
@@ -291,6 +296,7 @@ export class FestivalWishMappingsComponent {
   // ------------------------------------------------------------------ editor: open / close
 
   openCreate(): void {
+    this.clearEditorImage();
     this.editingMapping = null;
     this.selectedFestivalId = null;
     this.selectedUserIds = new Set();
@@ -303,10 +309,54 @@ export class FestivalWishMappingsComponent {
   }
 
   openEdit(mapping: FestivalWishMapping): void {
+    this.clearEditorImage();
     this.editingMapping = mapping;
     this.active = mapping.active;
     this.note = mapping.customMessage ?? '';
+    if (mapping.imageUrl) {
+      this.imagePreviewUrl = mapping.imageUrl;
+    }
     this.navigateEditor(true);
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    const allowed = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      this.imageError = 'Unsupported image format. Use PNG, JPEG, GIF or WebP.';
+      input.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.imageError = 'File size exceeds 5 MB limit.';
+      input.value = '';
+      return;
+    }
+    this.imageError = '';
+    this.clearEditorImagePreview();
+    this.selectedImageFile = file;
+    this.imagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  removeSelectedImage(): void {
+    this.clearEditorImage();
+  }
+
+  private clearEditorImagePreview(): void {
+    if (this.imagePreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.imagePreviewUrl);
+    }
+    this.imagePreviewUrl = undefined;
+  }
+
+  private clearEditorImage(): void {
+    this.clearEditorImagePreview();
+    this.selectedImageFile = undefined;
+    this.imageError = '';
   }
 
   closeEditor(): void {
@@ -453,11 +503,46 @@ export class FestivalWishMappingsComponent {
 
     if (this.editingMapping) {
       const mapping = this.editingMapping;
+      if (this.selectedImageFile) {
+        this.api
+          .saveFestivalWishMappingWithImage(
+            mapping.specialEventId,
+            mapping.userId,
+            this.active,
+            note,
+            this.selectedImageFile
+          )
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => this.onSaved('Festival wish mapping updated with image.'),
+            error: (error: HttpErrorResponse) => this.onSaveFailed(error)
+          });
+      } else {
+        this.api
+          .saveFestivalWishMapping({ specialEventId: mapping.specialEventId, userId: mapping.userId, active: this.active, customMessage: note })
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => this.onSaved('Festival wish mapping updated.'),
+            error: (error: HttpErrorResponse) => this.onSaveFailed(error)
+          });
+      }
+      return;
+    }
+
+    // Creating mappings
+    if (this.selectedImageFile && this.selectedUserIds.size === 1) {
+      const userId = Array.from(this.selectedUserIds)[0];
       this.api
-        .saveFestivalWishMapping({ specialEventId: mapping.specialEventId, userId: mapping.userId, active: this.active, customMessage: note })
+        .saveFestivalWishMappingWithImage(
+          this.selectedFestivalId as number,
+          userId,
+          this.active,
+          note,
+          this.selectedImageFile
+        )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: () => this.onSaved('Festival wish mapping updated.'),
+          next: () => this.onSaved('Festival wish mapping created with custom image.'),
           error: (error: HttpErrorResponse) => this.onSaveFailed(error)
         });
       return;

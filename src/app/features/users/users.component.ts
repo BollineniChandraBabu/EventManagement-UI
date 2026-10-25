@@ -37,6 +37,11 @@ export class UsersComponent {
 
   filterText = '';
   filterRole = 'ALL';
+  selectedRoles: string[] = [];
+  selectedGenders: string[] = [];
+  filterActive: boolean | null = null;
+  roleOptions: string[] = [];
+  genderOptions: string[] = [];
   page = 0;
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
@@ -48,7 +53,18 @@ export class UsersComponent {
   deactivatingIds = new Set<number>();
 
   constructor() {
+    this.loadFilterValues();
     this.loadUsers();
+  }
+
+  loadFilterValues(): void {
+    this.api.getUsersFilterValues().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        if (res.roles) this.roleOptions = res.roles;
+        if (res.genders) this.genderOptions = res.genders;
+      },
+      error: () => {}
+    });
   }
 
   get displayPage(): number {
@@ -157,7 +173,29 @@ export class UsersComponent {
 
   onRoleFilter(value: string): void {
     this.filterRole = value;
-    this.applyRoleFilter();
+    if (value === 'ALL') {
+      this.selectedRoles = [];
+    } else {
+      this.selectedRoles = [value];
+    }
+    this.page = 0;
+    this.loadUsers();
+  }
+
+  onGenderFilter(value: string): void {
+    this.selectedGenders = value === 'ALL' ? [] : [value];
+    this.page = 0;
+    this.loadUsers();
+  }
+
+  onActiveFilter(value: string): void {
+    if (value === 'ALL') {
+      this.filterActive = null;
+    } else {
+      this.filterActive = value === 'true';
+    }
+    this.page = 0;
+    this.loadUsers();
   }
 
   onPageSizeChange(value: string): void {
@@ -215,12 +253,26 @@ export class UsersComponent {
     this.totalElements = 0;
     this.totalPages = 0;
 
-    this.api.users(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const rolesParam = this.selectedRoles.length ? this.selectedRoles : undefined;
+    const gendersParam = this.selectedGenders.length ? this.selectedGenders : undefined;
+    const activeParam = this.filterActive !== null ? this.filterActive : undefined;
+
+    this.api.users(
+      this.page,
+      this.pageSize,
+      this.filterText,
+      this.sortBy,
+      this.sortDir,
+      rolesParam,
+      gendersParam,
+      undefined,
+      activeParam
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.allUsers = response.content ?? [];
+        this.viewUsers = [...this.allUsers];
         this.totalElements = response.totalElements ?? this.allUsers.length;
         this.totalPages = response.totalPages ?? 0;
-        this.applyRoleFilter();
         this.loading = false;
       },
       error: () => {
@@ -228,13 +280,5 @@ export class UsersComponent {
         this.loading = false;
       }
     });
-  }
-
-  private applyRoleFilter(): void {
-    if (this.filterRole === 'ALL') {
-      this.viewUsers = [...this.allUsers];
-      return;
-    }
-    this.viewUsers = this.allUsers.filter((user) => user.role === this.filterRole);
   }
 }
