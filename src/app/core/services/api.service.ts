@@ -517,7 +517,7 @@ export class ApiService {
   }
 
   getEmailStatusesFilterValues(): Observable<{ statuses?: string[]; emailTypes?: string[] }> {
-    return this.http.get<ApiResponse<{ statuses?: string[]; emailTypes?: string[] }>>(`${environment.apiUrl}/emails/status/filter-values`).pipe(
+    return this.http.get<ApiResponse<{ statuses?: string[]; emailTypes?: string[] }>>(`${environment.apiUrl}/email/filter-values`).pipe(
       map((response) => this.unwrap(response))
     );
   }
