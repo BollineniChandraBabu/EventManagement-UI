@@ -34,8 +34,8 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Status</th>
+              <th><div class="th-row"><span>Name</span><app-multi-select-filter label="Name" searchPlaceholder="Search names…" [disabled]="loading" [options]="codeOptions" [selected]="selectedCodes" (applied)="onCodesChange($event)"></app-multi-select-filter></div></th>
+              <th><div class="th-row"><span>Status</span><app-multi-select-filter label="Status" searchPlaceholder="Search statuses…" [disabled]="loading" [options]="statusOptions" [selected]="selectedStatuses" (applied)="onStatusesChange($event)"></app-multi-select-filter></div></th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>

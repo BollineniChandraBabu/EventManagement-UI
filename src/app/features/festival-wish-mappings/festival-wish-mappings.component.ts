@@ -17,6 +17,7 @@ import { ApiService } from '../../core/services/api.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 import { startOfDay } from '../calendar/calendar.utils';
 import {
   FestivalTiming,
@@ -46,7 +47,7 @@ interface SortOption {
 @Component({
   selector: 'app-festival-wish-mappings',
   standalone: true,
-  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent, MultiSelectFilterComponent],
   templateUrl: './festival-wish-mappings.component.html',
   styleUrl: './festival-wish-mappings.component.css'
 })
@@ -94,6 +95,11 @@ export class FestivalWishMappingsComponent {
   editingMapping: FestivalWishMapping | null = null;
   festivals: FestivalItem[] = [];
   users: AppUser[] = [];
+  selectedFestivalIds: string[] = [];
+  selectedFilterUserIds: string[] = [];
+  festivalOptions: MultiSelectOption[] = [];
+  filterUserOptions: MultiSelectOption[] = [];
+  private filterValuesLoaded = false;
   referenceLoaded = false;
   referenceLoading = false;
   referenceFailed = false;
@@ -112,6 +118,9 @@ export class FestivalWishMappingsComponent {
   imagePreviewUrl?: string;
   imageError = '';
 
+  // ---- image lightbox
+  previewImage?: FestivalWishMapping;
+
   private readonly load$ = new Subject<number>();
   private readonly search$ = new Subject<string>();
 
@@ -125,8 +134,18 @@ export class FestivalWishMappingsComponent {
         }),
         switchMap((page) => {
           const sort = this.sortOptions.find((option) => option.id === this.sortId) ?? this.sortOptions[0];
+          const hasMulti = this.selectedFestivalIds.length > 0 || this.selectedFilterUserIds.length > 0;
           return this.api
-            .festivalWishMappingsPaged(page, this.size, this.search.trim(), sort.sortBy, sort.sortDir, this.status)
+            .festivalWishMappingsPaged(
+              page,
+              this.size,
+              this.search.trim(),
+              sort.sortBy,
+              sort.sortDir,
+              this.status,
+              hasMulti ? this.selectedFestivalIds.map((id) => Number(id)) : undefined,
+              hasMulti ? this.selectedFilterUserIds.map((id) => Number(id)) : undefined
+            )
             .pipe(catchError(() => of(null)));
         }),
         takeUntilDestroyed(this.destroyRef)
@@ -157,6 +176,34 @@ export class FestivalWishMappingsComponent {
 
     this.load(0);
     this.loadSummary();
+    this.loadFilterValues();
+  }
+
+  loadFilterValues(): void {
+    if (this.filterValuesLoaded) {
+      return;
+    }
+    this.filterValuesLoaded = true;
+    forkJoin({
+      festivals: this.api.festivals(undefined, 0, 500),
+      users: this.api.users(0, MAX_LOADED, '', 'name', 'asc')
+    })
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (!result) return;
+        this.festivalOptions = (result.festivals ?? []).map((festival) => ({ value: String(festival.id), label: festival.eventName }));
+        this.filterUserOptions = (result.users.content ?? []).map((user) => ({ value: String(user.id), label: user.name, hint: user.email }));
+      });
+  }
+
+  onFestivalsChange(values: string[]): void {
+    this.selectedFestivalIds = values;
+    this.load(0);
+  }
+
+  onFilterUsersChange(values: string[]): void {
+    this.selectedFilterUserIds = values;
+    this.load(0);
   }
 
   // ------------------------------------------------------------------ dashboard
@@ -198,12 +245,19 @@ export class FestivalWishMappingsComponent {
   }
 
   get hasFilters(): boolean {
-    return this.search.trim().length > 0 || this.status !== 'ALL';
+    return (
+      this.search.trim().length > 0 ||
+      this.status !== 'ALL' ||
+      this.selectedFestivalIds.length > 0 ||
+      this.selectedFilterUserIds.length > 0
+    );
   }
 
   clearFilters(): void {
     this.search = '';
     this.status = 'ALL';
+    this.selectedFestivalIds = [];
+    this.selectedFilterUserIds = [];
     this.load(0);
   }
 
@@ -365,8 +419,22 @@ export class FestivalWishMappingsComponent {
     }
   }
 
+  openImage(mapping: FestivalWishMapping): void {
+    if (mapping.imageUrl) {
+      this.previewImage = mapping;
+    }
+  }
+
+  closeImage(): void {
+    this.previewImage = undefined;
+  }
+
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.previewImage) {
+      this.closeImage();
+      return;
+    }
     if (this.editorOpen) {
       this.closeEditor();
     }

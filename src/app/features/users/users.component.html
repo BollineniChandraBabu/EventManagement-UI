@@ -36,36 +36,40 @@
         </div>
 
         <div>
-          <label class="form-label">Role</label>
-          <select class="form-select" (change)="onRoleFilter($any($event.target).value)" [disabled]="loading">
-            <option value="ALL">All roles</option>
-            <option *ngFor="let role of (roleOptions.length ? roleOptions : [ROLE_USER, ROLE_ADMIN])" [value]="role">{{ role }}</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Gender</label>
-          <select class="form-select" (change)="onGenderFilter($any($event.target).value)" [disabled]="loading">
-            <option value="ALL">All genders</option>
-            <option *ngFor="let gender of (genderOptions.length ? genderOptions : ['MALE', 'FEMALE', 'OTHER'])" [value]="gender">{{ gender }}</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Status</label>
-          <select class="form-select" (change)="onActiveFilter($any($event.target).value)" [disabled]="loading">
-            <option value="ALL">All statuses</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
-        </div>
-
-        <div>
           <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
           </select>
         </div>
+      </div>
+
+      <!-- Multi-select filters -->
+      <div class="filter-toolbar mb-4">
+        <span class="filter-toolbar-label"><i class="fa-solid fa-filter me-1"></i>Filters</span>
+        <app-multi-select-filter
+          label="Gender"
+          searchPlaceholder="Search genders…"
+          [disabled]="loading"
+          [options]="genderOptions"
+          [selected]="selectedGenders"
+          (applied)="onGendersChange($event)">
+        </app-multi-select-filter>
+        <app-multi-select-filter
+          label="Status"
+          searchPlaceholder="Search statuses…"
+          [disabled]="loading"
+          [options]="statusOptions"
+          [selected]="selectedStatuses"
+          (applied)="onStatusesChange($event)">
+        </app-multi-select-filter>
+        <app-multi-select-filter
+          label="Relationship"
+          searchPlaceholder="Search relationships…"
+          [disabled]="loading"
+          [options]="relationshipOptions"
+          [selected]="selectedRelationships"
+          (applied)="onRelationshipsChange($event)">
+        </app-multi-select-filter>
       </div>
 
       <!-- Table -->
@@ -87,10 +91,20 @@
               </th>
               <th>Date of Birth</th>
               <th>
-                <button class="sort-header" type="button" (click)="toggleSort('role')" [disabled]="loading">
-                  Role
-                  <i *ngIf="isSortedBy('role')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
-                </button>
+                <div class="th-row">
+                  <button class="sort-header" type="button" (click)="toggleSort('role')" [disabled]="loading">
+                    Role
+                    <i *ngIf="isSortedBy('role')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i>
+                  </button>
+                  <app-multi-select-filter
+                    label="Role"
+                    searchPlaceholder="Search roles…"
+                    [disabled]="loading"
+                    [options]="roleOptions"
+                    [selected]="selectedRoles"
+                    (applied)="onRolesChange($event)">
+                  </app-multi-select-filter>
+                </div>
               </th>
               <th class="text-end">Actions</th>
             </tr>

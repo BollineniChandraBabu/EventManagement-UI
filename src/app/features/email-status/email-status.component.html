@@ -34,27 +34,32 @@
         </div>
 
         <div>
-          <label class="form-label">Status</label>
-          <select class="form-select" (change)="onStatusFilter($any($event.target).value)" [disabled]="loading">
-            <option value="ALL">All statuses</option>
-            <option *ngFor="let status of (statusOptions.length ? statusOptions : ['SENT', 'QUEUED', 'FAILED'])" [value]="status">{{ status }}</option>
-          </select>
-        </div>
-
-        <div *ngIf="emailTypeOptions.length">
-          <label class="form-label">Email Type</label>
-          <select class="form-select" (change)="onEmailTypeFilter($any($event.target).value)" [disabled]="loading">
-            <option value="ALL">All email types</option>
-            <option *ngFor="let type of emailTypeOptions" [value]="type">{{ type }}</option>
-          </select>
-        </div>
-
-        <div>
           <label class="form-label">Per page</label>
           <select class="form-select" (change)="onPageSizeChange($any($event.target).value)" [disabled]="loading">
             <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">{{ size }}</option>
           </select>
         </div>
+      </div>
+
+      <!-- Multi-select filters -->
+      <div class="filter-toolbar mb-4">
+        <span class="filter-toolbar-label"><i class="fa-solid fa-filter me-1"></i>Filters</span>
+        <app-multi-select-filter
+          label="Status"
+          searchPlaceholder="Search statuses…"
+          [disabled]="loading"
+          [options]="statusOptions"
+          [selected]="selectedStatuses"
+          (applied)="onStatusesChange($event)">
+        </app-multi-select-filter>
+        <app-multi-select-filter
+          label="Email type"
+          searchPlaceholder="Search email types…"
+          [disabled]="loading"
+          [options]="emailTypeOptions"
+          [selected]="selectedEmailTypes"
+          (applied)="onEmailTypesChange($event)">
+        </app-multi-select-filter>
       </div>
 
       <!-- Table -->
@@ -63,8 +68,32 @@
           <thead>
             <tr>
               <th>Recipient</th>
-              <th>Subject</th>
-              <th><button class="sort-header" type="button" (click)="toggleSort('status')">Status <i *ngIf="isSortedBy('status')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
+              <th>
+                <div class="th-row">
+                  <span>Subject</span>
+                  <app-multi-select-filter
+                    label="Email type"
+                    searchPlaceholder="Search email types…"
+                    [disabled]="loading"
+                    [options]="emailTypeOptions"
+                    [selected]="selectedEmailTypes"
+                    (applied)="onEmailTypesChange($event)">
+                  </app-multi-select-filter>
+                </div>
+              </th>
+              <th>
+                <div class="th-row">
+                  <button class="sort-header" type="button" (click)="toggleSort('status')">Status <i *ngIf="isSortedBy('status')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button>
+                  <app-multi-select-filter
+                    label="Status"
+                    searchPlaceholder="Search statuses…"
+                    [disabled]="loading"
+                    [options]="statusOptions"
+                    [selected]="selectedStatuses"
+                    (applied)="onStatusesChange($event)">
+                  </app-multi-select-filter>
+                </div>
+              </th>
               <th><button class="sort-header" type="button" (click)="toggleSort('sentAt')">Sent at <i *ngIf="isSortedBy('sentAt')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th>
               <th class="text-end">Actions</th>
             </tr>

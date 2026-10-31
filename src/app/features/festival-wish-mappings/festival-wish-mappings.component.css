@@ -14,14 +14,29 @@ button.fw-kpi:focus-visible { outline: 3px solid var(--c-primary-ring); outline-
 .fw-kpi--danger { background: var(--c-error-bg); border-color: var(--c-error-border); }
 .fw-kpi--danger .fw-kpi-value { color: var(--c-error); }
 
-.fw-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; padding: 0.9rem 1.25rem; margin-bottom: 1rem; }
+.fw-filters { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.85rem; padding: 0.9rem 1.25rem; margin-bottom: 1rem; }
 .fw-search { position: relative; flex: 1 1 240px; margin: 0; }
 .fw-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--c-text-muted); pointer-events: none; }
 .fw-search input { padding-left: 2.3rem; height: 38px; }
 .fw-tabs { display: flex; gap: 0.35rem; }
 .fw-tabs .btn { height: 38px; padding: 0.4rem 0.8rem; font-size: 0.82rem; }
 .fw-sort { width: auto; height: 38px; }
+.fw-sort-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .fw-size { width: auto; }
+
+/* Clickable wish image thumbnail (opens a lightbox) */
+.fw-thumb { padding: 0; border: 1px solid var(--c-border); border-radius: var(--r-md); background: var(--c-surface-alt); cursor: zoom-in; line-height: 0; flex: 0 0 auto; }
+.fw-thumb:hover { border-color: var(--c-primary); }
+.fw-thumb:focus-visible { outline: 3px solid var(--c-primary-ring); outline-offset: 1px; }
+.fw-thumb img { width: 40px; height: 40px; object-fit: cover; border-radius: calc(var(--r-md) - 1px); display: block; }
+.fw-cards .fw-thumb img { width: 36px; height: 36px; }
+
+/* Image lightbox */
+.fw-lightbox { position: fixed; inset: 0; z-index: 1400; display: grid; place-items: center; padding: 1rem; background: rgb(15 23 42 / 78%); backdrop-filter: blur(3px); }
+.fw-lightbox-inner { position: relative; display: flex; flex-direction: column; gap: 0.6rem; width: min(900px, 100%); max-height: 92vh; padding: 0.85rem; border-radius: var(--r-xl); background: var(--c-surface); box-shadow: var(--shadow-xl); }
+.fw-lightbox-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.fw-lightbox-title { font-weight: 800; overflow-wrap: anywhere; }
+.fw-lightbox-img { max-width: 100%; max-height: 74vh; margin: 0 auto; border-radius: var(--r-md); object-fit: contain; }
 
 .state-card { display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; padding: 1.5rem 1rem; margin-bottom: 1rem; border: 1px solid var(--c-border); border-radius: var(--r-lg); background: var(--c-surface); color: var(--c-text-secondary); text-align: center; }
 .state-card--error { justify-content: space-between; background: var(--c-error-bg); border-color: var(--c-error-border); color: var(--c-error); }
@@ -118,4 +133,8 @@ button.fw-kpi:focus-visible { outline: 3px solid var(--c-primary-ring); outline-
   .fw-user-list { max-height: 36vh; }
   .fw-editor-foot { flex-direction: column-reverse; padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px)); }
   .fw-editor-foot .btn { width: 100%; min-height: 46px; justify-content: center; }
+
+  .fw-lightbox { padding: 0.75rem; }
+  .fw-lightbox-inner { width: 100%; padding: 0.75rem; }
+  .fw-lightbox-img { max-height: 70vh; }
 }

@@ -111,9 +111,7 @@
         <app-canvasjs-line-chart *ngIf="mailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
       </div>
     </div>
-<br>
-    <app-login-locations *ngIf="auth.isAdmin()" [startDate]="selectedStartDate" [endDate]="selectedEndDate"></app-login-locations>
-<br>
+
   <!-- Insta Dashboard -->
   <div *ngIf="igdata$ | async as data">
     <div class="dashboard-section-label">

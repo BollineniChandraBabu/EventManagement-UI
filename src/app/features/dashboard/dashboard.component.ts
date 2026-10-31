@@ -5,13 +5,12 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
 import { CanvasJsLineChartComponent } from './canvasjs-line-chart.component';
-import { LoginLocationsComponent } from './login-locations/login-locations.component';
 
 type LineChartData = Array<{ name: string; series: Array<{ name: string; value: number }> }>;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AsyncPipe, CanvasJsLineChartComponent, LoginLocationsComponent],
+  imports: [CommonModule, AsyncPipe, CanvasJsLineChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })

@@ -8,10 +8,11 @@ import { EventTypeSeed } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MultiSelectFilterComponent],
   templateUrl: './event-type-seeds.component.html',
   styleUrl: './event-type-seeds.component.css'
 })
@@ -23,6 +24,13 @@ export class EventTypeSeedsComponent {
 
   eventTypeSeeds: EventTypeSeed[] = [];
   filterText = '';
+  selectedCodes: string[] = [];
+  selectedStatuses: string[] = [];
+  codeOptions: MultiSelectOption[] = [];
+  readonly statusOptions: MultiSelectOption[] = [
+    { value: 'true', label: 'Active' },
+    { value: 'false', label: 'Inactive' }
+  ];
   page = 0;
   pageSize = 10;
   readonly pageSizes = [5, 10, 20];
@@ -34,6 +42,28 @@ export class EventTypeSeedsComponent {
   deletingIds = new Set<number>();
 
   constructor() {
+    this.loadEventTypeSeeds();
+    this.loadFilterValues();
+  }
+
+  loadFilterValues(): void {
+    this.api.getEventTypeSeedsFilterValues().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        if (res.codes?.length) this.codeOptions = res.codes.map((code) => ({ value: code, label: code }));
+      },
+      error: () => {}
+    });
+  }
+
+  onCodesChange(values: string[]): void {
+    this.selectedCodes = values;
+    this.page = 0;
+    this.loadEventTypeSeeds();
+  }
+
+  onStatusesChange(values: string[]): void {
+    this.selectedStatuses = values;
+    this.page = 0;
     this.loadEventTypeSeeds();
   }
 
@@ -100,7 +130,10 @@ export class EventTypeSeedsComponent {
     this.loading = true;
     this.eventTypeSeeds = [];
 
-    this.api.eventTypeSeedsPaged(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const codesParam = this.selectedCodes.length ? this.selectedCodes : undefined;
+    const activeParam = this.selectedStatuses.length === 1 ? this.selectedStatuses[0] === 'true' : undefined;
+
+    this.api.eventTypeSeedsPaged(this.page, this.pageSize, this.filterText, this.sortBy, this.sortDir, codesParam, activeParam).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.eventTypeSeeds = response.content ?? [];
         this.totalElements = response.totalElements ?? this.eventTypeSeeds.length;

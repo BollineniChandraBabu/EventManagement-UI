@@ -8,10 +8,11 @@ import { NotificationItem } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, MultiSelectFilterComponent],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css'
 })
@@ -30,13 +31,24 @@ export class NotificationsComponent {
   searchKey = '';
   sortBy: 'createdAt' | 'title' | 'published' | 'publishedAt' = 'createdAt';
   sortDir: 'asc' | 'desc' = 'desc';
+  selectedStatuses: string[] = [];
+  readonly statusOptions: MultiSelectOption[] = [
+    { value: 'true', label: 'Published' },
+    { value: 'false', label: 'Draft' }
+  ];
 
   constructor() { this.load(); }
+
+  onStatusesChange(values: string[]): void {
+    this.selectedStatuses = values;
+    this.load(0);
+  }
 
   load(page = this.page): void {
     this.page = Math.max(0, page);
     this.loading = true;
-    this.api.notificationsPaged(this.page, this.size, this.searchKey, this.sortBy, this.sortDir).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const publishedParam = this.selectedStatuses.length === 1 ? this.selectedStatuses[0] === 'true' : undefined;
+    this.api.notificationsPaged(this.page, this.size, this.searchKey, this.sortBy, this.sortDir, publishedParam).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.notifications = response.content;
         this.totalElements = response.totalElements;
