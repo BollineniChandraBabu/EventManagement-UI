@@ -484,6 +484,30 @@ html, body {
   .filter-bar { grid-template-columns: 1fr auto auto; align-items: end; }
 }
 
+/* ─── Multi-select filter toolbar ─────────────────────────── */
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-toolbar-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-text-muted);
+  margin-right: 0.15rem;
+}
+
+/* Keeps a sort button and its filter icon on one line inside a table header. */
+.th-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 /* ─── Empty state ─────────────────────────────────────────── */
 .empty-state {
   text-align: center;

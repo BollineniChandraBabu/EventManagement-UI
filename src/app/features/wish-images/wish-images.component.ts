@@ -10,6 +10,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 
 /** Same limits as the server (only real PNG, JPEG, GIF or WebP images). */
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
@@ -19,7 +20,7 @@ const GENERAL_EVENT_TYPES = ['Birthday', 'Anniversary', 'Festival'];
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent, MultiSelectFilterComponent],
   templateUrl: './wish-images.component.html',
   styleUrl: './wish-images.component.css'
 })
@@ -36,10 +37,13 @@ export class WishImagesComponent implements OnDestroy {
   totalElements = 0;
   totalPages = 0;
   filterText = '';
-  eventTypeFilter = '';
-  activeFilter = 'ALL';
   selectedEventTypes: string[] = [];
-  selectedUserIds: number[] = [];
+  selectedUserIds: string[] = [];
+  selectedStatuses: string[] = [];
+  readonly statusOptions: MultiSelectOption[] = [
+    { value: 'true', label: 'Active' },
+    { value: 'false', label: 'Inactive' }
+  ];
   sortBy: 'id' | 'eventType' | 'active' | 'createdAt' | 'updatedAt' = 'updatedAt';
   sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
@@ -51,6 +55,8 @@ export class WishImagesComponent implements OnDestroy {
   previewUrl?: string;
   selectedImage: WishImage | null = null;
   eventTypeSuggestions: string[] = GENERAL_EVENT_TYPES;
+  eventTypeOptions: MultiSelectOption[] = [];
+  userOptions: MultiSelectOption[] = [];
   fileError = '';
   readonly imageHint = 'PNG, JPEG, GIF or WebP, up to 5 MB';
   readonly acceptedTypes = ALLOWED_IMAGE_TYPES.join(',');
@@ -58,8 +64,31 @@ export class WishImagesComponent implements OnDestroy {
 
   constructor() {
     this.loadImages();
-    this.api.users(0, 1000, '', 'name', 'asc').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: (result) => this.users = result.content ?? [] });
+    this.api.users(0, 1000, '', 'name', 'asc').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (result) => {
+        this.users = result.content ?? [];
+        this.userOptions = this.users.map((user) => ({ value: String(user.id), label: user.name, hint: user.email }));
+      }
+    });
     this.loadEventTypeSuggestions();
+  }
+
+  onEventTypesChange(values: string[]): void {
+    this.selectedEventTypes = values;
+    this.page = 0;
+    this.loadImages();
+  }
+
+  onUsersChange(values: string[]): void {
+    this.selectedUserIds = values;
+    this.page = 0;
+    this.loadImages();
+  }
+
+  onStatusesChange(values: string[]): void {
+    this.selectedStatuses = values;
+    this.page = 0;
+    this.loadImages();
   }
 
   ngOnDestroy(): void {
@@ -129,6 +158,7 @@ export class WishImagesComponent implements OnDestroy {
         seen.add(key);
         return true;
       });
+      this.eventTypeOptions = this.eventTypeSuggestions.map((name) => ({ value: name, label: name }));
     });
   }
 
@@ -165,15 +195,15 @@ export class WishImagesComponent implements OnDestroy {
 
   private loadImages(): void {
     this.loading = true;
-    const active = this.activeFilter === 'ALL' ? undefined : this.activeFilter === 'ACTIVE';
+    const active = this.selectedStatuses.length === 1 ? this.selectedStatuses[0] === 'true' : undefined;
     const eventTypesParam = this.selectedEventTypes.length ? this.selectedEventTypes : undefined;
-    const userIdsParam = this.selectedUserIds.length ? this.selectedUserIds : undefined;
+    const userIdsParam = this.selectedUserIds.length ? this.selectedUserIds.map((id) => Number(id)) : undefined;
 
     this.api.wishImages(
       this.page,
       this.pageSize,
       this.filterText.trim(),
-      this.eventTypeFilter.trim(),
+      '',
       undefined,
       active,
       this.sortBy,

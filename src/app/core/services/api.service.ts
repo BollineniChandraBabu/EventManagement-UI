@@ -96,10 +96,11 @@ export class ApiService {
     }).pipe(map((response) => this.unwrap(response)));
   }
 
-  getLoginLocationChart(startDate?: string, endDate?: string): Observable<LoginLocationChartResponse> {
+  getLoginLocationChart(startDate?: string, endDate?: string, userIds?: number[]): Observable<LoginLocationChartResponse> {
     let params = new HttpParams();
     if (startDate) params = params.set('startDate', startDate);
     if (endDate) params = params.set('endDate', endDate);
+    if (userIds?.length) userIds.forEach((id) => (params = params.append('userIds', id)));
 
     return this.http.get<ApiResponse<LoginLocationChartResponse>>(`${environment.apiUrl}/dashboard/chart/login-locations`, { params })
       .pipe(map((response) => this.unwrap(response)));
@@ -241,11 +242,22 @@ export class ApiService {
     size = 10,
     searchKey = '',
     sortBy = 'displayName',
-    sortDir: 'asc' | 'desc' = 'asc'
+    sortDir: 'asc' | 'desc' = 'asc',
+    codes?: string[],
+    active?: boolean
   ): Observable<PagedResponse<RelationshipSeed>> {
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (codes?.length) codes.forEach((code) => (params = params.append('codes', code)));
+    if (active !== undefined && active !== null) params = params.set('active', active);
+
     return this.requestWithFallback((path) => this.http.get<ApiResponse<PagedResponse<RelationshipSeed> | RelationshipSeed[]>>(`${environment.apiUrl}${path}`, {
-      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+      params
     })).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  getRelationshipSeedsFilterValues(): Observable<{ codes?: string[]; active?: boolean[] }> {
+    return this.requestWithFallback((path) => this.http.get<ApiResponse<{ codes?: string[]; active?: boolean[] }>>(`${environment.apiUrl}${path}/filter-values`))
+      .pipe(map((response) => this.unwrap(response)));
   }
 
   relationshipSeedById(id: number): Observable<RelationshipSeed> {
@@ -282,11 +294,21 @@ export class ApiService {
   }
 
   eventTypeSeedsPaged(
-    page = 0, size = 10, searchKey = '', sortBy = 'displayName', sortDir: 'asc' | 'desc' = 'asc'
+    page = 0, size = 10, searchKey = '', sortBy = 'displayName', sortDir: 'asc' | 'desc' = 'asc',
+    codes?: string[], active?: boolean
   ): Observable<PagedResponse<EventTypeSeed>> {
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (codes?.length) codes.forEach((code) => (params = params.append('codes', code)));
+    if (active !== undefined && active !== null) params = params.set('active', active);
+
     return this.requestWithFallback<ApiResponse<PagedResponse<EventTypeSeed> | EventTypeSeed[]>>((path) => this.http.get<ApiResponse<PagedResponse<EventTypeSeed> | EventTypeSeed[]>>(`${environment.apiUrl}${path}`, {
-      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+      params
     }), this.eventTypeSeedPaths).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  getEventTypeSeedsFilterValues(): Observable<{ codes?: string[]; active?: boolean[] }> {
+    return this.requestWithFallback<ApiResponse<{ codes?: string[]; active?: boolean[] }>>((path) => this.http.get<ApiResponse<{ codes?: string[]; active?: boolean[] }>>(`${environment.apiUrl}${path}/filter-values`), this.eventTypeSeedPaths)
+      .pipe(map((response) => this.unwrap(response)));
   }
 
   eventTypeSeedById(id: number): Observable<EventTypeSeed> {
@@ -358,14 +380,28 @@ export class ApiService {
     sortBy = 'eventDate',
     sortDir: 'asc' | 'desc' = 'asc'
   ): Observable<FestivalItem[]> {
-    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
     if (month) {
-      params = params.set('month', month);
+      const params = this.pagedParams(page, size, searchKey, sortBy, sortDir).set('month', month);
+      return this.http.get<ApiResponse<FestivalItem[] | PagedResponse<FestivalItem>>>(`${environment.apiUrl}/festivals`, { params }).pipe(
+        map((response) => this.unwrap(response)),
+        map((payload) => this.normalizeCollection(payload))
+      );
     }
 
-    return this.http.get<ApiResponse<FestivalItem[] | PagedResponse<FestivalItem>>>(`${environment.apiUrl}/festivals`, { params }).pipe(
-      map((response) => this.unwrap(response)),
-      map((payload) => this.normalizeCollection(payload))
+    // /api/festivals requires a month, so a full list comes from the special-events seed endpoint.
+    return this.allSpecialEvents(size);
+  }
+
+  /** Full list of special events across every month (used to populate festival pickers). */
+  allSpecialEvents(size = 500): Observable<FestivalItem[]> {
+    let params = new HttpParams().set('page', 0).set('size', size).set('searchKey', '');
+    for (let month = 1; month <= 12; month += 1) {
+      params = params.append('months', month);
+    }
+    params = params.set('sortBy', 'eventDate').set('sortDir', 'asc');
+
+    return this.http.get<PagedResponse<FestivalItem>>(`${environment.apiUrl}/seed/special-events`, { params }).pipe(
+      map((response) => this.normalizeCollection<FestivalItem>(response))
     );
   }
 
@@ -580,11 +616,21 @@ export class ApiService {
     size = 10,
     searchKey = '',
     sortBy = 'createdAt',
-    sortDir: 'asc' | 'desc' = 'desc'
+    sortDir: 'asc' | 'desc' = 'desc',
+    published?: boolean
   ): Observable<PagedResponse<NotificationItem>> {
+    let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    if (published !== undefined && published !== null) params = params.set('published', published);
+
     return this.http.get<ApiResponse<PagedResponse<NotificationItem> | NotificationItem[]>>(`${environment.apiUrl}/notifications`, {
-      params: this.pagedParams(page, size, searchKey, sortBy, sortDir)
+      params
     }).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  getNotificationsFilterValues(): Observable<{ published?: boolean[] }> {
+    return this.http.get<ApiResponse<{ published?: boolean[] }>>(`${environment.apiUrl}/notifications/filter-values`).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
 

@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, HostListener, Input, OnChanges, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subject, catchError, of, switchMap, tap } from 'rxjs';
-import { LoginLocationChartPoint } from '../../../core/models/api.models';
-import { SensitiveEmailPipe } from '../../../core/pipes/sensitive-email.pipe';
-import { ApiService } from '../../../core/services/api.service';
-import { SensitiveDataService } from '../../../core/services/sensitive-data.service';
-import { SensitiveInfoToggleComponent } from '../../../shared/sensitive-info-toggle.component';
+import { LoginLocationChartPoint } from '../../core/models/api.models';
+import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
+import { ApiService } from '../../core/services/api.service';
+import { SensitiveDataService } from '../../core/services/sensitive-data.service';
+import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 import {
   LocationSummary,
   LoginFilters,
@@ -31,24 +32,25 @@ import {
 } from './login-locations.utils';
 
 /**
- * Admin view of where people sign in from: summary numbers, top locations, searchable and
- * paginated history (table on desktop, cards on phones), a map per login and CSV export.
+ * Admin page showing where people sign in from: date range, summary numbers, top locations,
+ * searchable and paginated history (table on desktop, cards on phones), a map per login and CSV export.
  */
 @Component({
   selector: 'app-login-locations',
   standalone: true,
-  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent, MultiSelectFilterComponent],
   templateUrl: './login-locations.component.html',
   styleUrl: './login-locations.component.css'
 })
-export class LoginLocationsComponent implements OnChanges {
+export class LoginLocationsComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly sensitive = inject(SensitiveDataService);
 
-  @Input({ required: true }) startDate!: string;
-  @Input({ required: true }) endDate!: string;
+  readonly maxDate = this.toDateInputValue(new Date());
+  startDate = this.toDateInputValue(this.daysAgo(6));
+  endDate = this.maxDate;
 
   readonly pageSizes = [10, 25, 50];
   readonly sortOptions: Array<{ id: LoginSortKey; label: string }> = [
@@ -68,6 +70,8 @@ export class LoginLocationsComponent implements OnChanges {
   multiLocationUserCount = 0;
 
   filters: LoginFilters = { search: '', userEmail: '', multipleLocationsOnly: false };
+  selectedUserIds: string[] = [];
+  userOptions: MultiSelectOption[] = [];
   sortKey: LoginSortKey = 'newest';
   pageSize = this.pageSizes[0];
   pageIndex = 0;
@@ -91,7 +95,11 @@ export class LoginLocationsComponent implements OnChanges {
         }),
         // switchMap drops the answer of an older request when the date range changes quickly
         switchMap(() =>
-          this.api.getLoginLocationChart(this.startDate, this.endDate).pipe(catchError(() => of(null)))
+          this.api.getLoginLocationChart(
+            this.startDate,
+            this.endDate,
+            this.selectedUserIds.length ? this.selectedUserIds.map((id) => Number(id)) : undefined
+          ).pipe(catchError(() => of(null)))
         ),
         takeUntilDestroyed(this.destroyRef)
       )
@@ -102,9 +110,49 @@ export class LoginLocationsComponent implements OnChanges {
         this.points = response?.points ?? [];
         this.onDataChanged();
       });
+
+    this.api.users(0, 1000, '', 'name', 'asc').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (result) => {
+        this.userOptions = (result.content ?? []).map((user) => ({
+          value: String(user.id),
+          label: user.name,
+          hint: user.email
+        }));
+      },
+      error: () => {}
+    });
+
+    this.reload();
   }
 
-  ngOnChanges(): void {
+  onUsersChange(values: string[]): void {
+    this.selectedUserIds = values;
+    this.reload();
+  }
+
+  onStartDateChange(value: string): void {
+    const selected = this.parseInputDate(value);
+    if (!selected || selected > new Date()) {
+      this.startDate = this.toDateInputValue(this.daysAgo(6));
+    } else {
+      this.startDate = this.toDateInputValue(selected);
+    }
+    if (this.startDate > this.endDate) {
+      this.endDate = this.startDate;
+    }
+    this.reload();
+  }
+
+  onEndDateChange(value: string): void {
+    const selected = this.parseInputDate(value);
+    if (!selected || selected > new Date()) {
+      this.endDate = this.maxDate;
+    } else {
+      this.endDate = this.toDateInputValue(selected);
+    }
+    if (this.endDate < this.startDate) {
+      this.startDate = this.endDate;
+    }
     this.reload();
   }
 
@@ -112,10 +160,39 @@ export class LoginLocationsComponent implements OnChanges {
     this.reload$.next();
   }
 
+  private daysAgo(days: number): Date {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    return date;
+  }
+
+  private parseInputDate(value: string): Date | null {
+    if (!value) {
+      return null;
+    }
+    const [year, month, day] = value.split('-').map((part) => Number(part));
+    if (!year || !month || !day) {
+      return null;
+    }
+    const parsed = new Date(year, month - 1, day);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private toDateInputValue(date: Date): string {
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  }
+
   // ------------------------------------------------------------------ filters, sorting, paging
 
   get hasActiveFilters(): boolean {
-    return Boolean(this.filters.search.trim() || this.filters.userEmail || this.filters.multipleLocationsOnly);
+    return Boolean(
+      this.filters.search.trim() ||
+        this.filters.userEmail ||
+        this.filters.multipleLocationsOnly ||
+        this.selectedUserIds.length
+    );
   }
 
   onSearch(value: string): void {
@@ -140,7 +217,8 @@ export class LoginLocationsComponent implements OnChanges {
 
   clearFilters(): void {
     this.filters = { search: '', userEmail: '', multipleLocationsOnly: false };
-    this.applyFilters();
+    this.selectedUserIds = [];
+    this.reload();
   }
 
   onSortChange(key: LoginSortKey): void {

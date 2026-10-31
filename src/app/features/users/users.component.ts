@@ -13,10 +13,11 @@ import { ImpersonationService } from '../../core/services/impersonation.service'
 import { AuthService } from '../../core/services/auth.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SensitiveEmailPipe, SensitiveInfoToggleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SensitiveEmailPipe, SensitiveInfoToggleComponent, MultiSelectFilterComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css'
 })
@@ -36,12 +37,24 @@ export class UsersComponent {
   viewUsers: AppUser[] = [];
 
   filterText = '';
-  filterRole = 'ALL';
   selectedRoles: string[] = [];
   selectedGenders: string[] = [];
-  filterActive: boolean | null = null;
-  roleOptions: string[] = [];
-  genderOptions: string[] = [];
+  selectedRelationships: string[] = [];
+  selectedStatuses: string[] = [];
+  roleOptions: MultiSelectOption[] = [
+    { value: ROLE_ADMIN, label: ROLE_ADMIN },
+    { value: ROLE_USER, label: ROLE_USER }
+  ];
+  genderOptions: MultiSelectOption[] = [
+    { value: 'MALE', label: 'Male' },
+    { value: 'FEMALE', label: 'Female' },
+    { value: 'OTHER', label: 'Other' }
+  ];
+  relationshipOptions: MultiSelectOption[] = [];
+  readonly statusOptions: MultiSelectOption[] = [
+    { value: 'true', label: 'Active' },
+    { value: 'false', label: 'Inactive' }
+  ];
   page = 0;
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
@@ -60,11 +73,44 @@ export class UsersComponent {
   loadFilterValues(): void {
     this.api.getUsersFilterValues().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
-        if (res.roles) this.roleOptions = res.roles;
-        if (res.genders) this.genderOptions = res.genders;
+        if (res.roles?.length) this.roleOptions = res.roles.map((role) => ({ value: role, label: role }));
+        if (res.genders?.length) this.genderOptions = res.genders.map((gender) => ({ value: gender, label: this.titleCase(gender) }));
       },
       error: () => {}
     });
+    this.api.relationshipSeeds(undefined, 0, 1000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (seeds) => {
+        this.relationshipOptions = (seeds ?? []).map((seed) => ({
+          value: seed.code,
+          label: seed.displayName || seed.code
+        }));
+      },
+      error: () => {}
+    });
+  }
+
+  onRolesChange(values: string[]): void {
+    this.selectedRoles = values;
+    this.page = 0;
+    this.loadUsers();
+  }
+
+  onGendersChange(values: string[]): void {
+    this.selectedGenders = values;
+    this.page = 0;
+    this.loadUsers();
+  }
+
+  onRelationshipsChange(values: string[]): void {
+    this.selectedRelationships = values;
+    this.page = 0;
+    this.loadUsers();
+  }
+
+  onStatusesChange(values: string[]): void {
+    this.selectedStatuses = values;
+    this.page = 0;
+    this.loadUsers();
   }
 
   get displayPage(): number {
@@ -171,33 +217,6 @@ export class UsersComponent {
     this.loadUsers();
   }
 
-  onRoleFilter(value: string): void {
-    this.filterRole = value;
-    if (value === 'ALL') {
-      this.selectedRoles = [];
-    } else {
-      this.selectedRoles = [value];
-    }
-    this.page = 0;
-    this.loadUsers();
-  }
-
-  onGenderFilter(value: string): void {
-    this.selectedGenders = value === 'ALL' ? [] : [value];
-    this.page = 0;
-    this.loadUsers();
-  }
-
-  onActiveFilter(value: string): void {
-    if (value === 'ALL') {
-      this.filterActive = null;
-    } else {
-      this.filterActive = value === 'true';
-    }
-    this.page = 0;
-    this.loadUsers();
-  }
-
   onPageSizeChange(value: string): void {
     this.pageSize = Number(value);
     this.page = 0;
@@ -232,6 +251,10 @@ export class UsersComponent {
     return this.sortBy === field;
   }
 
+  private titleCase(value: string): string {
+    return value ? value.charAt(0) + value.slice(1).toLowerCase() : value;
+  }
+
   nextPage(): void {
     if (this.page < this.totalPages - 1) {
       this.page++;
@@ -255,7 +278,8 @@ export class UsersComponent {
 
     const rolesParam = this.selectedRoles.length ? this.selectedRoles : undefined;
     const gendersParam = this.selectedGenders.length ? this.selectedGenders : undefined;
-    const activeParam = this.filterActive !== null ? this.filterActive : undefined;
+    const relationshipsParam = this.selectedRelationships.length ? this.selectedRelationships : undefined;
+    const activeParam = this.selectedStatuses.length === 1 ? this.selectedStatuses[0] === 'true' : undefined;
 
     this.api.users(
       this.page,
@@ -265,7 +289,7 @@ export class UsersComponent {
       this.sortDir,
       rolesParam,
       gendersParam,
-      undefined,
+      relationshipsParam,
       activeParam
     ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {

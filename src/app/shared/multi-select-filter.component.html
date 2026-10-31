@@ -1,0 +1,53 @@
+<div class="msf" [class.msf--active]="activeCount > 0">
+  <button
+    type="button"
+    class="msf-trigger"
+    [disabled]="disabled"
+    (click)="toggleOpen()"
+    [attr.aria-expanded]="open"
+    aria-haspopup="listbox">
+    <i [class]="icon" aria-hidden="true"></i>
+    <span class="msf-trigger-label">{{ label }}</span>
+    <span class="msf-trigger-badge" *ngIf="activeCount > 0">{{ activeCount }}</span>
+    <i class="fa-solid fa-chevron-down msf-caret" [class.is-open]="open" aria-hidden="true"></i>
+  </button>
+
+  <div class="msf-panel" *ngIf="open" role="dialog" [attr.aria-label]="label + ' filter'">
+    <div class="msf-search" *ngIf="searchable">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input
+        class="msf-search-input"
+        type="text"
+        autocomplete="off"
+        [placeholder]="searchPlaceholder"
+        [(ngModel)]="search"
+        [attr.aria-label]="'Search ' + label" />
+      <button type="button" class="msf-search-clear" *ngIf="search" (click)="search = ''" aria-label="Clear search">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="msf-toolbar" *ngIf="filteredOptions.length">
+      <button type="button" class="msf-link" (click)="toggleAll()">
+        {{ allFilteredSelected ? 'Clear all' : 'Select all' }}
+      </button>
+      <span class="msf-toolbar-count">{{ draftCount }} selected</span>
+    </div>
+
+    <ul class="msf-list" role="listbox" aria-multiselectable="true">
+      <li *ngFor="let option of filteredOptions; trackBy: trackByValue">
+        <label class="msf-option" [class.is-checked]="isChecked(option.value)">
+          <input type="checkbox" [checked]="isChecked(option.value)" (change)="toggle(option.value)" />
+          <span class="msf-option-label">{{ option.label }}</span>
+          <span class="msf-option-hint" *ngIf="option.hint">{{ option.hint }}</span>
+        </label>
+      </li>
+      <li class="msf-empty" *ngIf="!filteredOptions.length">{{ emptyText }}</li>
+    </ul>
+
+    <div class="msf-actions">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearDraft()">Clear</button>
+      <button type="button" class="btn btn-sm btn-primary" (click)="apply()">Apply</button>
+    </div>
+  </div>
+</div>

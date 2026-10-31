@@ -1,0 +1,186 @@
+:host { display: inline-block; position: relative; }
+
+.msf { position: relative; display: inline-block; }
+
+.msf-trigger {
+  align-items: center;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  gap: 0.4rem;
+  min-height: 34px;
+  padding: 0.3rem 0.6rem;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), color var(--t-fast), background var(--t-fast);
+  white-space: nowrap;
+}
+
+.msf-trigger:hover:not(:disabled) {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+
+.msf-trigger:focus-visible {
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-ring);
+  outline: none;
+}
+
+.msf-trigger:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.msf--active .msf-trigger {
+  border-color: var(--c-primary);
+  background: var(--c-primary-light);
+  color: var(--c-primary);
+}
+
+.msf-trigger-badge {
+  align-items: center;
+  background: var(--c-primary);
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 700;
+  height: 18px;
+  justify-content: center;
+  min-width: 18px;
+  padding: 0 0.3rem;
+}
+
+.msf-caret { font-size: 0.7rem; transition: transform var(--t-fast); }
+.msf-caret.is-open { transform: rotate(180deg); }
+
+.msf-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  width: 264px;
+  max-width: 88vw;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 0.6rem;
+  text-align: left;
+}
+
+.msf-search {
+  align-items: center;
+  background: var(--c-surface-alt);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--r-md);
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+}
+
+.msf-search:focus-within { border-color: var(--c-primary); }
+
+.msf-search i { color: var(--c-text-muted); font-size: 0.75rem; }
+
+.msf-search-input {
+  background: transparent;
+  border: 0;
+  color: var(--c-text);
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  min-width: 0;
+  outline: none;
+  padding: 0.2rem 0;
+}
+
+.msf-search-clear {
+  background: transparent;
+  border: 0;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.1rem;
+}
+
+.msf-search-clear:hover { color: var(--c-error); }
+
+.msf-toolbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0.2rem 0.25rem;
+}
+
+.msf-link {
+  background: transparent;
+  border: 0;
+  color: var(--c-primary);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0;
+}
+
+.msf-link:hover { text-decoration: underline; }
+
+.msf-toolbar-count { color: var(--c-text-muted); font-size: 0.72rem; font-weight: 600; }
+
+.msf-list {
+  list-style: none;
+  margin: 0;
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 0.15rem 0;
+}
+
+.msf-option {
+  align-items: center;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  display: flex;
+  gap: 0.55rem;
+  padding: 0.4rem 0.45rem;
+  transition: background var(--t-fast);
+}
+
+.msf-option:hover { background: var(--c-surface-hover); }
+.msf-option.is-checked { background: var(--c-primary-light); }
+
+.msf-option input[type='checkbox'] {
+  accent-color: var(--c-primary);
+  cursor: pointer;
+  height: 15px;
+  margin: 0;
+  width: 15px;
+}
+
+.msf-option-label {
+  color: var(--c-text);
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.msf-option-hint { color: var(--c-text-muted); font-size: 0.72rem; font-weight: 600; }
+
+.msf-empty { color: var(--c-text-muted); font-size: 0.78rem; padding: 0.6rem 0.45rem; text-align: center; }
+
+.msf-actions {
+  border-top: 1px solid var(--c-border-subtle);
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+  padding-top: 0.55rem;
+}
+
+.msf-actions .btn { min-height: 32px; padding: 0.3rem 0.9rem !important; }

@@ -32,7 +32,11 @@
     <div class="fw-tabs" role="group" aria-label="Status">
       <button *ngFor="let tab of statusTabs" type="button" class="btn" [class.btn-primary]="status === tab.id" [class.btn-outline-secondary]="status !== tab.id" [attr.aria-pressed]="status === tab.id" (click)="setStatus(tab.id)">{{ tab.label }}</button>
     </div>
-    <select class="form-select fw-sort" [ngModel]="sortId" (ngModelChange)="onSortChange($event)" aria-label="Sort"><option *ngFor="let option of sortOptions" [value]="option.id">{{ option.label }}</option></select>
+    <div class="fw-sort-row">
+      <app-multi-select-filter label="Festival" searchPlaceholder="Search festivals…" [disabled]="loading" [options]="festivalOptions" [selected]="selectedFestivalIds" (applied)="onFestivalsChange($event)"></app-multi-select-filter>
+      <app-multi-select-filter label="Recipient" searchPlaceholder="Search recipients…" [disabled]="loading" [options]="filterUserOptions" [selected]="selectedFilterUserIds" (applied)="onFilterUsersChange($event)"></app-multi-select-filter>
+      <select class="form-select fw-sort" [ngModel]="sortId" (ngModelChange)="onSortChange($event)" aria-label="Sort"><option *ngFor="let option of sortOptions" [value]="option.id">{{ option.label }}</option></select>
+    </div>
   </section>
 
   <div class="state-card state-card--error" *ngIf="loadFailed" role="alert"><span><i class="fa-solid fa-triangle-exclamation me-2"></i>The mappings could not be loaded.</span><button class="btn btn-sm btn-outline-danger" type="button" (click)="load()">Try again</button></div>
@@ -54,7 +58,9 @@
           <tr *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
             <td>
               <div class="d-flex align-items-center gap-2">
-                <img *ngIf="mapping.imageUrl" [src]="mapping.imageUrl" [alt]="mapping.festivalName" class="rounded" style="width: 40px; height: 40px; object-fit: cover;" />
+                <button *ngIf="mapping.imageUrl" type="button" class="fw-thumb" (click)="openImage(mapping)" [attr.aria-label]="'View ' + mapping.festivalName + ' wish image'">
+                  <img [src]="mapping.imageUrl" [alt]="mapping.festivalName" />
+                </button>
                 <div>
                   <div class="fw-name">{{ mapping.festivalName }}</div>
                   <div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div>
@@ -84,7 +90,9 @@
       <li class="fw-card" *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
         <div class="fw-card-top">
           <div class="min-w-0 d-flex align-items-center gap-2">
-            <img *ngIf="mapping.imageUrl" [src]="mapping.imageUrl" [alt]="mapping.festivalName" class="rounded" style="width: 36px; height: 36px; object-fit: cover;" />
+            <button *ngIf="mapping.imageUrl" type="button" class="fw-thumb" (click)="openImage(mapping)" [attr.aria-label]="'View ' + mapping.festivalName + ' wish image'">
+              <img [src]="mapping.imageUrl" [alt]="mapping.festivalName" />
+            </button>
             <div>
               <div class="fw-name">{{ mapping.festivalName }}</div>
               <div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} · <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div>
@@ -196,4 +204,15 @@
       <button class="btn btn-primary" type="button" (click)="save()" [disabled]="!canSave"><i class="fa-solid me-1" [class.fa-floppy-disk]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>{{ saveLabel }}</button>
     </footer>
   </section>
+</div>
+
+<!-- Wish image lightbox -->
+<div class="fw-lightbox" *ngIf="previewImage as preview" (click)="closeImage()" role="dialog" aria-modal="true" aria-label="Wish image preview">
+  <div class="fw-lightbox-inner" (click)="$event.stopPropagation()">
+    <div class="fw-lightbox-head">
+      <span class="fw-lightbox-title">{{ preview.festivalName }} · {{ preview.userName }}</span>
+      <button class="btn-close" type="button" (click)="closeImage()" aria-label="Close image preview"></button>
+    </div>
+    <img class="fw-lightbox-img" [src]="preview.imageUrl" [alt]="preview.festivalName + ' wish image'" />
+  </div>
 </div>

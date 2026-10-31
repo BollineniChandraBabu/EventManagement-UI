@@ -11,10 +11,11 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent],
+  imports: [CommonModule, FormsModule, SensitiveEmailPipe, SensitiveInfoToggleComponent, MultiSelectFilterComponent],
   templateUrl: './email-status.component.html',
   styleUrl: './email-status.component.css'
 })
@@ -34,11 +35,10 @@ export class EmailStatusComponent implements OnDestroy {
   viewItems: EmailStatus[] = [];
 
   filterText = '';
-  filterStatus = 'ALL';
   selectedStatuses: string[] = [];
   selectedEmailTypes: string[] = [];
-  statusOptions: string[] = [];
-  emailTypeOptions: string[] = [];
+  statusOptions: MultiSelectOption[] = [];
+  emailTypeOptions: MultiSelectOption[] = [];
   sortBy: 'id' | 'toEmail' | 'status' | 'sentAt' = 'id';
   sortDir: 'asc' | 'desc' = 'desc';
   page = 0;
@@ -68,8 +68,8 @@ export class EmailStatusComponent implements OnDestroy {
   loadFilterValues(): void {
     this.api.getEmailStatusesFilterValues().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
-        if (res.statuses) this.statusOptions = res.statuses;
-        if (res.emailTypes) this.emailTypeOptions = res.emailTypes;
+        if (res.statuses?.length) this.statusOptions = res.statuses.map((status) => ({ value: status, label: status }));
+        if (res.emailTypes?.length) this.emailTypeOptions = res.emailTypes.map((type) => ({ value: type, label: type }));
       },
       error: () => {}
     });
@@ -163,15 +163,14 @@ export class EmailStatusComponent implements OnDestroy {
     this.loadItems();
   }
 
-  onStatusFilter(value: string): void {
-    this.filterStatus = value;
-    this.selectedStatuses = value === 'ALL' ? [] : [value];
+  onStatusesChange(values: string[]): void {
+    this.selectedStatuses = values;
     this.page = 0;
     this.loadItems();
   }
 
-  onEmailTypeFilter(value: string): void {
-    this.selectedEmailTypes = value === 'ALL' ? [] : [value];
+  onEmailTypesChange(values: string[]): void {
+    this.selectedEmailTypes = values;
     this.page = 0;
     this.loadItems();
   }
@@ -268,30 +267,6 @@ export class EmailStatusComponent implements OnDestroy {
       URL.revokeObjectURL(this.imageUrls.get(oldestId) as string);
       this.imageUrls.delete(oldestId);
     }
-  }
-
-  private applyStatusFilter(): void {
-    const typeFiltered = this.emailTypeFilter
-      ? this.allItems.filter((item) => this.isSameEmailType(item.emailType, this.emailTypeFilter))
-      : [...this.allItems];
-
-    if (this.filterStatus === 'ALL') {
-      this.viewItems = typeFiltered;
-      return;
-    }
-
-    this.viewItems = typeFiltered.filter((item) => item.status === this.filterStatus);
-  }
-
-  private isSameEmailType(actualType: string | undefined, expectedType: string): boolean {
-    if (!actualType) {
-      return false;
-    }
-
-    const normalizedActual = actualType.replace(/[-_\s]/g, '').toUpperCase();
-    const normalizedExpected = expectedType.replace(/[-_\s]/g, '').toUpperCase();
-
-    return normalizedActual === normalizedExpected;
   }
 
   deleteEmail(id: number): void {

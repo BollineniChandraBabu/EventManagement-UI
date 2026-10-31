@@ -3,7 +3,7 @@
 
 .privacy-note { margin: 0 0 1rem; padding: 0.6rem 0.9rem; border: 1px solid var(--c-border); border-radius: var(--r-md); background: var(--c-surface-alt); color: var(--c-text-secondary); font-size: 0.82rem; }
 
-.vu-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.85rem 1.25rem; padding: 1.1rem 1.25rem; margin-bottom: 1rem; }
+.vu-filters { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 0.85rem 1.25rem; padding: 1.1rem 1.25rem; margin-bottom: 1rem; }
 .preset-group-wrap, .search-box-wrap { display: flex; flex-direction: column; gap: 0.25rem; }
 .search-box-wrap { flex: 1 1 240px; }
 .filter-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-text-secondary); }

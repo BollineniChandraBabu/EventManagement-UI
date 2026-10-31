@@ -1,3 +1,14 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon teal"><i class="fa-solid fa-location-dot"></i></span>
+      <div>
+        <h1 class="page-header-title">Login Locations</h1>
+        <p class="page-header-subtitle">See where people sign in from and spot unusual activity</p>
+      </div>
+    </div>
+  </div>
+
 <section class="login-locations card">
   <header class="ll-header">
     <div class="ll-title-block">
@@ -14,6 +25,17 @@
       </button>
     </div>
   </header>
+
+  <div class="ll-date-controls">
+    <div class="ll-date-control">
+      <label class="ll-date-label" for="llStartDate"><i class="fa-regular fa-calendar me-1"></i>Start date</label>
+      <input id="llStartDate" type="date" class="form-control" [value]="startDate" [max]="endDate" (change)="onStartDateChange($any($event.target).value)" />
+    </div>
+    <div class="ll-date-control">
+      <label class="ll-date-label" for="llEndDate">End date</label>
+      <input id="llEndDate" type="date" class="form-control" [value]="endDate" [min]="startDate" [max]="maxDate" (change)="onEndDateChange($any($event.target).value)" />
+    </div>
+  </div>
 
   <div class="ll-state ll-state--error" *ngIf="loadFailed" role="alert">
     <span><i class="fa-solid fa-triangle-exclamation me-2"></i>Login locations could not be loaded.</span>
@@ -60,13 +82,19 @@
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
         <input class="form-control" type="search" placeholder="Search name, email, location or IP" [ngModel]="filters.search" (ngModelChange)="onSearch($event)" aria-label="Search logins" />
       </label>
-      <select class="form-select" [ngModel]="filters.userEmail" (ngModelChange)="onUserChange($event)" aria-label="Filter by user">
-        <option value="">All users</option>
-        <option *ngFor="let user of users" [value]="user.email">{{ user.name }} ({{ user.logins }})</option>
-      </select>
-      <select class="form-select" [ngModel]="sortKey" (ngModelChange)="onSortChange($event)" aria-label="Sort logins">
-        <option *ngFor="let option of sortOptions" [value]="option.id">{{ option.label }}</option>
-      </select>
+      <div class="ll-sort-row">
+        <app-multi-select-filter
+          label="User"
+          searchPlaceholder="Search users…"
+          [disabled]="loading"
+          [options]="userOptions"
+          [selected]="selectedUserIds"
+          (applied)="onUsersChange($event)">
+        </app-multi-select-filter>
+        <select class="form-select" [ngModel]="sortKey" (ngModelChange)="onSortChange($event)" aria-label="Sort logins">
+          <option *ngFor="let option of sortOptions" [value]="option.id">{{ option.label }}</option>
+        </select>
+      </div>
     </div>
     <div class="ll-chips">
       <button type="button" class="ll-chip" [class.is-active]="filters.multipleLocationsOnly" (click)="toggleMultipleLocations()" [attr.aria-pressed]="filters.multipleLocationsOnly" [disabled]="!multiLocationUserCount && !filters.multipleLocationsOnly" title="Users who signed in from two or more locations">
@@ -157,4 +185,5 @@
       <a class="btn btn-outline-primary" [href]="externalMapUrl(selectedPoint)" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Open in Google Maps</a>
     </div>
   </div>
+</div>
 </div>

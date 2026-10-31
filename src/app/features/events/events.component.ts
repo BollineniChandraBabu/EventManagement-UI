@@ -9,10 +9,11 @@ import { EventItem } from '../../core/models/api.models';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {AuthService} from "../../core/services/auth.service";
+import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MultiSelectFilterComponent],
   templateUrl: './events.component.html',
   styleUrl: './events.component.css'
 })
@@ -25,11 +26,16 @@ export class EventsComponent {
   readonly isAdmin = this.auth.isAdmin;
   events: EventItem[] = [];
   viewEvents: EventItem[] = [];
-  eventTypeOptions: string[] = [];
+  eventTypeOptions: MultiSelectOption[] = [];
+  userOptions: MultiSelectOption[] = [];
   filterText = '';
-  filterType = 'ALL';
   selectedEventTypes: string[] = [];
-  filterActive: boolean | null = null;
+  selectedUserIds: string[] = [];
+  selectedStatuses: string[] = [];
+  readonly statusOptions: MultiSelectOption[] = [
+    { value: 'true', label: 'Active' },
+    { value: 'false', label: 'Inactive' }
+  ];
   page = 0;
   readonly pageSizes = [5, 10, 20];
   pageSize = 10;
@@ -64,7 +70,8 @@ export class EventsComponent {
   loadEvents(): void {
     this.loading = true;
     const eventTypesParam = this.selectedEventTypes.length ? this.selectedEventTypes : undefined;
-    const activeParam = this.filterActive !== null ? this.filterActive : undefined;
+    const userIdsParam = this.selectedUserIds.length ? this.selectedUserIds.map((id) => Number(id)) : undefined;
+    const activeParam = this.selectedStatuses.length === 1 ? this.selectedStatuses[0] === 'true' : undefined;
 
     this.api.events(
       this.page,
@@ -73,7 +80,7 @@ export class EventsComponent {
       this.sortBy,
       this.sortDir,
       eventTypesParam,
-      undefined,
+      userIdsParam,
       activeParam
     ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
@@ -90,19 +97,20 @@ export class EventsComponent {
     });
   }
 
-  onTypeFilter(value: string): void {
-    this.filterType = value;
-    this.selectedEventTypes = value === 'ALL' ? [] : [value];
+  onEventTypesChange(values: string[]): void {
+    this.selectedEventTypes = values;
     this.page = 0;
     this.loadEvents();
   }
 
-  onActiveFilter(value: string): void {
-    if (value === 'ALL') {
-      this.filterActive = null;
-    } else {
-      this.filterActive = value === 'true';
-    }
+  onUsersChange(values: string[]): void {
+    this.selectedUserIds = values;
+    this.page = 0;
+    this.loadEvents();
+  }
+
+  onStatusesChange(values: string[]): void {
+    this.selectedStatuses = values;
     this.page = 0;
     this.loadEvents();
   }
@@ -205,20 +213,24 @@ export class EventsComponent {
     return this.deletingIds.has(id);
   }
 
-  private applyTypeFilter(): void {
-    if (this.filterType === 'ALL') {
-      this.viewEvents = [...this.events];
-      return;
-    }
-
-    this.viewEvents = this.events.filter((event) => event.eventType === this.filterType);
-  }
-
   private loadEventTypeOptions(): void {
     this.api.eventTypeSeeds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (seeds) => {
-        this.eventTypeOptions = (seeds ?? []).map((seed) => seed.displayName);
+        this.eventTypeOptions = (seeds ?? []).map((seed) => ({
+          value: seed.code || seed.displayName,
+          label: seed.displayName || seed.code || ''
+        }));
       }
+    });
+    this.api.users(0, 1000, '', 'name', 'asc').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (result) => {
+        this.userOptions = (result.content ?? []).map((user) => ({
+          value: String(user.id),
+          label: user.name,
+          hint: user.email
+        }));
+      },
+      error: () => {}
     });
   }
 }
