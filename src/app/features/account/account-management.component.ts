@@ -11,6 +11,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SensitiveDataService } from '../../core/services/sensitive-data.service';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
+import { ThemeService } from '../../core/services/theme.service';
 import { AppUser } from '../../core/models/api.models';
 
 @Component({
@@ -30,6 +31,7 @@ export class AccountManagementComponent {
   private readonly toast = inject(ToastService);
   readonly sensitive = inject(SensitiveDataService);
   readonly impersonation = inject(ImpersonationService);
+  readonly theme = inject(ThemeService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly confirmDialog = inject(ConfirmDialogService);
   readonly ROLE_ADMIN = ROLE_ADMIN;
@@ -70,6 +72,8 @@ export class AccountManagementComponent {
   isRemovingProfilePicture = false;
 
   constructor() {
+    this.theme.load();
+
     this.auth.getProfile().subscribe({
       next: (profile) => {
         // When impersonating, show the impersonated user's details
@@ -253,6 +257,17 @@ export class AccountManagementComponent {
         this.toast.error('Unable to change password. Please verify your current password and try again.');
         this.isChangingPassword = false;
       }
+    });
+  }
+
+  selectTheme(code: string): void {
+    if (this.theme.activeCode() === code && this.theme.savingCode() !== code) {
+      return;
+    }
+
+    this.theme.select(code).subscribe({
+      next: () => this.toast.success(`Theme changed to ${this.theme.labelFor(code)}.`),
+      error: () => this.toast.error('Unable to save your theme. Please try again.')
     });
   }
 

@@ -42,7 +42,9 @@ import {
   WishImage, CalendarResItem,
   AgentStatus,
   CopilotAnswer,
-  DeliveryOpsRunResult
+  DeliveryOpsRunResult,
+  ThemeStyle,
+  ThemePreference
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -650,6 +652,25 @@ export class ApiService {
 
   removeMyProfilePicture(): Observable<AppUser> {
     return this.http.delete<ApiResponse<AppUser>>(`${environment.apiUrl}/users/me/profile-picture`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  listThemes(): Observable<ThemeStyle[]> {
+    return this.http.get<ApiResponse<ThemeStyle[]>>(`${environment.apiUrl}/themes`).pipe(
+      map((response) => this.unwrap(response)),
+      map((payload) => this.normalizeCollection(payload))
+    );
+  }
+
+  getMyTheme(): Observable<ThemePreference> {
+    return this.http.get<ApiResponse<ThemePreference>>(`${environment.apiUrl}/themes/me`).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  saveMyTheme(theme: string): Observable<ThemePreference> {
+    return this.http.put<ApiResponse<ThemePreference>>(`${environment.apiUrl}/themes/me`, { theme }).pipe(
       map((response) => this.unwrap(response))
     );
   }

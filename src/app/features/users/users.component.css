@@ -29,8 +29,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #dbeafe, #c7d2fe);
-  color: #3730a3;
+  background: var(--c-primary-light);
+  color: var(--c-primary);
   font-size: 0.78rem;
   font-weight: 700;
   display: grid;
@@ -39,7 +39,7 @@
 }
 
 .input-group-text {
-  border-radius: var(--r-md) 0 0 var(--r-md) !important;
+  border-radius: var(--control-radius) 0 0 var(--control-radius) !important;
   border: 1.5px solid var(--c-border) !important;
   border-right: none !important;
   background: var(--c-surface) !important;
@@ -47,10 +47,10 @@
 
 /* Login as button */
 .login-as-btn {
-  color: #d97706 !important;
+  color: var(--c-warning) !important;
 }
 
 .login-as-btn:hover {
-  background: #fffbeb !important;
-  color: #b45309 !important;
+  background: var(--c-warning-bg) !important;
+  color: var(--c-warning) !important;
 }

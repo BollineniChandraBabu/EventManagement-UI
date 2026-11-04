@@ -219,6 +219,18 @@ export interface FestivalItem {
   active: boolean;
 }
 
+export interface ThemeStyle {
+  id: number;
+  /** Technical name used by the UI, e.g. `liquid-glass`. */
+  code: string;
+  /** User-friendly label, e.g. `Liquid Glass`. */
+  displayName: string;
+}
+
+export interface ThemePreference {
+  theme: string;
+}
+
 export interface CalendarResItem {
   id: number;
   eventType: string;

@@ -30,13 +30,13 @@ import { LoadingService } from '../core/services/loading.service';
         display: inline-flex;
         gap: 0.75rem;
         align-items: center;
-        background: #ffffff;
-        border: 1px solid #dfe7fb;
-        border-radius: 0.8rem;
+        background: var(--modal-bg);
+        border: 1px solid var(--c-border);
+        border-radius: var(--card-radius);
         padding: 0.85rem 1rem;
-        box-shadow: 0 12px 28px rgba(33, 60, 130, 0.2);
+        box-shadow: var(--card-shadow-hover);
         font-weight: 500;
-        color: #1f2f57;
+        color: var(--c-text);
       }
     `
   ]

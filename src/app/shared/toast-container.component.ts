@@ -47,8 +47,8 @@ declare global {
       .toast-card {
         width: min(360px, calc(100vw - 1.5rem));
         border: 0;
-        border-radius: 0.9rem;
-        box-shadow: 0 14px 36px rgba(12, 26, 75, 0.22);
+        border-radius: var(--card-radius);
+        box-shadow: var(--card-shadow-hover);
         backdrop-filter: blur(2px);
         margin-bottom: 0.75rem;
         overflow: hidden;

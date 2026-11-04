@@ -170,8 +170,47 @@
       </div>
     </div>
 
-    <!-- Right: Password + Session -->
+    <!-- Right: Appearance + Password + Session -->
     <div class="col-12 col-xl-5">
+      <!-- Appearance / theme picker -->
+      <div class="card mb-4" *ngIf="!impersonation.isImpersonating()">
+        <div class="card-body">
+          <h2 class="section-title mb-2">
+            <i class="fa-solid fa-palette me-2" style="color:#8b5cf6;"></i>Appearance
+          </h2>
+          <p class="text-muted mb-4" style="font-size:.85rem;">
+            Pick a look for the whole app. Your choice is saved to your account and applied on every device.
+          </p>
+
+          <div class="theme-grid" role="radiogroup" aria-label="Theme style">
+            <button
+              *ngFor="let option of theme.catalog()"
+              type="button"
+              class="theme-option"
+              role="radio"
+              [attr.aria-checked]="theme.activeCode() === option.code"
+              [class.theme-option--active]="theme.activeCode() === option.code"
+              [attr.data-preview]="option.code"
+              [disabled]="theme.savingCode() === option.code"
+              (click)="selectTheme(option.code)"
+            >
+              <span class="theme-swatch" [attr.data-preview]="option.code" aria-hidden="true"></span>
+              <span class="theme-option-text">
+                <span class="theme-option-name">{{ option.displayName }}</span>
+                <span class="theme-option-code">{{ option.code }}</span>
+              </span>
+              <i
+                class="theme-option-check fa-solid"
+                [class.fa-circle-check]="theme.activeCode() === option.code"
+                [class.fa-spinner]="theme.savingCode() === option.code"
+                [class.fa-spin]="theme.savingCode() === option.code"
+                [class.fa-circle]="theme.activeCode() !== option.code && theme.savingCode() !== option.code"
+              ></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Two-step sign-in (hidden while impersonating) -->
       <div class="card mb-4" *ngIf="!impersonation.isImpersonating()">
         <div class="card-body">
