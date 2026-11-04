@@ -48,6 +48,10 @@ export class AccountManagementComponent {
     isGoodNightEnabled: [false]
   });
 
+  readonly mfaForm = this.fb.nonNullable.group({
+    mfaEnabled: [false]
+  });
+
   readonly changePasswordForm = this.fb.nonNullable.group({
     currentPassword: ['', [Validators.required]],
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
@@ -55,6 +59,7 @@ export class AccountManagementComponent {
   });
 
   isChangingPassword = false;
+  isSavingMfa = false;
   isBalanceLoading = false;
   pollinationsBalance: number | null = null;
   showCurrentPassword = false;
@@ -111,6 +116,34 @@ export class AccountManagementComponent {
     this.api.updateWishSettings(payload).subscribe({
       next: () => this.toast.success('Wish settings updated successfully.'),
       error: () => this.toast.error('Unable to update wish settings. Please try again.')
+    });
+  }
+
+  /** Turns the emailed one-time-code requirement on or off for this account. */
+  saveMfaSetting(): void {
+    if (this.impersonation.isImpersonating()) {
+      this.toast.warning('Security settings cannot be changed while impersonating.');
+      return;
+    }
+
+    const mfaEnabled = this.mfaForm.controls.mfaEnabled.value;
+    this.isSavingMfa = true;
+    this.api.updateMyMfa({ mfaEnabled }).subscribe({
+      next: (profile) => {
+        this.mfaForm.patchValue({ mfaEnabled: !!profile.mfaEnabled });
+        this.isSavingMfa = false;
+        this.toast.success(
+          mfaEnabled
+            ? 'Two-step sign-in is on. A code is emailed each time you sign in.'
+            : 'Two-step sign-in is off.'
+        );
+      },
+      error: () => {
+        // Put the switch back so it never shows a value the server did not accept.
+        this.mfaForm.patchValue({ mfaEnabled: !mfaEnabled });
+        this.isSavingMfa = false;
+        this.toast.error('Unable to update two-step sign-in. Please try again.');
+      }
     });
   }
 
@@ -248,6 +281,7 @@ export class AccountManagementComponent {
       isGoodMorningEnabled: !!profile.isGoodMorningEnabled,
       isGoodNightEnabled: !!profile.isGoodNightEnabled,
     });
+    this.mfaForm.patchValue({ mfaEnabled: !!profile.mfaEnabled });
     this.profilePictureUrl = profile.profilePictureUrl ?? null;
   }
 }

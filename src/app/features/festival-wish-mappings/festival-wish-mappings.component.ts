@@ -18,6 +18,9 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { ToastService } from '../../core/services/toast.service';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
+import { BulkSelection } from '../../shared/bulk-selection';
+import { WISHES_URL_MAX_LENGTH, wishesUrlError } from '../../core/utils/wishes-url';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import { startOfDay } from '../calendar/calendar.utils';
 import {
   FestivalTiming,
@@ -61,6 +64,7 @@ export class FestivalWishMappingsComponent {
 
   readonly today = startOfDay(new Date());
   readonly noteMaxLength = MAX_NOTE_LENGTH;
+  readonly wishesUrlMaxLength = WISHES_URL_MAX_LENGTH;
   readonly pageSizes = [10, 25, 50];
   readonly statusTabs: Array<{ id: FestivalMappingStatus; label: string }> = [
     { id: 'ALL', label: 'All' },
@@ -89,6 +93,8 @@ export class FestivalWishMappingsComponent {
   loadFailed = false;
   readonly togglingIds = new Set<number>();
   readonly deletingIds = new Set<number>();
+  readonly selection = new BulkSelection();
+  bulkDeleting = false;
 
   // ---- editor
   editorOpen = false;
@@ -111,6 +117,7 @@ export class FestivalWishMappingsComponent {
   loadingMapped = false;
   active = true;
   note = '';
+  wishesUrl = '';
   saving = false;
 
   // ---- image upload in editor
@@ -157,6 +164,8 @@ export class FestivalWishMappingsComponent {
           this.mappings = result.content;
           this.totalElements = result.totalElements;
           this.totalPages = Math.max(1, result.totalPages);
+          // Rows can only be ticked while they are on screen.
+          this.selection.retainOnly(this.mappings.map((mapping) => mapping.id));
         }
       });
 
@@ -304,7 +313,8 @@ export class FestivalWishMappingsComponent {
         specialEventId: mapping.specialEventId,
         userId: mapping.userId,
         active: !mapping.active,
-        customMessage: mapping.customMessage ?? ''
+        customMessage: mapping.customMessage ?? '',
+        wishesUrl: mapping.wishesUrl ?? ''
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -347,6 +357,51 @@ export class FestivalWishMappingsComponent {
       });
   }
 
+  // ------------------------------------------------------------------ bulk delete
+
+  get pageIds(): number[] {
+    return this.mappings.map((mapping) => mapping.id);
+  }
+
+  get allSelected(): boolean {
+    return this.selection.allSelected(this.pageIds);
+  }
+
+  toggleAll(): void {
+    this.selection.toggleAll(this.pageIds);
+  }
+
+  deleteSelected(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeleting) {
+      return;
+    }
+    this.confirmDialog
+      .confirmDelete({
+        itemLabel: `${ids.length} selected wish ${ids.length === 1 ? 'mapping' : 'mappings'}`,
+        detail: 'Any uploaded images for them are removed from storage as well.'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDelete(ids));
+  }
+
+  private performBulkDelete(ids: number[]): void {
+    this.bulkDeleting = true;
+    this.api.deleteFestivalWishMappings(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeleting = false;
+        this.selection.clear();
+        this.toast.success(`${ids.length} wish ${ids.length === 1 ? 'mapping' : 'mappings'} deleted.`);
+        this.load();
+        this.loadSummary();
+      },
+      error: (error) => {
+        this.bulkDeleting = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to delete the selected mappings right now.'));
+      }
+    });
+  }
+
   // ------------------------------------------------------------------ editor: open / close
 
   openCreate(): void {
@@ -358,6 +413,7 @@ export class FestivalWishMappingsComponent {
     this.userQuery = '';
     this.active = true;
     this.note = '';
+    this.wishesUrl = '';
     this.showPastFestivals = false;
     this.navigateEditor(true);
   }
@@ -367,6 +423,7 @@ export class FestivalWishMappingsComponent {
     this.editingMapping = mapping;
     this.active = mapping.active;
     this.note = mapping.customMessage ?? '';
+    this.wishesUrl = mapping.wishesUrl ?? '';
     if (mapping.imageUrl) {
       this.imagePreviewUrl = mapping.imageUrl;
     }
@@ -477,7 +534,21 @@ export class FestivalWishMappingsComponent {
   }
 
   get canSave(): boolean {
-    return !this.saving && (this.isEditing || (this.selectedFestivalId !== null && this.selectedUserIds.size > 0));
+    return (
+      !this.saving &&
+      !this.wishesUrlMessage &&
+      (this.isEditing || (this.selectedFestivalId !== null && this.selectedUserIds.size > 0))
+    );
+  }
+
+  /** Validation message for the optional custom wishes page link, or null when it is fine. */
+  get wishesUrlMessage(): string | null {
+    return wishesUrlError(this.wishesUrl);
+  }
+
+  get canTestWishesUrl(): boolean {
+    const value = this.wishesUrl.trim();
+    return value.length > 0 && !this.wishesUrlMessage;
   }
 
   get saveLabel(): string {
@@ -567,6 +638,8 @@ export class FestivalWishMappingsComponent {
       return;
     }
     const note = this.note.trim();
+    // '' removes the link, so the festival email simply has no link.
+    const wishesUrl = this.wishesUrl.trim();
     this.saving = true;
 
     if (this.editingMapping) {
@@ -578,7 +651,8 @@ export class FestivalWishMappingsComponent {
             mapping.userId,
             this.active,
             note,
-            this.selectedImageFile
+            this.selectedImageFile,
+            wishesUrl
           )
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
@@ -587,7 +661,7 @@ export class FestivalWishMappingsComponent {
           });
       } else {
         this.api
-          .saveFestivalWishMapping({ specialEventId: mapping.specialEventId, userId: mapping.userId, active: this.active, customMessage: note })
+          .saveFestivalWishMapping({ specialEventId: mapping.specialEventId, userId: mapping.userId, active: this.active, customMessage: note, wishesUrl })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: () => this.onSaved('Festival wish mapping updated.'),
@@ -606,7 +680,8 @@ export class FestivalWishMappingsComponent {
           userId,
           this.active,
           note,
-          this.selectedImageFile
+          this.selectedImageFile,
+          wishesUrl
         )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
@@ -617,6 +692,14 @@ export class FestivalWishMappingsComponent {
     }
 
     const festival = this.selectedFestival;
+
+    // The bulk endpoint has no wishes-link field, so when a link is set each
+    // recipient is saved on its own through the per-recipient endpoint.
+    if (wishesUrl) {
+      this.saveMappingsWithLink([...this.selectedUserIds]);
+      return;
+    }
+
     this.api
       .saveFestivalWishMappingsBulk({ specialEventId: this.selectedFestivalId as number, userIds: [...this.selectedUserIds], active: this.active, customMessage: note })
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -624,6 +707,21 @@ export class FestivalWishMappingsComponent {
         next: (result) => this.onSaved(bulkResultMessage(result, festival?.eventName ?? 'Festival')),
         error: (error: HttpErrorResponse) => this.onSaveFailed(error)
       });
+  }
+
+  /** Saves one mapping per recipient so the custom wishes link is stored for each of them. */
+  private saveMappingsWithLink(userIds: number[]): void {
+    const specialEventId = this.selectedFestivalId as number;
+    const note = this.note.trim();
+    const wishesUrl = this.wishesUrl.trim();
+    const requests = userIds.map((userId) =>
+      this.api.saveFestivalWishMappingWithImage(specialEventId, userId, this.active, note, undefined, wishesUrl)
+    );
+
+    forkJoin(requests).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => this.onSaved(bulkResultMessage({ created: userIds.length, updated: 0 }, this.selectedFestival?.eventName ?? 'Festival')),
+      error: (error: HttpErrorResponse) => this.onSaveFailed(error)
+    });
   }
 
   private onSaved(message: string): void {

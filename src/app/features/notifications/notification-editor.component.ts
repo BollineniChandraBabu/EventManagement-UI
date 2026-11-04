@@ -26,6 +26,11 @@ export class NotificationEditorComponent {
   isPublished = false;
   form: SaveNotificationPayload = { title: '', message: '', canSendEmail: false, scheduledFrom: null, scheduledTo: null };
 
+  /** The earliest time the schedule pickers accept, in the browser's own time zone. */
+  get minScheduleValue(): string {
+    return this.toDateTimeLocal(new Date().toISOString()) ?? '';
+  }
+
   constructor() {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -42,6 +47,17 @@ export class NotificationEditorComponent {
 
     if (this.form.scheduledFrom && this.form.scheduledTo && this.form.scheduledTo < this.form.scheduledFrom) {
       this.toast.error('Schedule end time must be after start time.');
+      return;
+    }
+
+    // The server rejects a schedule that is not in the future, so it is caught here first.
+    const now = this.minScheduleValue;
+    if (this.form.scheduledFrom && this.form.scheduledFrom <= now) {
+      this.toast.error('Schedule start time must be in the future.');
+      return;
+    }
+    if (this.form.scheduledTo && this.form.scheduledTo <= now) {
+      this.toast.error('Schedule end time must be in the future.');
       return;
     }
 

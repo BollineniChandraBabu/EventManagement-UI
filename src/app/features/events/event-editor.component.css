@@ -61,6 +61,10 @@
 .summary-warning i { color: var(--c-warning); }
 .summary-note { margin: 0.9rem 0 0; padding-top: 0.75rem; border-top: 1px solid var(--c-border); font-size: 0.8rem; color: var(--c-text-muted); }
 
+.image-picker { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.image-picker__preview { width: 140px; height: 140px; object-fit: cover; border-radius: var(--r-md); border: 1px solid var(--c-border); }
+.image-picker__actions { display: flex; flex-direction: column; gap: 0.5rem; }
+
 .editor-actions { display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem; margin-top: 1.25rem; }
 .dirty-hint { margin-right: auto; font-size: 0.8rem; color: var(--c-warning); font-weight: 600; }
 .dirty-hint i { font-size: 0.5rem; vertical-align: middle; }

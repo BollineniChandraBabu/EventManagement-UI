@@ -172,6 +172,36 @@
 
     <!-- Right: Password + Session -->
     <div class="col-12 col-xl-5">
+      <!-- Two-step sign-in (hidden while impersonating) -->
+      <div class="card mb-4" *ngIf="!impersonation.isImpersonating()">
+        <div class="card-body">
+          <h2 class="section-title mb-4">
+            <i class="fa-solid fa-shield-halved me-2" style="color:#0ea5e9;"></i>Two-step sign-in
+          </h2>
+          <form [formGroup]="mfaForm" novalidate>
+            <div class="wish-toggle-card" [class.wish-toggle-card--on]="mfaForm.controls.mfaEnabled.value">
+              <span class="wish-emoji">🔐</span>
+              <div class="wish-info">
+                <div class="wish-title">Email verification code</div>
+                <div class="wish-sub">Ask for a one-time code each time you sign in</div>
+              </div>
+              <div class="form-check form-switch ms-auto mb-0">
+                <input class="form-check-input" type="checkbox" id="mfaEnabled" formControlName="mfaEnabled" [disabled]="isSavingMfa" />
+              </div>
+            </div>
+            <p class="text-muted mt-3 mb-3" style="font-size:.85rem;">
+              When this is on, after your password you enter a six-digit code sent to your email. Turning it off signs you in with your password only.
+            </p>
+            <div class="d-flex justify-content-end">
+              <button type="button" class="btn btn-primary" (click)="saveMfaSetting()" [disabled]="isSavingMfa">
+                <i class="fa-solid me-1" [class.fa-floppy-disk]="!isSavingMfa" [class.fa-spinner]="isSavingMfa" [class.fa-spin]="isSavingMfa"></i>
+                {{ isSavingMfa ? 'Saving…' : 'Save security setting' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- Change Password (hidden while impersonating) -->
       <div class="card mb-4" *ngIf="!impersonation.isImpersonating()">
         <div class="card-body">

@@ -51,10 +51,23 @@
         </app-multi-select-filter>
       </div>
 
+      <!-- Batch actions -->
+      <div class="bulk-bar mb-3" *ngIf="isAdmin() && selection.hasSelection()">
+        <span class="bulk-bar__count"><i class="fa-solid fa-list-check me-1"></i>{{ selection.count() }} selected</span>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="selection.clear()" [disabled]="bulkDeleting">Clear</button>
+        <button class="btn btn-sm btn-danger" type="button" (click)="deleteSelected()" [disabled]="bulkDeleting">
+          <i class="fa-solid me-1" [class.fa-trash-can]="!bulkDeleting" [class.fa-spinner]="bulkDeleting" [class.fa-spin]="bulkDeleting"></i>
+          {{ bulkDeleting ? 'Deleting…' : 'Delete selected' }}
+        </button>
+      </div>
+
       <div class="table-responsive">
         <table class="table table-hover">
           <thead>
             <tr>
+              <th class="select-col" *ngIf="isAdmin()">
+                <input class="form-check-input" type="checkbox" [checked]="allSelected" (change)="toggleAll()" [disabled]="loading || !viewEvents.length" aria-label="Select all events on this page" />
+              </th>
               <th>
                     <div class="th-row">
                       <button class="sort-header" type="button" (click)="toggleSort('user')" [disabled]="loading">
@@ -99,9 +112,20 @@
           </thead>
           <tbody>
             <tr *ngFor="let event of viewEvents">
-              <td><span class="text-muted">{{ event.userName || '—' }}</span></td>
+              <td class="select-col" *ngIf="isAdmin()">
+                <input class="form-check-input" type="checkbox" [checked]="selection.isSelected(event.id)" (change)="selection.toggle(event.id)" [disabled]="loading || isDeleting(event.id)" [attr.aria-label]="'Select event for ' + (event.userName || 'user')" />
+              </td>
+              <td>
+                <div class="event-user-cell">
+                  <button *ngIf="event.imageUrl" class="event-thumb" type="button" (click)="openImage(event)" [attr.aria-label]="'View greeting image for ' + (event.userName || 'user')">
+                    <img [src]="event.imageUrl" [alt]="(event.eventType || 'Event') + ' greeting image'" />
+                  </button>
+                  <span class="text-muted">{{ event.userName || '—' }}</span>
+                </div>
+              </td>
               <td>
                 <span class="badge badge-info">{{ event.eventType || '—' }}</span>
+                <i *ngIf="event.imageUrl" class="fa-regular fa-image ms-2 text-muted" title="Has an uploaded greeting image" aria-hidden="true"></i>
               </td>
               <td><span class="text-muted">{{ (event.eventDate | date:'mediumDate') || '—' }}</span></td>
               <td>
@@ -120,13 +144,13 @@
               </td>
             </tr>
             <tr *ngIf="loading" class="table-loading">
-              <td [attr.colspan]="isAdmin() ? 5 : 4">
+              <td [attr.colspan]="isAdmin() ? 6 : 4">
                 <div class="loading-dots"><span></span><span></span><span></span></div>
                 <div class="mt-2">Loading events…</div>
               </td>
             </tr>
             <tr *ngIf="!loading && viewEvents.length === 0" class="table-empty">
-              <td [attr.colspan]="isAdmin() ? 5 : 4">
+              <td [attr.colspan]="isAdmin() ? 6 : 4">
                 <div class="empty-state">
                   <div class="empty-state-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
                   <p class="empty-state-title">No events yet</p>
@@ -151,5 +175,17 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Uploaded greeting image lightbox -->
+<div class="event-lightbox" *ngIf="previewImage as preview" (click)="closeImage()" role="dialog" aria-modal="true" aria-label="Greeting image preview">
+  <div class="event-lightbox__inner" (click)="$event.stopPropagation()">
+    <div class="event-lightbox__head">
+      <span class="event-lightbox__title">{{ preview.eventType || 'Event' }} · {{ preview.userName || 'User' }}</span>
+      <button class="btn-close" type="button" (click)="closeImage()" aria-label="Close image preview"></button>
+    </div>
+    <img class="event-lightbox__img" [src]="preview.imageUrl" [alt]="(preview.eventType || 'Event') + ' greeting image'" />
+    <p class="event-lightbox__hint mb-0"><i class="fa-solid fa-circle-info me-1"></i>This uploaded image is used in the wish email instead of a generated one.</p>
   </div>
 </div>

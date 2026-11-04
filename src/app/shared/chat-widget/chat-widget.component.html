@@ -145,6 +145,9 @@
                     </div>
 
                     <div class="header-actions">
+                        <button type="button" class="icon-btn" [class.active]="selectMode" (click)="toggleSelectMode()" [title]="selectMode ? 'Cancel selection' : 'Select messages'">
+                            <i class="fa-solid" [class.fa-list-check]="!selectMode" [class.fa-xmark]="selectMode"></i>
+                        </button>
                         <button type="button" class="icon-btn" [class.active]="showStarredOnly" (click)="toggleStarredFilter()" title="Pinned / Starred messages">
                             <i class="fa-solid fa-star" [style.color]="showStarredOnly ? '#eab308' : ''"></i>
                         </button>
@@ -155,6 +158,19 @@
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
+                </div>
+
+                <!-- Batch delete bar -->
+                <div class="chat-select-bar" *ngIf="selectMode">
+                    <label class="chat-select-all">
+                        <input type="checkbox" [checked]="allSelectableSelected" (change)="toggleSelectAll()" [disabled]="!selectableMessageIds.length" aria-label="Select all deletable messages" />
+                        <span>Select all</span>
+                    </label>
+                    <span class="chat-select-count">{{ selection.count() }} selected</span>
+                    <button type="button" class="chat-select-delete" (click)="deleteSelectedMessages()" [disabled]="!selection.hasSelection() || bulkDeleting">
+                        <i class="fa-solid me-1" [class.fa-trash-can]="!bulkDeleting" [class.fa-spinner]="bulkDeleting" [class.fa-spin]="bulkDeleting"></i>
+                        {{ bulkDeleting ? 'Deleting…' : 'Delete' }}
+                    </button>
                 </div>
 
                 <!-- Thread Search Bar -->
@@ -184,6 +200,8 @@
                                 [class.show-avatar]="shouldShowAvatar(message)"
                                 [class.highlighted]="highlightedMessageId === message.messageId"
                                 [class.msg-ui-active]="isMessageActive(message.messageId)"
+                                [class.selectable]="selectMode && canSelectForDelete(message)"
+                                [class.selected]="selectMode && selection.isSelected(message.messageId)"
                                 [attr.data-message-id]="message.messageId"
                                 (mouseenter)="onMessageMouseEnter(message.messageId)"
                                 (mouseleave)="onMessageMouseLeave($event, message.messageId)"
@@ -191,7 +209,16 @@
                                 (pointermove)="onMessagePointerMove($event, message)"
                                 (pointerup)="onMessagePointerUp($event, message)"
                                 (pointercancel)="onMessagePointerCancel()"
+                                (click)="onMessageRowClick(message)"
                         >
+                            <!-- Selection checkbox (batch delete) -->
+                            <input *ngIf="selectMode && canSelectForDelete(message)"
+                                   class="msg-select-check"
+                                   type="checkbox"
+                                   [checked]="selection.isSelected(message.messageId)"
+                                   (change)="toggleMessageSelection(message)"
+                                   (click)="$event.stopPropagation()"
+                                   [attr.aria-label]="'Select message'" />
                             <!-- Sender avatar (received, last in group) -->
                             <div class="msg-sender-avatar">
                                 <img *ngIf="conversationAvatar(activeConversation); else senderInitialAvatar" [src]="conversationAvatar(activeConversation)" alt="avatar" />

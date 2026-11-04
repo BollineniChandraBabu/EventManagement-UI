@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -72,8 +73,8 @@ export class ResetPasswordComponent {
 
         setTimeout(() => this.router.navigate(['/login']), 1500);
       },
-      error: () => {
-        this.toast.error('Reset link is invalid or expired. Please request a new reset email.');
+      error: (error) => {
+        this.toast.error(apiErrorMessage(error, 'Reset link is invalid or expired. Please request a new reset email.'));
         this.isSubmitting = false;
       }
     });

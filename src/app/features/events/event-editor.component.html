@@ -80,6 +80,29 @@
           <div class="invalid-feedback d-block" *ngIf="form.controls.wishesUrl.touched && wishesUrlMessage">{{ wishesUrlMessage }}</div>
           <div class="form-text mt-1" id="wishesUrlHelp">If filled in, the email includes a button to this page. Leave it empty and no link is added.</div>
         </section>
+
+        <!-- 5. Image -->
+        <section class="card editor-card">
+          <h2 class="editor-card__title"><span class="step">5</span>Greeting image <small class="text-muted fw-normal">(optional)</small></h2>
+          <p class="form-text mt-0">Upload an image to use in this event's email. If you leave it empty, one is generated automatically.</p>
+          <div class="image-picker" *ngIf="hasImage">
+            <img class="image-picker__preview" [src]="imagePreviewUrl" alt="Greeting image preview" />
+            <div class="image-picker__actions">
+              <label class="btn btn-sm btn-outline-primary mb-0">
+                <i class="fa-solid fa-arrow-rotate-right me-1"></i>Replace image
+                <input type="file" class="d-none" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onImageSelected($event)" />
+              </label>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeSelectedImage()">
+                <i class="fa-solid fa-trash-can me-1"></i>Remove
+              </button>
+            </div>
+          </div>
+          <div *ngIf="!hasImage">
+            <input class="form-control" [class.is-invalid]="!!imageError" type="file" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onImageSelected($event)" />
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="imageError">{{ imageError }}</div>
+          <div class="form-text" *ngIf="!imageError">{{ imageHint }}</div>
+        </section>
       </div>
 
       <!-- Summary -->
@@ -96,6 +119,7 @@
             <li *ngIf="next" class="summary-next"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>Next email: <strong>{{ nextText }}</strong></span></li>
             <li *ngIf="isPastOneTimeEvent" class="summary-warning"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>This date has passed and it does not repeat, so no email will be sent.</span></li>
             <li><i class="fa-solid fa-link" aria-hidden="true"></i><span>{{ form.controls.wishesUrl.value.trim() && !wishesUrlMessage ? 'Email includes your wishes page' : 'No wishes page link' }}</span></li>
+            <li><i class="fa-regular fa-image" aria-hidden="true"></i><span>{{ hasImage ? 'Uses your uploaded image' : 'Image created automatically' }}</span></li>
           </ul>
           <p class="summary-note"><i class="fa-regular fa-image me-1"></i>The email uses an image you uploaded for this event type, otherwise one is created automatically. <a routerLink="/wish-images">Manage images</a></p>
         </section>

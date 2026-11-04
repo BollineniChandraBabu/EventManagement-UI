@@ -9,11 +9,23 @@
     <button class="btn btn-outline-primary" type="button" (click)="applySearch()" [disabled]="loading"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
   </div></div>
   <div class="card"><div class="card-body">
+    <!-- Batch actions -->
+    <div class="bulk-bar mb-3" *ngIf="selection.hasSelection()">
+      <span class="bulk-bar__count"><i class="fa-solid fa-list-check me-1"></i>{{ selection.count() }} selected</span>
+      <button class="btn btn-sm btn-outline-secondary" type="button" (click)="selection.clear()" [disabled]="bulkDeleting">Clear</button>
+      <button class="btn btn-sm btn-danger" type="button" (click)="deleteSelected()" [disabled]="bulkDeleting || !canDeleteSelected" [title]="canDeleteSelected ? '' : 'Unpublish the selected notifications first'">
+        <i class="fa-solid me-1" [class.fa-trash-can]="!bulkDeleting" [class.fa-spinner]="bulkDeleting" [class.fa-spin]="bulkDeleting"></i>
+        {{ bulkDeleting ? 'Deleting…' : 'Delete selected' }}
+      </button>
+    </div>
     <div class="table-responsive notifications-table-wrap">
       <table class="table table-hover notifications-table align-middle">
-        <thead><tr><th><button class="sort-header" type="button" (click)="toggleSort('title')" [disabled]="loading">Notification <i *ngIf="isSortedBy('title')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th><th><div class="th-row"><button class="sort-header" type="button" (click)="toggleSort('published')" [disabled]="loading">Status <i *ngIf="isSortedBy('published')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button><app-multi-select-filter label="Status" searchPlaceholder="Search statuses…" [disabled]="loading" [options]="statusOptions" [selected]="selectedStatuses" (applied)="onStatusesChange($event)"></app-multi-select-filter></div></th><th>Schedule Window</th><th><button class="sort-header" type="button" (click)="toggleSort('publishedAt')" [disabled]="loading">Published <i *ngIf="isSortedBy('publishedAt')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th><th>Email</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th class="select-col"><input class="form-check-input" type="checkbox" [checked]="allSelected" (change)="toggleAll()" [disabled]="loading || !notifications.length" aria-label="Select all notifications on this page" /></th><th><button class="sort-header" type="button" (click)="toggleSort('title')" [disabled]="loading">Notification <i *ngIf="isSortedBy('title')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th><th><div class="th-row"><button class="sort-header" type="button" (click)="toggleSort('published')" [disabled]="loading">Status <i *ngIf="isSortedBy('published')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button><app-multi-select-filter label="Status" searchPlaceholder="Search statuses…" [disabled]="loading" [options]="statusOptions" [selected]="selectedStatuses" (applied)="onStatusesChange($event)"></app-multi-select-filter></div></th><th>Schedule Window</th><th><button class="sort-header" type="button" (click)="toggleSort('publishedAt')" [disabled]="loading">Published <i *ngIf="isSortedBy('publishedAt')" class="fa-solid" [class.fa-arrow-up]="sortDir === 'asc'" [class.fa-arrow-down]="sortDir === 'desc'"></i></button></th><th>Email</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let item of notifications">
+            <td class="select-col">
+              <input class="form-check-input" type="checkbox" [checked]="selection.isSelected(item.id)" (change)="selection.toggle(item.id)" [disabled]="loading || item.published" [attr.aria-label]="'Select notification ' + item.title" />
+            </td>
             <td>
               <div class="notification-cell-title">{{ item.title }}</div>
               <div class="notification-cell-message">{{ item.message }}</div>
@@ -37,7 +49,7 @@
               <button class="btn btn-sm btn-outline-warning" *ngIf="item.published" (click)="unpublish(item)"><i class="fa-solid fa-bell-slash me-1"></i>Unpublish</button>
             </td>
           </tr>
-          <tr *ngIf="!loading && notifications.length === 0"><td colspan="6" class="text-center text-muted">No notifications yet.</td></tr>
+          <tr *ngIf="!loading && notifications.length === 0"><td colspan="7" class="text-center text-muted">No notifications yet.</td></tr>
         </tbody>
       </table>
     </div>

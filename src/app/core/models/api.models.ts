@@ -151,6 +151,8 @@ export interface AppUser {
   isBirthdayEnabled?: boolean;
   /** Optional link to a custom birthday wishes page, added to the birthday email. */
   birthdayWishesUrl?: string | null;
+  /** When true, signing in also requires a one-time code sent by email. */
+  mfaEnabled?: boolean;
 }
 
 export interface SaveUserPayload {
@@ -166,6 +168,12 @@ export interface SaveUserPayload {
   isBirthdayEnabled?: boolean;
   /** Send '' to remove the link. */
   birthdayWishesUrl?: string;
+  /** Admin choice for the account: require an emailed one-time code at sign-in. */
+  mfaEnabled?: boolean;
+}
+
+export interface MfaUpdateRequest {
+  mfaEnabled: boolean;
 }
 
 /** An administrator-uploaded image used as a fallback for a generated wish. */
@@ -237,6 +245,8 @@ export interface FestivalWishMapping {
   lastWishSentOn?: string | null;
   /** true = the last attempt to send this wish failed. */
   error?: boolean;
+  /** Optional link to a custom wishes page, added to the festival email. */
+  wishesUrl?: string | null;
 }
 
 export interface SaveFestivalWishMappingPayload {
@@ -244,6 +254,8 @@ export interface SaveFestivalWishMappingPayload {
   userId: number;
   active: boolean;
   customMessage?: string;
+  /** Send '' to remove the link. */
+  wishesUrl?: string;
 }
 
 export type FestivalMappingStatus = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'FAILED';
@@ -284,6 +296,8 @@ export interface EventItem {
   userId?: number;
   /** Optional link to a custom wishes page, added to the event's email. */
   wishesUrl?: string | null;
+  /** Signed URL of the admin-uploaded greeting image, when the event has one. */
+  imageUrl?: string | null;
 }
 
 export interface SaveEventPayload {

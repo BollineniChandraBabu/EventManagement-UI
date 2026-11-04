@@ -49,13 +49,26 @@
     <button class="btn btn-primary btn-sm" type="button" *ngIf="!hasFilters" (click)="openCreate()"><i class="fa-solid fa-plus me-1"></i>Add recipients</button>
   </div>
 
+  <!-- Batch actions -->
+  <div class="bulk-bar mb-3" *ngIf="mappings.length && selection.hasSelection()">
+    <span class="bulk-bar__count"><i class="fa-solid fa-list-check me-1"></i>{{ selection.count() }} selected</span>
+    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="selection.clear()" [disabled]="bulkDeleting">Clear</button>
+    <button class="btn btn-sm btn-danger" type="button" (click)="deleteSelected()" [disabled]="bulkDeleting">
+      <i class="fa-solid me-1" [class.fa-trash-can]="!bulkDeleting" [class.fa-spinner]="bulkDeleting" [class.fa-spin]="bulkDeleting"></i>
+      {{ bulkDeleting ? 'Deleting…' : 'Delete selected' }}
+    </button>
+  </div>
+
   <section class="card fw-list" *ngIf="mappings.length">
     <!-- Desktop / tablet -->
     <div class="table-responsive d-none d-md-block">
       <table class="table fw-table">
-        <thead><tr><th>Festival</th><th>Recipient</th><th>Status</th><th>Last sent</th><th class="text-center">Active</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th class="select-col"><input class="form-check-input" type="checkbox" [checked]="allSelected" (change)="toggleAll()" [disabled]="loading" aria-label="Select all mappings on this page" /></th><th>Festival</th><th>Recipient</th><th>Status</th><th>Last sent</th><th class="text-center">Active</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
           <tr *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
+            <td class="select-col">
+              <input class="form-check-input" type="checkbox" [checked]="selection.isSelected(mapping.id)" (change)="selection.toggle(mapping.id)" [disabled]="loading || deletingIds.has(mapping.id)" [attr.aria-label]="'Select ' + mapping.festivalName + ' for ' + mapping.userName" />
+            </td>
             <td>
               <div class="d-flex align-items-center gap-2">
                 <button *ngIf="mapping.imageUrl" type="button" class="fw-thumb" (click)="openImage(mapping)" [attr.aria-label]="'View ' + mapping.festivalName + ' wish image'">
@@ -64,6 +77,7 @@
                 <div>
                   <div class="fw-name">{{ mapping.festivalName }}</div>
                   <div class="fw-sub">{{ mapping.eventDate | date: 'mediumDate' }} <span class="fw-when" [class.is-past]="timing(mapping).isPast">{{ timing(mapping).label }}</span></div>
+                  <div class="fw-sub" *ngIf="mapping.wishesUrl" [title]="mapping.wishesUrl"><i class="fa-solid fa-link me-1"></i>Custom wishes page</div>
                 </div>
               </div>
             </td>
@@ -90,6 +104,7 @@
       <li class="fw-card" *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
         <div class="fw-card-top">
           <div class="min-w-0 d-flex align-items-center gap-2">
+            <input class="form-check-input" type="checkbox" [checked]="selection.isSelected(mapping.id)" (change)="selection.toggle(mapping.id)" [disabled]="loading || deletingIds.has(mapping.id)" [attr.aria-label]="'Select ' + mapping.festivalName + ' for ' + mapping.userName" />
             <button *ngIf="mapping.imageUrl" type="button" class="fw-thumb" (click)="openImage(mapping)" [attr.aria-label]="'View ' + mapping.festivalName + ' wish image'">
               <img [src]="mapping.imageUrl" [alt]="mapping.festivalName" />
             </button>
@@ -102,6 +117,7 @@
         </div>
         <div class="fw-card-row"><i class="fa-solid fa-user" aria-hidden="true"></i>{{ mapping.userName }}</div>
         <div class="fw-card-row fw-note" *ngIf="mapping.customMessage"><i class="fa-regular fa-comment-dots" aria-hidden="true"></i>{{ mapping.customMessage }}</div>
+        <div class="fw-card-row fw-sub" *ngIf="mapping.wishesUrl"><i class="fa-solid fa-link" aria-hidden="true"></i>Custom wishes page</div>
         <div class="fw-card-row fw-sub"><i class="fa-regular fa-paper-plane" aria-hidden="true"></i>Last sent: {{ lastSent(mapping) }}</div>
         <div class="fw-card-actions">
           <div class="form-check form-switch m-0 fw-card-switch"><input class="form-check-input" type="checkbox" role="switch" [id]="'toggle-' + mapping.id" [checked]="mapping.active" [disabled]="togglingIds.has(mapping.id)" (change)="toggleActive(mapping)" /><label class="form-check-label" [for]="'toggle-' + mapping.id">{{ mapping.active ? 'Active' : 'Inactive' }}</label></div>
@@ -184,6 +200,23 @@
         <label class="form-label fw-label" for="fw-note">Personal note <span class="text-muted fw-normal">(optional)</span></label>
         <textarea id="fw-note" class="form-control" rows="3" [maxlength]="noteMaxLength" [(ngModel)]="note" placeholder="Shown at the end of the email, e.g. “Wishing you and the family a very happy Diwali!”"></textarea>
         <div class="fw-note-meta"><span class="fw-sub">{{ isEditing ? 'Clear it to send no note.' : 'The same note is used for everyone you add.' }}</span><span class="fw-sub">{{ note.length }}/{{ noteMaxLength }}</span></div>
+
+        <label class="form-label fw-label mt-3" for="fw-wishes-url">Custom wishes page <span class="text-muted fw-normal">(optional)</span></label>
+        <div class="input-group">
+          <input id="fw-wishes-url" class="form-control" type="url" inputmode="url" autocomplete="off"
+            placeholder="https://example.com/diwali/wishes.html"
+            [maxlength]="wishesUrlMaxLength"
+            [class.is-invalid]="!!wishesUrlMessage"
+            [(ngModel)]="wishesUrl"
+            aria-describedby="fw-wishes-url-help" />
+          <a class="btn btn-outline-secondary" [class.disabled]="!canTestWishesUrl" [attr.aria-disabled]="!canTestWishesUrl"
+            [attr.href]="canTestWishesUrl ? wishesUrl.trim() : null" target="_blank" rel="noopener noreferrer"
+            title="Open the page in a new tab">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i><span class="d-none d-sm-inline ms-1">Test link</span>
+          </a>
+        </div>
+        <div class="invalid-feedback d-block" *ngIf="wishesUrlMessage">{{ wishesUrlMessage }}</div>
+        <div class="form-text" id="fw-wishes-url-help">If filled in, the festival email includes a button to this page. Leave it empty and no link is added.</div>
 
         <!-- Custom Image Upload -->
         <div class="mt-3">

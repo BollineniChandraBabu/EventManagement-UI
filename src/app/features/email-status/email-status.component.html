@@ -62,11 +62,22 @@
         </app-multi-select-filter>
       </div>
 
+      <!-- Batch actions -->
+      <div class="bulk-bar mb-3" *ngIf="isAdmin() && selection.hasSelection()">
+        <span class="bulk-bar__count"><i class="fa-solid fa-list-check me-1"></i>{{ selection.count() }} selected</span>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="selection.clear()" [disabled]="bulkDeleting">Clear</button>
+        <button class="btn btn-sm btn-danger" type="button" (click)="deleteSelected()" [disabled]="bulkDeleting">
+          <i class="fa-solid me-1" [class.fa-trash-can]="!bulkDeleting" [class.fa-spinner]="bulkDeleting" [class.fa-spin]="bulkDeleting"></i>
+          {{ bulkDeleting ? 'Deleting…' : 'Delete selected' }}
+        </button>
+      </div>
+
       <!-- Table -->
       <div class="table-responsive">
         <table class="table table-hover">
           <thead>
             <tr>
+              <th class="select-col" *ngIf="isAdmin()"><input class="form-check-input" type="checkbox" [checked]="allSelected" (change)="toggleAll()" [disabled]="loading || !viewItems.length" aria-label="Select all email records on this page" /></th>
               <th>Recipient</th>
               <th>
                 <div class="th-row">
@@ -100,6 +111,9 @@
           </thead>
           <tbody>
             <tr *ngFor="let item of viewItems">
+              <td class="select-col" *ngIf="isAdmin()">
+                <input class="form-check-input" type="checkbox" [checked]="selection.isSelected(item.id)" (change)="selection.toggle(item.id)" [disabled]="loading || isDeleting(item.id)" [attr.aria-label]="'Select email to ' + item.toEmail" />
+              </td>
               <td>{{ item.toEmail | sensitiveEmail }}</td>
               <td><span class="email-subject">{{ item.subject || '(no subject)' }}</span></td>
               <td>
@@ -119,20 +133,20 @@
                 <button class="btn btn-sm btn-outline-primary" *ngIf="canPreview(item)" (click)="openPreview(item)" [disabled]="loading" [attr.title]="'Preview email'">
                   <i class="fa-solid fa-eye me-1"></i>
                 </button>
-                <button *ngIf="isAdmin" class="btn btn-sm btn-outline-danger" type="button" (click)="deleteEmail(item.id)" [disabled]="loading || isDeleting(item.id)" [attr.title]="isDeleting(item.id) ? 'Deleting email…' : 'Delete email'"
+                <button *ngIf="isAdmin()" class="btn btn-sm btn-outline-danger" type="button" (click)="deleteEmail(item.id)" [disabled]="loading || isDeleting(item.id)" [attr.title]="isDeleting(item.id) ? 'Deleting email…' : 'Delete email'"
                         [attr.aria-label]="isDeleting(item.id) ? 'Deleting email' : 'Delete email'">
                   <i class="fa-solid fa-trash-can me-1"></i>
                 </button>
               </td>
             </tr>
             <tr *ngIf="loading" class="table-loading">
-              <td colspan="5">
+              <td [attr.colspan]="isAdmin() ? 6 : 5">
                 <div class="loading-dots"><span></span><span></span><span></span></div>
                 <div class="mt-2">Loading records…</div>
               </td>
             </tr>
             <tr *ngIf="!loading && viewItems.length === 0" class="table-empty">
-              <td colspan="5">
+              <td [attr.colspan]="isAdmin() ? 6 : 5">
                 <div class="empty-state">
                   <div class="empty-state-icon"><i class="fa-solid fa-inbox"></i></div>
                   <p class="empty-state-title">No records found</p>

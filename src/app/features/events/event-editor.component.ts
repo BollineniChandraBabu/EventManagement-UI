@@ -42,6 +42,14 @@ export class EventEditorComponent {
   loadFailed = false;
   saving = false;
 
+  /** Admin-uploaded greeting image for this event. */
+  selectedImageFile?: File;
+  imagePreviewUrl?: string;
+  imageError = '';
+  readonly imageHint = 'PNG, JPEG, GIF or WebP, up to 5 MB';
+  private readonly allowedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+  private readonly maxImageBytes = 5 * 1024 * 1024;
+
   readonly form = this.fb.nonNullable.group({
     userId: [0, [Validators.required, Validators.min(1)]],
     eventType: ['', [Validators.required]],
@@ -52,6 +60,7 @@ export class EventEditorComponent {
 
   constructor() {
     this.load();
+    this.destroyRef.onDestroy(() => this.releaseImagePreview());
   }
 
   // ------------------------------------------------------------------ loading
@@ -163,6 +172,47 @@ export class EventEditorComponent {
     return this.typeCode(type);
   };
 
+  // ------------------------------------------------------------------ image
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!this.allowedImageTypes.includes(file.type)) {
+      this.imageError = 'Unsupported image format. Use PNG, JPEG, GIF or WebP.';
+      input.value = '';
+      return;
+    }
+    if (file.size > this.maxImageBytes) {
+      this.imageError = 'The image must be 5 MB or smaller.';
+      input.value = '';
+      return;
+    }
+    this.imageError = '';
+    this.releaseImagePreview();
+    this.selectedImageFile = file;
+    this.imagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  removeSelectedImage(): void {
+    this.releaseImagePreview();
+    this.selectedImageFile = undefined;
+    this.imageError = '';
+  }
+
+  get hasImage(): boolean {
+    return !!this.imagePreviewUrl;
+  }
+
+  private releaseImagePreview(): void {
+    if (this.imagePreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.imagePreviewUrl);
+    }
+    this.imagePreviewUrl = undefined;
+  }
+
   // ------------------------------------------------------------------ saving
 
   save(): void {
@@ -179,7 +229,13 @@ export class EventEditorComponent {
       // '' removes the link, so the email for this event simply has no link
       wishesUrl: value.wishesUrl.trim()
     };
-    const request = this.editingEventId ? this.api.updateEvent(this.editingEventId, payload) : this.api.saveEvent(payload);
+
+    // The multipart endpoints are used only when an image was chosen, so a plain
+    // save never replaces or removes the image an event already has.
+    const image = this.selectedImageFile;
+    const request = this.editingEventId
+      ? (image ? this.api.updateEventWithImage(this.editingEventId, payload, image) : this.api.updateEvent(this.editingEventId, payload))
+      : (image ? this.api.saveEventWithImage(payload, image) : this.api.saveEvent(payload));
 
     this.saving = true;
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -212,6 +268,10 @@ export class EventEditorComponent {
       recurring: event.recurring,
       wishesUrl: event.wishesUrl ?? ''
     });
+    // Shows the image the event already has; a new upload replaces it on save.
+    if (event.imageUrl) {
+      this.imagePreviewUrl = event.imageUrl;
+    }
     this.form.markAsPristine();
   }
 }

@@ -135,6 +135,15 @@ export class ChatService {
     );
   }
 
+  deleteMessagesByIds(messageIds: number[]): Observable<Array<{ messageId: number; conversationId: number; deletedAt: string }>> {
+    let params = new HttpParams();
+    messageIds.forEach((id) => (params = params.append('ids', id)));
+    return this.http.delete<Array<{ messageId: number; conversationId: number; deletedAt: string }>>(
+      `${environment.apiUrl}/chat/messages`,
+      { params }
+    );
+  }
+
   editMessage(messageId: number, messageText: string): Observable<ChatMessage> {
     return this.http.patch<ChatMessage>(`${environment.apiUrl}/chat/messages/${messageId}`, { messageText });
   }

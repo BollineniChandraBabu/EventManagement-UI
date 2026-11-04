@@ -25,6 +25,9 @@ import {
 } from '../../core/models/chat.models';
 import { ChatService } from '../../core/services/chat.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service';
+import { BulkSelection } from '../bulk-selection';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 interface ChatTimelineEntry {
   kind: 'day' | 'message';
@@ -48,6 +51,7 @@ export class ChatWidgetComponent {
   private readonly chat = inject(ChatService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly toast = inject(ToastService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly ngZone = inject(NgZone);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -97,6 +101,11 @@ export class ChatWidgetComponent {
   // Starred / Pinned messages (WhatsApp/Teams feature)
   starredMessageIds = new Set<number>();
   showStarredOnly = false;
+
+  // Multi-select delete (uses the batch endpoint the backend exposes)
+  readonly selection = new BulkSelection();
+  selectMode = false;
+  bulkDeleting = false;
 
   // Emoji Picker (WhatsApp/Instagram feature)
   showEmojiPicker = false;
@@ -299,6 +308,7 @@ export class ChatWidgetComponent {
    * reactions/actions don't get clipped.
    */
   isMessageActive(messageId: number): boolean {
+    if (this.selectMode) return false;
     return this.hoveredMessageId === messageId || this.activeMessageId === messageId;
   }
 
@@ -339,6 +349,7 @@ export class ChatWidgetComponent {
     this.showEmojiPicker = false;
     this.replyingToMessage = null;
     this.clearActiveMessageState();
+    this.exitSelectMode();
     this.showScrollButton = false;
     this.newMessagesWhileScrolled = 0;
   }
@@ -352,6 +363,7 @@ export class ChatWidgetComponent {
     this.showEmojiPicker = false;
     this.replyingToMessage = null;
     this.clearActiveMessageState();
+    this.exitSelectMode();
     this.showScrollButton = false;
     this.newMessagesWhileScrolled = 0;
     this.chat.subscribeToConversation(conversation.conversationId);
@@ -486,6 +498,75 @@ export class ChatWidgetComponent {
     return !!message.messageId;
   }
 
+  // ── Multi-select delete ───────────────────────────────────────────────────
+  /** Only the sender, and only within the 24-hour window the server allows, may delete. */
+  canSelectForDelete(message: ChatMessage): boolean {
+    if (!message.messageId || !message.mine || !message.sentAt) return false;
+    const sent = new Date(message.sentAt).getTime();
+    return !Number.isNaN(sent) && Date.now() - sent <= 24 * 60 * 60 * 1000;
+  }
+
+  toggleSelectMode(): void {
+    this.selectMode = !this.selectMode;
+    this.selection.clear();
+    this.clearActiveMessageState();
+  }
+
+  exitSelectMode(): void {
+    this.selectMode = false;
+    this.selection.clear();
+  }
+
+  toggleMessageSelection(message: ChatMessage): void {
+    if (this.canSelectForDelete(message)) this.selection.toggle(message.messageId);
+  }
+
+  /** In select mode a tap anywhere on a deletable row toggles it. */
+  onMessageRowClick(message: ChatMessage): void {
+    if (this.selectMode) this.toggleMessageSelection(message);
+  }
+
+  /** Message ids on screen that may still be deleted. */
+  get selectableMessageIds(): number[] {
+    return this.messages.filter((m) => this.canSelectForDelete(m)).map((m) => m.messageId);
+  }
+
+  get allSelectableSelected(): boolean {
+    return this.selection.allSelected(this.selectableMessageIds);
+  }
+
+  toggleSelectAll(): void {
+    this.selection.toggleAll(this.selectableMessageIds);
+  }
+
+  deleteSelectedMessages(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeleting) return;
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `${ids.length} selected ${ids.length === 1 ? 'message' : 'messages'}` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDeleteMessages(ids));
+  }
+
+  private performBulkDeleteMessages(ids: number[]): void {
+    this.bulkDeleting = true;
+    this.chat.deleteMessagesByIds(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeleting = false;
+        this.selection.clear();
+        const removed = new Set(ids);
+        this.messages = this.messages.filter((m) => !removed.has(m.messageId));
+        this.toast.success(`${ids.length} ${ids.length === 1 ? 'message' : 'messages'} deleted.`);
+        this.reloadConversationsOnly();
+        if (!this.messages.some((m) => this.canSelectForDelete(m))) this.selectMode = false;
+      },
+      error: (error) => {
+        this.bulkDeleting = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to delete the selected messages right now.'));
+      }
+    });
+  }
+
   // ── Teams / WhatsApp / Instagram Feature Helpers ──────────────────────────
   toggleStarMessage(message: ChatMessage): void {
     if (this.starredMessageIds.has(message.messageId)) {
@@ -605,6 +686,7 @@ export class ChatWidgetComponent {
    * `z-index: 50` via `.msg-ui-active` so its floating UI sits above siblings.
    */
   onMessagePointerDown(event: PointerEvent, message: ChatMessage): void {
+    if (this.selectMode) return;
     if (!event.isPrimary || this.shouldIgnoreGesture(event)) return;
     this.gesturePointerId = event.pointerId;
     this.gestureMessageId = message.messageId;
@@ -969,6 +1051,7 @@ export class ChatWidgetComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((res) => {
           this.messages = [...res.items].reverse();
+          this.selection.retainOnly(this.selectableMessageIds);
           this.loadReactionsForMessages(this.messages);
           this.markConversationRead(otherUserId);
           this.scrollToBottom();
