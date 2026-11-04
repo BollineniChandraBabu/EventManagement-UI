@@ -14,6 +14,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
+import { BulkSelection } from '../../shared/bulk-selection';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -64,6 +66,8 @@ export class UsersComponent {
   sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
   deactivatingIds = new Set<number>();
+  readonly selection = new BulkSelection();
+  bulkDeactivating = false;
 
   constructor() {
     this.loadFilterValues();
@@ -167,6 +171,53 @@ export class UsersComponent {
 
   isDeactivating(id: number): boolean {
     return this.deactivatingIds.has(id);
+  }
+
+  // ------------------------------------------------------------ bulk deactivate
+
+  get pageIds(): number[] {
+    return this.viewUsers.map((user) => user.id);
+  }
+
+  get allSelected(): boolean {
+    return this.selection.allSelected(this.pageIds);
+  }
+
+  toggleAll(): void {
+    this.selection.toggleAll(this.pageIds);
+  }
+
+  deactivateSelected(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeactivating) {
+      return;
+    }
+    this.confirmDialog
+      .confirm({
+        title: 'Deactivate these users?',
+        message: `${ids.length} selected ${ids.length === 1 ? 'account' : 'accounts'} will be deactivated. You can activate them again later.`,
+        confirmText: 'Deactivate',
+        tone: 'danger',
+        icon: 'fa-user-slash'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDeactivate(ids));
+  }
+
+  private performBulkDeactivate(ids: number[]): void {
+    this.bulkDeactivating = true;
+    this.api.deactivateUsers(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeactivating = false;
+        this.selection.clear();
+        this.toast.success(`${ids.length} ${ids.length === 1 ? 'user' : 'users'} deactivated successfully.`);
+        this.loadUsers();
+      },
+      error: (error) => {
+        this.bulkDeactivating = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to deactivate the selected users right now.'));
+      }
+    });
   }
 
   userDob(user: AppUser): string | null {
@@ -297,6 +348,8 @@ export class UsersComponent {
         this.viewUsers = [...this.allUsers];
         this.totalElements = response.totalElements ?? this.allUsers.length;
         this.totalPages = response.totalPages ?? 0;
+        // Rows can only be ticked while they are on screen.
+        this.selection.retainOnly(this.viewUsers.map((user) => user.id));
         this.loading = false;
       },
       error: () => {

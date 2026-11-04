@@ -9,6 +9,8 @@ import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
+import { BulkSelection } from '../../shared/bulk-selection';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -40,6 +42,8 @@ export class EventTypeSeedsComponent {
   sortDir: 'asc' | 'desc' = 'asc';
   loading = false;
   deletingIds = new Set<number>();
+  readonly selection = new BulkSelection();
+  bulkDeleting = false;
 
   constructor() {
     this.loadEventTypeSeeds();
@@ -126,6 +130,47 @@ export class EventTypeSeedsComponent {
     return this.deletingIds.has(id);
   }
 
+  // ------------------------------------------------------------ bulk delete
+
+  get pageIds(): number[] {
+    return this.eventTypeSeeds.map((seed) => seed.id);
+  }
+
+  get allSelected(): boolean {
+    return this.selection.allSelected(this.pageIds);
+  }
+
+  toggleAll(): void {
+    this.selection.toggleAll(this.pageIds);
+  }
+
+  deleteSelected(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeleting) {
+      return;
+    }
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `${ids.length} selected event ${ids.length === 1 ? 'type' : 'types'}` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDelete(ids));
+  }
+
+  private performBulkDelete(ids: number[]): void {
+    this.bulkDeleting = true;
+    this.api.deleteEventTypeSeeds(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeleting = false;
+        this.selection.clear();
+        this.toast.success(`${ids.length} event ${ids.length === 1 ? 'type' : 'types'} deleted successfully.`);
+        this.loadEventTypeSeeds();
+      },
+      error: (error) => {
+        this.bulkDeleting = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to delete the selected event types right now.'));
+      }
+    });
+  }
+
   private loadEventTypeSeeds(): void {
     this.loading = true;
     this.eventTypeSeeds = [];
@@ -138,6 +183,8 @@ export class EventTypeSeedsComponent {
         this.eventTypeSeeds = response.content ?? [];
         this.totalElements = response.totalElements ?? this.eventTypeSeeds.length;
         this.totalPages = response.totalPages ?? 0;
+        // Rows can only be ticked while they are on screen.
+        this.selection.retainOnly(this.eventTypeSeeds.map((seed) => seed.id));
         this.loading = false;
       },
       error: () => {

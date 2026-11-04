@@ -10,11 +10,13 @@
     <div class="row g-2 mb-2">
       <div class="col-md-6">
         <label class="form-label">Schedule From</label>
-        <input class="form-control" type="datetime-local" [(ngModel)]="form.scheduledFrom" [disabled]="loading || saving" />
+        <input class="form-control" type="datetime-local" [(ngModel)]="form.scheduledFrom" [disabled]="loading || saving" [min]="minScheduleValue" />
+        <div class="form-text">Must be in the future.</div>
       </div>
       <div class="col-md-6">
         <label class="form-label">Schedule To</label>
-        <input class="form-control" type="datetime-local" [(ngModel)]="form.scheduledTo" [disabled]="loading || saving" [min]="form.scheduledFrom || null" />
+        <input class="form-control" type="datetime-local" [(ngModel)]="form.scheduledTo" [disabled]="loading || saving" [min]="form.scheduledFrom || minScheduleValue" />
+        <div class="form-text">Must be after the start time.</div>
       </div>
     </div>
     <div class="form-check mb-3"><input id="canSendEmail" class="form-check-input" type="checkbox" [(ngModel)]="form.canSendEmail" [disabled]="loading || saving"/><label class="form-check-label" for="canSendEmail">Send email to all users</label></div>

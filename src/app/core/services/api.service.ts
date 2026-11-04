@@ -31,6 +31,7 @@ import {
   RelationshipSeed,
   WishSettingsPayload,
   PollinationsBalanceResponse,
+  MfaUpdateRequest,
   UserStatusUpdateRequest,
   ProfilePictureUploadUrlRequest,
   ProfilePictureUploadUrlResponse,
@@ -172,6 +173,10 @@ export class ApiService {
     return this.http.patch(`${environment.apiUrl}/users/${id}/status`, userStatusUpdateRequest);
   }
 
+  deactivateUsers(ids: number[]): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/users`, { params: this.idsParams(ids) });
+  }
+
   wishImages(
     page = 0,
     size = 10,
@@ -220,6 +225,10 @@ export class ApiService {
 
   deleteWishImage(id: number): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/admin/wish-images/${id}`);
+  }
+
+  deleteWishImages(ids: number[]): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/admin/wish-images`, { params: this.idsParams(ids) });
   }
 
   relationshipSeeds(
@@ -278,6 +287,10 @@ export class ApiService {
     return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`));
   }
 
+  deleteRelationshipSeeds(ids: number[]): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}`, { params: this.idsParams(ids) }));
+  }
+
   eventTypeSeeds(
     searchKey = '',
     page = 0,
@@ -329,6 +342,10 @@ export class ApiService {
     return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}/${id}`), this.eventTypeSeedPaths);
   }
 
+  deleteEventTypeSeeds(ids: number[]): Observable<unknown> {
+    return this.requestWithFallback((path) => this.http.delete(`${environment.apiUrl}${path}`, { params: this.idsParams(ids) }), this.eventTypeSeedPaths);
+  }
+
   events(
     page = 0,
     size = 10,
@@ -358,6 +375,14 @@ export class ApiService {
     return this.http.post(`${environment.apiUrl}/events`, payload);
   }
 
+  /** Creates an event and, when given, uploads its greeting image in the same request. */
+  saveEventWithImage(payload: SaveEventPayload, image?: File): Observable<EventItem> {
+    return this.http.post<ApiResponse<EventItem>>(
+      `${environment.apiUrl}/events/with-image`,
+      this.eventFormData(payload, image)
+    ).pipe(map((response) => this.unwrap(response)));
+  }
+
   eventById(id: number): Observable<EventItem> {
     return this.http.get<ApiResponse<EventItem>>(`${environment.apiUrl}/events/${id}`).pipe(
       map((response) => this.unwrap(response))
@@ -368,8 +393,20 @@ export class ApiService {
     return this.http.put(`${environment.apiUrl}/events/${id}`, payload);
   }
 
+  /** Updates an event and replaces its greeting image when one is given. */
+  updateEventWithImage(id: number, payload: SaveEventPayload, image?: File): Observable<EventItem> {
+    return this.http.put<ApiResponse<EventItem>>(
+      `${environment.apiUrl}/events/${id}/with-image`,
+      this.eventFormData(payload, image)
+    ).pipe(map((response) => this.unwrap(response)));
+  }
+
   deleteEvent(id: number): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/events/${id}`);
+  }
+
+  deleteEvents(ids: number[]): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/events`, { params: this.idsParams(ids) });
   }
 
   festivals(
@@ -449,7 +486,8 @@ export class ApiService {
     userId: number,
     active: boolean,
     customMessage?: string,
-    image?: File
+    image?: File,
+    wishesUrl?: string
   ): Observable<FestivalWishMapping> {
     const formData = new FormData();
     formData.append('specialEventId', String(specialEventId));
@@ -457,6 +495,9 @@ export class ApiService {
     formData.append('active', String(active));
     if (customMessage !== undefined && customMessage !== null) {
       formData.append('customMessage', customMessage);
+    }
+    if (wishesUrl !== undefined && wishesUrl !== null) {
+      formData.append('wishesUrl', wishesUrl);
     }
     if (image) {
       formData.append('image', image);
@@ -488,6 +529,10 @@ export class ApiService {
 
   deleteFestivalWishMapping(id: number): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/festival-wish-mappings/${id}`);
+  }
+
+  deleteFestivalWishMappings(ids: number[]): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/festival-wish-mappings`, { params: this.idsParams(ids) });
   }
 
   agentStatus(): Observable<AgentStatus> {
@@ -562,12 +607,23 @@ export class ApiService {
     return this.http.delete(`${environment.apiUrl}/emails/status/${id}`);
   }
 
+  deleteEmails(ids: number[]): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/emails/status`, { params: this.idsParams(ids) });
+  }
+
   sendTestEmail(html: string) {
     return this.http.post(`${environment.apiUrl}/emails/test`, { html });
   }
 
   updateWishSettings(payload: WishSettingsPayload) {
     return this.http.patch(`${environment.apiUrl}/users/me/wish-settings`, payload);
+  }
+
+  /** Turns the one-time-code requirement on or off for the signed-in account. */
+  updateMyMfa(payload: MfaUpdateRequest): Observable<AppUser> {
+    return this.http.patch<ApiResponse<AppUser>>(`${environment.apiUrl}/users/me/mfa`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
   }
 
   getMyWishPreview(): Observable<WishPreviewResponse> {
@@ -656,6 +712,10 @@ export class ApiService {
     return this.http.delete(`${environment.apiUrl}/notifications/${id}`);
   }
 
+  deleteNotifications(ids: number[]): Observable<unknown> {
+    return this.http.delete(`${environment.apiUrl}/notifications`, { params: this.idsParams(ids) });
+  }
+
   publishNotification(id: number): Observable<NotificationItem> {
     return this.http.post<ApiResponse<NotificationItem>>(`${environment.apiUrl}/notifications/${id}/publish`, {}).pipe(
       map((response) => this.unwrap(response))
@@ -690,6 +750,31 @@ export class ApiService {
     return this.http.post<ApiResponse<SchedulerTriggerResponse>>(`${environment.apiUrl}/schedulers/${encodeURIComponent(jobName)}/trigger`, {}).pipe(
       map((response) => this.unwrap(response))
     );
+  }
+
+  /** Repeated `ids` params, as the batch-delete endpoints accept. */
+  private idsParams(ids: number[]): HttpParams {
+    let params = new HttpParams();
+    (ids ?? []).forEach((id) => (params = params.append('ids', id)));
+    return params;
+  }
+
+  /** The multipart body used by the event create/update "with-image" endpoints. */
+  private eventFormData(payload: SaveEventPayload, image?: File): FormData {
+    const formData = new FormData();
+    formData.append('eventType', payload.eventType ?? '');
+    if (payload.eventDate) {
+      formData.append('eventDate', payload.eventDate);
+    }
+    formData.append('recurring', String(payload.recurring));
+    formData.append('userId', String(payload.userId));
+    if (payload.wishesUrl !== undefined && payload.wishesUrl !== null) {
+      formData.append('wishesUrl', payload.wishesUrl);
+    }
+    if (image) {
+      formData.append('image', image);
+    }
+    return formData;
   }
 
   private pagedParams(

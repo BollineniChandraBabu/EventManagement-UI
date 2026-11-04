@@ -43,6 +43,10 @@ button.fw-kpi:focus-visible { outline: 3px solid var(--c-primary-ring); outline-
 .state-card--empty { flex-direction: column; padding: 2.5rem 1rem; }
 .fw-empty-icon { font-size: 2.2rem; color: var(--c-text-muted); }
 
+.select-col { width: 44px; text-align: center; }
+.bulk-bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.9rem; border: 1px solid var(--c-primary-muted); background: var(--c-primary-light); border-radius: var(--r-md); }
+.bulk-bar__count { font-weight: 600; color: var(--c-primary); margin-right: auto; }
+
 .fw-list { padding: 0.25rem 0.25rem 1rem; }
 .fw-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-text-muted); white-space: nowrap; }
 .fw-table td { vertical-align: middle; }

@@ -11,6 +11,8 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
+import { BulkSelection } from '../../shared/bulk-selection';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 /** Same limits as the server (only real PNG, JPEG, GIF or WebP images). */
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
@@ -49,6 +51,8 @@ export class WishImagesComponent implements OnDestroy {
   loading = false;
   saving = false;
   deletingIds = new Set<number>();
+  readonly selection = new BulkSelection();
+  bulkDeleting = false;
   editorOpen = false;
   editing?: WishImage;
   selectedFile?: File;
@@ -193,6 +197,47 @@ export class WishImagesComponent implements OnDestroy {
     });
   }
 
+  // ------------------------------------------------------------ bulk delete
+
+  get pageIds(): number[] {
+    return this.images.map((image) => image.id);
+  }
+
+  get allSelected(): boolean {
+    return this.selection.allSelected(this.pageIds);
+  }
+
+  toggleAll(): void {
+    this.selection.toggleAll(this.pageIds);
+  }
+
+  deleteSelected(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeleting) {
+      return;
+    }
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `${ids.length} selected wish ${ids.length === 1 ? 'image' : 'images'}` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDelete(ids));
+  }
+
+  private performBulkDelete(ids: number[]): void {
+    this.bulkDeleting = true;
+    this.api.deleteWishImages(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeleting = false;
+        this.selection.clear();
+        this.toast.success(`${ids.length} wish ${ids.length === 1 ? 'image' : 'images'} deleted.`);
+        this.loadImages();
+      },
+      error: (error) => {
+        this.bulkDeleting = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to delete the selected wish images right now.'));
+      }
+    });
+  }
+
   private loadImages(): void {
     this.loading = true;
     const active = this.selectedStatuses.length === 1 ? this.selectedStatuses[0] === 'true' : undefined;
@@ -212,7 +257,7 @@ export class WishImagesComponent implements OnDestroy {
       userIdsParam
     )
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: (result) => { this.images = result.content ?? []; this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.loading = false; },
+        next: (result) => { this.images = result.content ?? []; this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.selection.retainOnly(this.images.map((image) => image.id)); this.loading = false; },
         error: () => { this.images = []; this.loading = false; this.toast.error('Unable to load wish images right now.'); }
       });
   }

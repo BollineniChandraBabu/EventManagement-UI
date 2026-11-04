@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -32,8 +33,8 @@ export class ForgotPasswordComponent {
         this.toast.success('Reset link sent successfully. Please check your email.');
         this.isSubmitting = false;
       },
-      error: () => {
-        this.toast.error('We could not send the reset link right now. Please try again.');
+      error: (error) => {
+        this.toast.error(apiErrorMessage(error, 'We could not send the reset link right now. Please try again.'));
         this.isSubmitting = false;
       }
     });

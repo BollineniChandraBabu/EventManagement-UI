@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -58,8 +59,8 @@ export class OtpLoginComponent implements OnInit {
         this.toast.success('OTP sent. Please check your inbox.');
         this.isSendingOtp = false;
       },
-      error: () => {
-        this.toast.error('Unable to send OTP right now. Please try again in a moment.');
+      error: (error) => {
+        this.toast.error(apiErrorMessage(error, 'Unable to send OTP right now. Please try again in a moment.'));
         this.isSendingOtp = false;
       }
     });
@@ -84,8 +85,8 @@ export class OtpLoginComponent implements OnInit {
       longitude: this.navState.longitude
     }).subscribe({
       next: () => void this.auth.navigateAfterLogin(this.route.snapshot.queryParamMap.get('redirectUrl')),
-      error: () => {
-        this.toast.error('Invalid OTP. Please check the code and try again.');
+      error: (error) => {
+        this.toast.error(apiErrorMessage(error, 'Invalid OTP. Please check the code and try again.'));
         this.isVerifying = false;
       }
     });

@@ -65,6 +65,18 @@
               <option [value]="ROLE_ADMIN">{{ ROLE_ADMIN }}</option>
             </select>
           </div>
+          <div class="col-12">
+            <div class="wish-toggle-card" [class.wish-toggle-card--on]="form.controls.mfaEnabled.value">
+              <div class="wish-toggle-icon">🔐</div>
+              <div class="wish-toggle-info">
+                <div class="wish-toggle-title">Two-step sign-in (MFA)</div>
+                <div class="wish-toggle-sub">Require a one-time code sent by email every time this user signs in</div>
+              </div>
+              <div class="form-check form-switch ms-auto">
+                <input class="form-check-input" type="checkbox" id="mfaEnabled" formControlName="mfaEnabled" />
+              </div>
+            </div>
+          </div>
         </form>
       </div>
     </div>

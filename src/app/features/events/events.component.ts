@@ -10,6 +10,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {AuthService} from "../../core/services/auth.service";
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
+import { BulkSelection } from '../../shared/bulk-selection';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -45,6 +47,10 @@ export class EventsComponent {
   sortDir: 'asc' | 'desc' = 'desc';
   loading = false;
   deletingIds = new Set<number>();
+  readonly selection = new BulkSelection();
+  bulkDeleting = false;
+  /** Event whose uploaded greeting image is open in the lightbox. */
+  previewImage: EventItem | null = null;
 
   constructor() {
     this.loadEventTypeOptions();
@@ -88,6 +94,8 @@ export class EventsComponent {
         this.viewEvents = [...this.events];
         this.totalElements = response.totalElements ?? this.events.length;
         this.totalPages = response.totalPages ?? 0;
+        // Rows can only be ticked while they are on screen.
+        this.selection.retainOnly(this.events.map((event) => event.id));
         this.loading = false;
       },
       error: () => {
@@ -211,6 +219,66 @@ export class EventsComponent {
 
   isDeleting(id: number): boolean {
     return this.deletingIds.has(id);
+  }
+
+  // ------------------------------------------------------------ bulk delete
+
+  get pageIds(): number[] {
+    return this.events.map((event) => event.id);
+  }
+
+  get allSelected(): boolean {
+    return this.selection.allSelected(this.pageIds);
+  }
+
+  toggleAll(): void {
+    this.selection.toggleAll(this.pageIds);
+  }
+
+  deleteSelected(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeleting) {
+      return;
+    }
+    this.confirmDialog
+      .confirmDelete({
+        itemLabel: `${ids.length} selected ${ids.length === 1 ? 'event' : 'events'}`,
+        detail: 'Their uploaded greeting images are removed from storage as well.'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDelete(ids));
+  }
+
+  private performBulkDelete(ids: number[]): void {
+    this.bulkDeleting = true;
+    this.api.deleteEvents(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeleting = false;
+        this.selection.clear();
+        this.toast.success(`${ids.length} ${ids.length === 1 ? 'event' : 'events'} deleted successfully.`);
+        // Step back a page when the whole page was removed.
+        if (this.page > 0 && ids.length >= this.events.length) {
+          this.page -= 1;
+        }
+        this.loadEvents();
+      },
+      error: (error) => {
+        this.bulkDeleting = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to delete the selected events right now.'));
+      }
+    });
+  }
+
+  // ------------------------------------------------------------ image lightbox
+
+  openImage(event: EventItem): void {
+    if (event.imageUrl) {
+      this.previewImage = event;
+    }
+  }
+
+  closeImage(): void {
+    this.previewImage = null;
   }
 
   private loadEventTypeOptions(): void {

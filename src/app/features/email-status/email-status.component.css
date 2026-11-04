@@ -1,3 +1,24 @@
+.select-col {
+  width: 44px;
+  text-align: center;
+}
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--c-primary-muted);
+  background: var(--c-primary-light);
+  border-radius: var(--r-md);
+}
+
+.bulk-bar__count {
+  font-weight: 600;
+  color: var(--c-primary);
+  margin-right: auto;
+}
+
 .email-subject {
   display: -webkit-box;
   -webkit-line-clamp: 1;

@@ -560,6 +560,50 @@
 
 .thread-status.online { color: var(--cw-accent-dk); }
 
+/* ── Batch delete bar ── */
+.chat-select-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem;
+  background: var(--cw-active);
+  border-bottom: 1px solid var(--cw-border);
+  flex-shrink: 0;
+  z-index: 9;
+}
+
+.chat-select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--cw-other-text);
+  cursor: pointer;
+  margin: 0;
+}
+
+.chat-select-all input { cursor: pointer; }
+
+.chat-select-count {
+  font-size: 0.72rem;
+  color: var(--cw-meta);
+  margin-left: auto;
+}
+
+.chat-select-delete {
+  border: none;
+  border-radius: 8px;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.chat-select-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ── Typing indicator ── */
 .typing-bubble {
   display: inline-flex;
@@ -641,6 +685,21 @@
 /* CRITICAL: elevate active message above siblings */
 .chat-message.msg-ui-active {
   z-index: 50;
+}
+
+/* Multi-select (batch delete) */
+.chat-message.selectable { cursor: pointer; }
+.chat-message.selectable .msg-bubble-wrap,
+.chat-message.selectable .msg-sender-avatar { pointer-events: none; }
+
+.chat-message.selected { background: rgba(37, 211, 102, 0.12); }
+
+.msg-select-check {
+  align-self: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .chat-message.mine { justify-content: flex-end; }

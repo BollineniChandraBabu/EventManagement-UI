@@ -12,6 +12,8 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { SensitiveEmailPipe } from '../../core/pipes/sensitive-email.pipe';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
+import { BulkSelection } from '../../shared/bulk-selection';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -27,6 +29,8 @@ export class EmailStatusComponent implements OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   deletingIds = new Set<number>();
+  readonly selection = new BulkSelection();
+  bulkDeleting = false;
   readonly isAdmin = this.auth.isAdmin;
   readonly pageTitle: string;
   readonly emailTypeFilter: string;
@@ -229,6 +233,8 @@ export class EmailStatusComponent implements OnDestroy {
         this.viewItems = [...this.allItems];
         this.totalElements = response.totalElements ?? this.allItems.length;
         this.totalPages = response.totalPages ?? 0;
+        // Rows can only be ticked while they are on screen.
+        this.selection.retainOnly(this.viewItems.map((item) => item.id));
         this.loading = false;
       },
       error: () => {
@@ -293,6 +299,50 @@ export class EmailStatusComponent implements OnDestroy {
 
   isDeleting(id: number): boolean {
     return this.deletingIds.has(id);
+  }
+
+  // ------------------------------------------------------------ bulk delete
+
+  get pageIds(): number[] {
+    return this.viewItems.map((item) => item.id);
+  }
+
+  get allSelected(): boolean {
+    return this.selection.allSelected(this.pageIds);
+  }
+
+  toggleAll(): void {
+    this.selection.toggleAll(this.pageIds);
+  }
+
+  deleteSelected(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeleting) {
+      return;
+    }
+    this.confirmDialog
+      .confirmDelete({
+        itemLabel: `${ids.length} selected email ${ids.length === 1 ? 'record' : 'records'}`,
+        detail: 'Any attached images are removed from storage as well.'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDelete(ids));
+  }
+
+  private performBulkDelete(ids: number[]): void {
+    this.bulkDeleting = true;
+    this.api.deleteEmails(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeleting = false;
+        this.selection.clear();
+        this.toast.success(`${ids.length} email ${ids.length === 1 ? 'record' : 'records'} deleted successfully.`);
+        this.loadItems();
+      },
+      error: (error) => {
+        this.bulkDeleting = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to delete the selected email records right now.'));
+      }
+    });
   }
 
   private emailLabel(id: number): string {

@@ -9,6 +9,8 @@ import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
+import { BulkSelection } from '../../shared/bulk-selection';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 @Component({
   standalone: true,
@@ -40,6 +42,8 @@ export class RelationshipSeedsComponent {
   sortDir: 'asc' | 'desc' = 'asc';
   loading = false;
   deletingIds = new Set<number>();
+  readonly selection = new BulkSelection();
+  bulkDeleting = false;
 
   constructor() {
     this.loadRelationshipSeeds();
@@ -156,6 +160,47 @@ export class RelationshipSeedsComponent {
     return this.deletingIds.has(id);
   }
 
+  // ------------------------------------------------------------ bulk delete
+
+  get pageIds(): number[] {
+    return this.relationshipSeeds.map((seed) => seed.id);
+  }
+
+  get allSelected(): boolean {
+    return this.selection.allSelected(this.pageIds);
+  }
+
+  toggleAll(): void {
+    this.selection.toggleAll(this.pageIds);
+  }
+
+  deleteSelected(): void {
+    const ids = this.selection.ids();
+    if (!ids.length || this.bulkDeleting) {
+      return;
+    }
+    this.confirmDialog
+      .confirmDelete({ itemLabel: `${ids.length} selected ${ids.length === 1 ? 'relationship' : 'relationships'}` })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performBulkDelete(ids));
+  }
+
+  private performBulkDelete(ids: number[]): void {
+    this.bulkDeleting = true;
+    this.api.deleteRelationshipSeeds(ids).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.bulkDeleting = false;
+        this.selection.clear();
+        this.toast.success(`${ids.length} ${ids.length === 1 ? 'relationship' : 'relationships'} deleted successfully.`);
+        this.loadRelationshipSeeds();
+      },
+      error: (error) => {
+        this.bulkDeleting = false;
+        this.toast.error(apiErrorMessage(error, 'Unable to delete the selected relationships right now.'));
+      }
+    });
+  }
+
   private loadRelationshipSeeds(): void {
     this.loading = true;
     this.relationshipSeeds = [];
@@ -168,6 +213,8 @@ export class RelationshipSeedsComponent {
         this.relationshipSeeds = response.content ?? [];
         this.totalElements = response.totalElements ?? this.relationshipSeeds.length;
         this.totalPages = response.totalPages ?? 0;
+        // Rows can only be ticked while they are on screen.
+        this.selection.retainOnly(this.relationshipSeeds.map((seed) => seed.id));
         this.loading = false;
       },
       error: () => {

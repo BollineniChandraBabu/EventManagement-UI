@@ -72,11 +72,24 @@
         </app-multi-select-filter>
       </div>
 
+      <!-- Batch actions -->
+      <div class="bulk-bar mb-3" *ngIf="selection.hasSelection()">
+        <span class="bulk-bar__count"><i class="fa-solid fa-list-check me-1"></i>{{ selection.count() }} selected</span>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="selection.clear()" [disabled]="bulkDeactivating">Clear</button>
+        <button class="btn btn-sm btn-danger" type="button" (click)="deactivateSelected()" [disabled]="bulkDeactivating">
+          <i class="fa-solid me-1" [class.fa-user-slash]="!bulkDeactivating" [class.fa-spinner]="bulkDeactivating" [class.fa-spin]="bulkDeactivating"></i>
+          {{ bulkDeactivating ? 'Deactivating…' : 'Deactivate selected' }}
+        </button>
+      </div>
+
       <!-- Table -->
       <div class="table-responsive">
         <table class="table table-hover">
           <thead>
             <tr>
+              <th class="select-col">
+                <input class="form-check-input" type="checkbox" [checked]="allSelected" (change)="toggleAll()" [disabled]="loading || !viewUsers.length" aria-label="Select all users on this page" />
+              </th>
               <th>
                 <button class="sort-header" type="button" (click)="toggleSort('name')" [disabled]="loading">
                   Name
@@ -111,10 +124,14 @@
           </thead>
           <tbody>
             <tr *ngFor="let user of viewUsers">
+              <td class="select-col">
+                <input class="form-check-input" type="checkbox" [checked]="selection.isSelected(user.id)" (change)="selection.toggle(user.id)" [disabled]="loading || isDeactivating(user.id)" [attr.aria-label]="'Select ' + user.name" />
+              </td>
               <td>
                 <div class="user-cell">
                   <span class="user-avatar">{{ user.name.charAt(0) | uppercase }}</span>
                   {{ user.name }}
+                  <i *ngIf="user.mfaEnabled" class="fa-solid fa-shield-halved text-success ms-1" title="Two-step sign-in is on" aria-label="Two-step sign-in is on"></i>
                 </div>
               </td>
               <td><span class="text-muted">{{ user.email | sensitiveEmail }}</span></td>
@@ -153,13 +170,13 @@
               </td>
             </tr>
             <tr *ngIf="loading" class="table-loading">
-              <td colspan="5">
+              <td colspan="6">
                 <div class="loading-dots"><span></span><span></span><span></span></div>
                 <div class="mt-2">Loading users…</div>
               </td>
             </tr>
             <tr *ngIf="!loading && viewUsers.length === 0" class="table-empty">
-              <td colspan="5">
+              <td colspan="6">
                 <div class="empty-state">
                   <div class="empty-state-icon"><i class="fa-solid fa-users"></i></div>
                   <p class="empty-state-title">No users found</p>
