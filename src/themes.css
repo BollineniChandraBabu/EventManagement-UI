@@ -1,0 +1,744 @@
+/* ═══════════════════════════════════════════════════════════
+   THEME STYLES
+   ═══════════════════════════════════════════════════════════
+   Each block re-declares the design tokens consumed across the
+   app (see :root in styles.css). The active theme is set by
+   ThemeService as <html data-theme="...">. When no theme is
+   selected — or the code is unknown — the default token values
+   from :root apply, which render the original UI unchanged.
+
+   Technical name (code)   User-friendly name (display_name)
+   ─────────────────────   ─────────────────────────────────
+   default                 Default
+   skeuomorphism           Realistic Design
+   neomorphism             Soft UI
+   glassmorphism           Frosted Glass
+   claymorphism            Soft 3D Design
+   minimalism              Clean & Simple
+   maximalism              Bold & Vibrant
+   brutalism               Bold & Raw
+   liquid-glass            Liquid Glass
+   bento-grid              Modular Grid
+   spatial-ui              3D Spatial Design
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── default ─────────────────────────────────────────────
+   No overrides: the :root tokens in styles.css are the default
+   look, so selecting "default" or nothing keeps the current UI. */
+html[data-theme='default'] { --theme-name: 'default'; }
+
+/* ─── skeuomorphism — Realistic Design ────────────────────
+   Warm, tactile surfaces with bevels, inset wells and stitched
+   borders. Typography turns to a classic serif. */
+html[data-theme='skeuomorphism'] {
+  --c-primary:        #8a5a2b;
+  --c-primary-hover:  #6f4620;
+  --c-primary-light:  #f6ecdd;
+  --c-primary-muted:  #e7d3b3;
+  --c-primary-ring:   rgba(138,90,43,.28);
+  --c-bg:             #e9e2d3;
+  --c-surface:        #f7f1e3;
+  --c-surface-alt:    #efe7d6;
+  --c-surface-hover:  #eadfc8;
+  --c-text:           #3a2c1c;
+  --c-text-secondary: #6b5638;
+  --c-text-muted:     #9b8664;
+  --c-border:         #cbb894;
+  --c-border-subtle:  #ddceb0;
+  --c-border-strong:  #b49b70;
+  --shadow-sm: 0 1px 0 #fff inset, 0 2px 4px rgba(58,44,28,.25);
+  --shadow-md: 0 2px 6px rgba(58,44,28,.28), 0 1px 0 rgba(255,255,255,.6) inset;
+  --shadow-lg: 0 6px 16px rgba(58,44,28,.32), 0 1px 0 rgba(255,255,255,.6) inset;
+  --shadow-xl: 0 14px 32px rgba(58,44,28,.38);
+  --r-sm: 5px; --r-md: 7px; --r-lg: 10px; --r-xl: 12px; --r-2xl: 14px;
+  --font-body: 'Georgia', 'Iowan Old Style', 'Times New Roman', serif;
+  --font-heading: 'Georgia', 'Times New Roman', serif;
+  --card-radius: 12px;
+  --card-border-width: 1px;
+  --card-border-style: solid;
+  --card-shadow: 0 2px 4px rgba(58,44,28,.28), inset 0 1px 0 #fffdf6;
+  --card-shadow-hover: 0 6px 16px rgba(58,44,28,.34), inset 0 1px 0 #fffdf6;
+  --card-decoration: linear-gradient(180deg, rgba(255,255,255,.55) 0%, transparent 42%);
+  --header-bg: linear-gradient(180deg, #fbf6ea 0%, #eee3cd 100%);
+  --header-accent-gradient: linear-gradient(180deg, rgba(255,255,255,.6), transparent 60%);
+  --control-radius: 6px;
+  --btn-radius: 6px;
+  --table-head-bg: linear-gradient(180deg, #efe6d2, #e2d4b8);
+  --c-primary-shadow: rgba(58,44,28,.35);
+  --c-primary-shadow-lg: rgba(58,44,28,.45);
+  --page-bg-image: repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 3px, transparent 3px 6px);
+  --page-bg-size: auto;
+  --nav-bg: linear-gradient(180deg, #5a3f24 0%, #4a331c 100%);
+  --nav-fg: #f6ecd8;
+  --nav-fg-muted: rgba(246,236,216,.78);
+  --nav-fg-faint: rgba(246,236,216,.4);
+  --nav-border: rgba(255,255,255,.14);
+  --nav-item-bg: rgba(255,255,255,.12);
+  --nav-item-active-bg: linear-gradient(180deg, #7a5730, #5f4423);
+  --nav-icon-bg: rgba(255,255,255,.1);
+  --nav-accent: #e0b978;
+  --nav-accent-soft: rgba(224,185,120,.28);
+  --nav-item-radius: 8px;
+  --nav-shadow: 4px 0 18px rgba(40,28,14,.45);
+  --nav-tooltip-bg: #4a331c;
+  --footer-bg: #e2d8c3;
+  --footer-fg: #6b5638;
+  --footer-border: #cbb894;
+  --auth-bg: radial-gradient(circle at 30% 20%, #f4ecdb 0%, #e2d6bd 60%, #d8c9aa 100%);
+  --auth-card-bg: linear-gradient(180deg, #fbf6ea, #f0e6d1);
+  --auth-card-radius: 14px;
+  --auth-card-shadow: 0 18px 40px rgba(58,44,28,.4), inset 0 1px 0 #fffdf6;
+  --modal-bg: linear-gradient(180deg, #fbf6ea, #f0e6d1);
+  --modal-radius: 12px;
+  --banner-bg: #f7edcf;
+  --banner-border: #d8bd82;
+  --banner-title: #6b4a12;
+  --banner-text: #7a5a20;
+}
+
+/* ─── neomorphism — Soft UI ───────────────────────────────
+   Monochrome extrusions: elements share the page colour and are
+   shaped by paired light/dark shadows instead of borders. */
+html[data-theme='neomorphism'] {
+  --c-primary:        #5b6bd6;
+  --c-primary-hover:  #4a5ac4;
+  --c-primary-light:  #e8ebfa;
+  --c-primary-muted:  #d3d9f5;
+  --c-primary-ring:   rgba(91,107,214,.3);
+  --c-bg:             #e6ebf5;
+  --c-surface:        #e6ebf5;
+  --c-surface-alt:    #dfe5f2;
+  --c-surface-hover:  #dbe1f0;
+  --c-text:           #3a4360;
+  --c-text-secondary: #5c6685;
+  --c-text-muted:     #8b94ad;
+  --c-border:         #d3daeb;
+  --c-border-subtle:  #dde3f1;
+  --c-border-strong:  #c3cce3;
+  --shadow-xs: 1px 1px 2px #c8d0e0, -1px -1px 2px #ffffff;
+  --shadow-sm: 3px 3px 7px #c9d1e2, -3px -3px 7px #ffffff;
+  --shadow-md: 6px 6px 14px #c5cde0, -6px -6px 14px #ffffff;
+  --shadow-lg: 9px 9px 20px #c2cadd, -9px -9px 20px #ffffff;
+  --shadow-xl: 14px 14px 30px #bcc5da, -14px -14px 30px #ffffff;
+  --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-xl: 24px; --r-2xl: 28px;
+  --card-radius: 24px;
+  --card-border-width: 0px;
+  --card-border-style: solid;
+  --card-shadow: 8px 8px 18px #c5cde0, -8px -8px 18px #ffffff;
+  --card-shadow-hover: 12px 12px 26px #c0c8dc, -12px -12px 26px #ffffff;
+  --card-hover-lift: -2px;
+  --header-bg: #e6ebf5;
+  --header-accent-gradient: none;
+  --control-radius: 14px;
+  --btn-radius: 14px;
+  --table-head-bg: #e2e7f3;
+  --c-primary-shadow: rgba(91,107,214,.35);
+  --c-primary-shadow-lg: rgba(91,107,214,.45);
+  --page-bg-image: none;
+  --nav-bg: #e6ebf5;
+  --nav-fg: #3a4360;
+  --nav-fg-muted: #5c6685;
+  --nav-fg-faint: #98a1b8;
+  --nav-border: rgba(163,175,203,.35);
+  --nav-item-bg: #e6ebf5;
+  --nav-item-active-bg: #e6ebf5;
+  --nav-icon-bg: #e6ebf5;
+  --nav-accent: #5b6bd6;
+  --nav-accent-soft: #d3d9f5;
+  --nav-item-radius: 14px;
+  --nav-shadow: 6px 0 18px rgba(163,175,203,.5);
+  --nav-tooltip-bg: #3a4360;
+  --footer-bg: #dfe5f2;
+  --footer-fg: #6b7590;
+  --footer-border: #d3daeb;
+  --auth-bg: #e6ebf5;
+  --auth-card-bg: #e6ebf5;
+  --auth-card-radius: 28px;
+  --auth-card-shadow: 16px 16px 34px #c2cadd, -16px -16px 34px #ffffff;
+  --modal-bg: #e6ebf5;
+  --modal-radius: 24px;
+  --modal-shadow: 14px 14px 30px #bcc5da, -14px -14px 30px #ffffff;
+}
+html[data-theme='neomorphism'] .side-nav .nav-item.active,
+html[data-theme='neomorphism'] .side-nav .nav-icon,
+html[data-theme='neomorphism'] .side-nav .nav-item:hover,
+html[data-theme='neomorphism'] .side-nav .collapse-toggle,
+html[data-theme='neomorphism'] .side-nav .mobile-menu-toggle {
+  box-shadow: 3px 3px 7px #c9d1e2, -3px -3px 7px #ffffff;
+}
+html[data-theme='neomorphism'] .btn-primary,
+html[data-theme='neomorphism'] .form-control,
+html[data-theme='neomorphism'] .form-select {
+  box-shadow: 3px 3px 7px #c9d1e2, -3px -3px 7px #ffffff;
+}
+
+/* ─── glassmorphism — Frosted Glass ───────────────────────
+   Translucent frosted panels over a colourful gradient, with a
+   light blur and a bright 1px edge. */
+html[data-theme='glassmorphism'] {
+  --c-primary:        #7c3aed;
+  --c-primary-hover:  #6d28d9;
+  --c-primary-light:  rgba(124,58,237,.16);
+  --c-primary-muted:  rgba(124,58,237,.3);
+  --c-primary-ring:   rgba(124,58,237,.35);
+  --c-bg:             #eef1ff;
+  --c-surface:        rgba(255,255,255,.55);
+  --c-surface-alt:    rgba(255,255,255,.4);
+  --c-surface-hover:  rgba(255,255,255,.7);
+  --c-text:           #1e1b4b;
+  --c-text-secondary: #4c4a75;
+  --c-text-muted:     #7d7bab;
+  --c-border:         rgba(255,255,255,.7);
+  --c-border-subtle:  rgba(255,255,255,.5);
+  --c-border-strong:  rgba(255,255,255,.9);
+  --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-xl: 22px; --r-2xl: 26px;
+  --card-radius: 22px;
+  --card-shadow: 0 8px 32px rgba(80,60,160,.18);
+  --card-shadow-hover: 0 14px 44px rgba(80,60,160,.26);
+  --card-hover-lift: -2px;
+  --card-backdrop: blur(16px) saturate(150%);
+  --header-bg: rgba(255,255,255,.5);
+  --header-accent-gradient: linear-gradient(135deg, rgba(255,255,255,.5), transparent 70%);
+  --control-radius: 14px;
+  --btn-radius: 14px;
+  --table-head-bg: rgba(255,255,255,.45);
+  --c-primary-shadow: rgba(124,58,237,.35);
+  --c-primary-shadow-lg: rgba(124,58,237,.45);
+  --page-bg-image:
+    radial-gradient(circle at 12% 18%, rgba(167,139,250,.75) 0, transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(96,165,250,.7) 0, transparent 45%),
+    radial-gradient(circle at 78% 88%, rgba(244,114,182,.65) 0, transparent 42%),
+    radial-gradient(circle at 22% 82%, rgba(45,212,191,.6) 0, transparent 42%),
+    linear-gradient(135deg, #eef1ff 0%, #f5f3ff 100%);
+  --page-bg-size: cover;
+  --nav-bg: rgba(255,255,255,.28);
+  --nav-fg: #241f52;
+  --nav-fg-muted: #4c4a75;
+  --nav-fg-faint: rgba(36,31,82,.4);
+  --nav-border: rgba(255,255,255,.55);
+  --nav-item-bg: rgba(255,255,255,.45);
+  --nav-item-active-bg: rgba(255,255,255,.72);
+  --nav-icon-bg: rgba(255,255,255,.45);
+  --nav-accent: #7c3aed;
+  --nav-accent-soft: rgba(124,58,237,.22);
+  --nav-item-radius: 14px;
+  --nav-shadow: 4px 0 30px rgba(80,60,160,.2);
+  --nav-tooltip-bg: #1e1b4b;
+  --footer-bg: rgba(255,255,255,.4);
+  --footer-fg: #4c4a75;
+  --footer-border: rgba(255,255,255,.5);
+  --auth-bg:
+    radial-gradient(circle at 20% 20%, rgba(167,139,250,.7) 0, transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(96,165,250,.65) 0, transparent 45%),
+    linear-gradient(135deg, #eef1ff, #f5f3ff);
+  --auth-card-bg: rgba(255,255,255,.5);
+  --auth-card-radius: 26px;
+  --auth-card-shadow: 0 20px 50px rgba(80,60,160,.25);
+  --auth-card-backdrop: blur(18px) saturate(150%);
+  --modal-bg: rgba(255,255,255,.7);
+  --modal-radius: 22px;
+  --modal-shadow: 0 20px 50px rgba(80,60,160,.28);
+}
+html[data-theme='glassmorphism'] .side-nav {
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+/* ─── claymorphism — Soft 3D Design ───────────────────────
+   Chunky rounded, puffy pastel shapes with a thick coloured
+   outline and a soft double shadow that makes them pop. */
+html[data-theme='claymorphism'] {
+  --c-primary:        #f4739a;
+  --c-primary-hover:  #ec5b88;
+  --c-primary-light:  #ffe9f0;
+  --c-primary-muted:  #ffd0de;
+  --c-primary-ring:   rgba(244,115,154,.35);
+  --c-bg:             #eef1ff;
+  --c-surface:        #ffffff;
+  --c-surface-alt:    #f7f4ff;
+  --c-surface-hover:  #f0ebff;
+  --c-text:           #4b3b6b;
+  --c-text-secondary: #6f639a;
+  --c-text-muted:     #a29cc0;
+  --c-border:         #e3ddff;
+  --c-border-subtle:  #ece8ff;
+  --c-border-strong:  #cfc4ff;
+  --r-sm: 14px; --r-md: 18px; --r-lg: 22px; --r-xl: 28px; --r-2xl: 34px;
+  --card-radius: 28px;
+  --card-border-width: 3px;
+  --card-border-style: solid;
+  --card-shadow: 0 14px 0 rgba(0,0,0,.04), 0 18px 34px rgba(120,90,200,.18);
+  --card-shadow-hover: 0 18px 0 rgba(0,0,0,.05), 0 24px 44px rgba(120,90,200,.24);
+  --card-hover-lift: -3px;
+  --header-bg: #ffffff;
+  --header-accent-gradient: linear-gradient(135deg, rgba(244,115,154,.08), transparent 60%);
+  --control-radius: 18px;
+  --btn-radius: 999px;
+  --table-head-bg: #f7f4ff;
+  --c-primary-shadow: rgba(244,115,154,.4);
+  --c-primary-shadow-lg: rgba(244,115,154,.5);
+  --page-bg-image: radial-gradient(circle at 15% 15%, rgba(180,160,255,.25) 0, transparent 40%), radial-gradient(circle at 85% 85%, rgba(255,170,200,.25) 0, transparent 40%);
+  --nav-bg: #ffffff;
+  --nav-fg: #4b3b6b;
+  --nav-fg-muted: #6f639a;
+  --nav-fg-faint: #b3adcf;
+  --nav-border: #ece8ff;
+  --nav-item-bg: #f7f4ff;
+  --nav-item-active-bg: #ffe9f0;
+  --nav-icon-bg: #f0ebff;
+  --nav-accent: #f4739a;
+  --nav-accent-soft: #ffd0de;
+  --nav-item-radius: 18px;
+  --nav-shadow: 6px 0 24px rgba(120,90,200,.16);
+  --nav-tooltip-bg: #4b3b6b;
+  --footer-bg: #f7f4ff;
+  --footer-fg: #6f639a;
+  --footer-border: #ece8ff;
+  --auth-bg: radial-gradient(circle at 25% 20%, #ffe9f0 0, transparent 45%), radial-gradient(circle at 80% 80%, #e3ddff 0, transparent 45%), #eef1ff;
+  --auth-card-bg: #ffffff;
+  --auth-card-radius: 34px;
+  --auth-card-shadow: 0 18px 0 rgba(0,0,0,.04), 0 26px 50px rgba(120,90,200,.22);
+  --modal-bg: #ffffff;
+  --modal-radius: 28px;
+  --modal-shadow: 0 18px 0 rgba(0,0,0,.04), 0 26px 50px rgba(120,90,200,.24);
+}
+html[data-theme='claymorphism'] .card,
+html[data-theme='claymorphism'] .kpi-card,
+html[data-theme='claymorphism'] .page-header,
+html[data-theme='claymorphism'] .account-hero {
+  border-color: var(--c-border);
+}
+
+/* ─── minimalism — Clean & Simple ─────────────────────────
+   No shadows, hairline borders, tight radii and a calm neutral
+   palette that lets the content lead. */
+html[data-theme='minimalism'] {
+  --c-primary:        #111827;
+  --c-primary-hover:  #374151;
+  --c-primary-light:  #f3f4f6;
+  --c-primary-muted:  #e5e7eb;
+  --c-primary-ring:   rgba(17,24,39,.18);
+  --c-bg:             #ffffff;
+  --c-surface:        #ffffff;
+  --c-surface-alt:    #fafafa;
+  --c-surface-hover:  #f4f4f5;
+  --c-text:           #111827;
+  --c-text-secondary: #4b5563;
+  --c-text-muted:     #9ca3af;
+  --c-border:         #e5e7eb;
+  --c-border-subtle:  #f0f0f1;
+  --c-border-strong:  #d1d5db;
+  --shadow-xs: none; --shadow-sm: none; --shadow-md: none; --shadow-lg: none; --shadow-xl: none;
+  --r-sm: 4px; --r-md: 6px; --r-lg: 8px; --r-xl: 10px; --r-2xl: 12px;
+  --card-radius: 10px;
+  --card-shadow: none;
+  --card-shadow-hover: none;
+  --card-hover-lift: 0px;
+  --header-bg: #ffffff;
+  --header-accent-gradient: none;
+  --control-radius: 6px;
+  --btn-radius: 6px;
+  --table-head-bg: #fafafa;
+  --c-primary-shadow: rgba(0,0,0,0);
+  --c-primary-shadow-lg: rgba(0,0,0,0);
+  --page-bg-image: none;
+  --nav-bg: #ffffff;
+  --nav-fg: #111827;
+  --nav-fg-muted: #4b5563;
+  --nav-fg-faint: #9ca3af;
+  --nav-border: #e5e7eb;
+  --nav-item-bg: #f4f4f5;
+  --nav-item-active-bg: #f0f0f1;
+  --nav-icon-bg: transparent;
+  --nav-accent: #111827;
+  --nav-accent-soft: #e5e7eb;
+  --nav-item-radius: 6px;
+  --nav-shadow: none;
+  --nav-tooltip-bg: #111827;
+  --footer-bg: #ffffff;
+  --footer-fg: #6b7280;
+  --footer-border: #e5e7eb;
+  --auth-bg: #ffffff;
+  --auth-card-bg: #ffffff;
+  --auth-card-radius: 12px;
+  --auth-card-shadow: none;
+  --modal-bg: #ffffff;
+  --modal-radius: 10px;
+  --modal-shadow: 0 10px 40px rgba(0,0,0,.12);
+}
+html[data-theme='minimalism'] .side-nav { border-right: 1px solid var(--c-border); }
+html[data-theme='minimalism'] .btn-primary { box-shadow: none; }
+html[data-theme='minimalism'] .nav-item.active::before { background: var(--c-text); }
+html[data-theme='minimalism'] .nav-item:hover { transform: none; }
+
+/* ─── maximalism — Bold & Vibrant ─────────────────────────
+   Loud saturated colour blocks, thick borders and heavy drop
+   shadows for maximum visual energy. */
+html[data-theme='maximalism'] {
+  --c-primary:        #e11d8f;
+  --c-primary-hover:  #c01578;
+  --c-primary-light:  #ffe3f2;
+  --c-primary-muted:  #ffc2e2;
+  --c-primary-ring:   rgba(225,29,143,.4);
+  --c-bg:             #fff4e6;
+  --c-surface:        #fffdf5;
+  --c-surface-alt:    #fff0d6;
+  --c-surface-hover:  #ffe7c2;
+  --c-text:           #1a0033;
+  --c-text-secondary: #5b1a63;
+  --c-text-muted:     #a24c9e;
+  --c-border:         #2b0057;
+  --c-border-subtle:  #d9b8e8;
+  --c-border-strong:  #2b0057;
+  --shadow-sm: 4px 4px 0 #2b0057;
+  --shadow-md: 6px 6px 0 #2b0057;
+  --shadow-lg: 8px 8px 0 #2b0057;
+  --shadow-xl: 12px 12px 0 #2b0057;
+  --r-sm: 4px; --r-md: 8px; --r-lg: 12px; --r-xl: 16px; --r-2xl: 20px;
+  --card-radius: 16px;
+  --card-border-width: 3px;
+  --card-border-style: solid;
+  --card-shadow: 6px 6px 0 #2b0057;
+  --card-shadow-hover: 9px 9px 0 #2b0057;
+  --card-hover-lift: -3px;
+  --header-bg: #ffd60a;
+  --header-accent-gradient: linear-gradient(120deg, rgba(225,29,143,.18), rgba(0,180,216,.18));
+  --control-radius: 8px;
+  --btn-radius: 8px;
+  --table-head-bg: #ffd60a;
+  --c-primary-shadow: rgba(43,0,87,1);
+  --c-primary-shadow-lg: rgba(43,0,87,1);
+  --page-bg-image: repeating-linear-gradient(45deg, rgba(255,214,10,.35) 0 22px, transparent 22px 44px);
+  --nav-bg: #2b0057;
+  --nav-fg: #ffe7c2;
+  --nav-fg-muted: #ffc2e2;
+  --nav-fg-faint: rgba(255,231,194,.45);
+  --nav-border: rgba(255,214,10,.4);
+  --nav-item-bg: rgba(225,29,143,.35);
+  --nav-item-active-bg: #e11d8f;
+  --nav-icon-bg: rgba(255,214,10,.18);
+  --nav-accent: #ffd60a;
+  --nav-accent-soft: rgba(255,214,10,.3);
+  --nav-item-radius: 8px;
+  --nav-shadow: 6px 0 0 #e11d8f;
+  --nav-tooltip-bg: #e11d8f;
+  --footer-bg: #ffd60a;
+  --footer-fg: #2b0057;
+  --footer-border: #2b0057;
+  --auth-bg: repeating-linear-gradient(45deg, #ffe7c2 0 30px, #ffd60a 30px 60px);
+  --auth-card-bg: #fffdf5;
+  --auth-card-radius: 20px;
+  --auth-card-shadow: 10px 10px 0 #2b0057;
+  --modal-bg: #fffdf5;
+  --modal-radius: 16px;
+  --modal-shadow: 10px 10px 0 #2b0057;
+}
+
+/* ─── brutalism — Bold & Raw ──────────────────────────────
+   Unstyled-looking blocks: monospace type, hard black borders,
+   flat primary colours and no rounded corners. */
+html[data-theme='brutalism'] {
+  --c-primary:        #000000;
+  --c-primary-hover:  #333333;
+  --c-primary-light:  #ffff00;
+  --c-primary-muted:  #ffff00;
+  --c-primary-ring:   rgba(0,0,0,.3);
+  --c-bg:             #f2f2f2;
+  --c-surface:        #ffffff;
+  --c-surface-alt:    #eaeaea;
+  --c-surface-hover:  #ffff00;
+  --c-text:           #000000;
+  --c-text-secondary: #1a1a1a;
+  --c-text-muted:     #555555;
+  --c-border:         #000000;
+  --c-border-subtle:  #000000;
+  --c-border-strong:  #000000;
+  --shadow-xs: 2px 2px 0 #000; --shadow-sm: 3px 3px 0 #000; --shadow-md: 4px 4px 0 #000;
+  --shadow-lg: 6px 6px 0 #000; --shadow-xl: 8px 8px 0 #000;
+  --r-sm: 0; --r-md: 0; --r-lg: 0; --r-xl: 0; --r-2xl: 0;
+  --font-body: 'Courier New', 'IBM Plex Mono', monospace;
+  --font-heading: 'Courier New', monospace;
+  --card-radius: 0px;
+  --card-border-width: 3px;
+  --card-border-style: solid;
+  --card-shadow: 5px 5px 0 #000;
+  --card-shadow-hover: 8px 8px 0 #000;
+  --card-hover-lift: -2px;
+  --header-bg: #ffff00;
+  --header-accent-gradient: none;
+  --control-radius: 0px;
+  --btn-radius: 0px;
+  --table-head-bg: #000000;
+  --c-primary-shadow: rgba(0,0,0,1);
+  --c-primary-shadow-lg: rgba(0,0,0,1);
+  --page-bg-image: repeating-linear-gradient(0deg, rgba(0,0,0,.04) 0 1px, transparent 1px 8px);
+  --nav-bg: #000000;
+  --nav-fg: #ffffff;
+  --nav-fg-muted: #dddddd;
+  --nav-fg-faint: #888888;
+  --nav-border: #ffffff;
+  --nav-item-bg: #222222;
+  --nav-item-active-bg: #ffff00;
+  --nav-icon-bg: transparent;
+  --nav-accent: #ffff00;
+  --nav-accent-soft: rgba(255,255,0,.35);
+  --nav-item-radius: 0px;
+  --nav-shadow: 6px 0 0 #ffff00;
+  --nav-tooltip-bg: #ffff00;
+  --footer-bg: #000000;
+  --footer-fg: #ffffff;
+  --footer-border: #ffff00;
+  --auth-bg: repeating-linear-gradient(45deg, #f2f2f2 0 24px, #e6e6e6 24px 48px);
+  --auth-card-bg: #ffffff;
+  --auth-card-radius: 0px;
+  --auth-card-shadow: 10px 10px 0 #000;
+  --modal-bg: #ffffff;
+  --modal-radius: 0px;
+  --modal-shadow: 10px 10px 0 #000;
+}
+html[data-theme='brutalism'] .table thead th { color: #ffff00; }
+html[data-theme='brutalism'] .btn-primary { color: #ffff00 !important; }
+html[data-theme='brutalism'] .nav-item.active { color: #000 !important; }
+html[data-theme='brutalism'] .nav-item.active .nav-icon { color: #000 !important; }
+html[data-theme='brutalism'] .side-nav .nav-label { text-transform: uppercase; letter-spacing: .04em; }
+
+/* ─── liquid-glass — Liquid Glass ─────────────────────────
+   Deep glossy panels with a liquid gradient sheen, strong blur
+   and a specular highlight running along the top edge. */
+html[data-theme='liquid-glass'] {
+  --c-primary:        #22d3ee;
+  --c-primary-hover:  #06b6d4;
+  --c-primary-light:  rgba(34,211,238,.18);
+  --c-primary-muted:  rgba(34,211,238,.32);
+  --c-primary-ring:   rgba(34,211,238,.4);
+  --c-bg:             #061229;
+  --c-surface:        rgba(255,255,255,.08);
+  --c-surface-alt:    rgba(255,255,255,.05);
+  --c-surface-hover:  rgba(255,255,255,.14);
+  --c-text:           #eaf6ff;
+  --c-text-secondary: #a9c6e0;
+  --c-text-muted:     #7d9cbb;
+  --c-border:         rgba(255,255,255,.22);
+  --c-border-subtle:  rgba(255,255,255,.12);
+  --c-border-strong:  rgba(255,255,255,.4);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.4); --shadow-sm: 0 2px 10px rgba(0,0,0,.4);
+  --shadow-md: 0 8px 28px rgba(0,0,0,.45); --shadow-lg: 0 16px 48px rgba(0,0,0,.5);
+  --shadow-xl: 0 28px 70px rgba(0,0,0,.55);
+  --r-sm: 12px; --r-md: 16px; --r-lg: 22px; --r-xl: 28px; --r-2xl: 34px;
+  --card-radius: 28px;
+  --card-shadow: 0 16px 44px rgba(0,0,0,.5);
+  --card-shadow-hover: 0 22px 60px rgba(0,0,0,.6);
+  --card-hover-lift: -2px;
+  --card-backdrop: blur(20px) saturate(160%);
+  --header-bg: rgba(255,255,255,.08);
+  --header-accent-gradient: linear-gradient(120deg, rgba(34,211,238,.25), rgba(129,140,248,.2) 60%, transparent);
+  --control-radius: 16px;
+  --btn-radius: 999px;
+  --table-head-bg: rgba(255,255,255,.08);
+  --c-primary-shadow: rgba(34,211,238,.45);
+  --c-primary-shadow-lg: rgba(34,211,238,.6);
+  --page-bg-image:
+    radial-gradient(circle at 15% 12%, rgba(34,211,238,.35) 0, transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(129,140,248,.35) 0, transparent 42%),
+    radial-gradient(circle at 70% 90%, rgba(56,189,248,.28) 0, transparent 42%),
+    linear-gradient(160deg, #061229 0%, #0a1f3d 55%, #04101f 100%);
+  --page-bg-size: cover;
+  --nav-bg: rgba(255,255,255,.06);
+  --nav-fg: #eaf6ff;
+  --nav-fg-muted: #a9c6e0;
+  --nav-fg-faint: rgba(234,246,255,.4);
+  --nav-border: rgba(255,255,255,.16);
+  --nav-item-bg: rgba(255,255,255,.1);
+  --nav-item-active-bg: rgba(34,211,238,.22);
+  --nav-icon-bg: rgba(255,255,255,.08);
+  --nav-accent: #22d3ee;
+  --nav-accent-soft: rgba(34,211,238,.3);
+  --nav-item-radius: 16px;
+  --nav-shadow: 4px 0 40px rgba(0,0,0,.5);
+  --nav-tooltip-bg: #22d3ee;
+  --footer-bg: rgba(255,255,255,.05);
+  --footer-fg: #a9c6e0;
+  --footer-border: rgba(255,255,255,.14);
+  --auth-bg: radial-gradient(circle at 25% 20%, rgba(34,211,238,.4) 0, transparent 45%), radial-gradient(circle at 80% 85%, rgba(129,140,248,.4) 0, transparent 45%), linear-gradient(160deg, #061229, #04101f);
+  --auth-card-bg: rgba(255,255,255,.09);
+  --auth-card-radius: 34px;
+  --auth-card-shadow: 0 28px 70px rgba(0,0,0,.6);
+  --auth-card-backdrop: blur(24px) saturate(160%);
+  --modal-bg: rgba(10,31,61,.85);
+  --modal-radius: 28px;
+  --modal-shadow: 0 28px 70px rgba(0,0,0,.6);
+  --banner-bg: rgba(34,211,238,.16);
+  --banner-border: rgba(34,211,238,.5);
+  --banner-title: #c8f6ff;
+  --banner-text: #a9e9f5;
+  --backdrop-color: rgba(3,10,22,.72);
+}
+html[data-theme='liquid-glass'] .side-nav,
+html[data-theme='liquid-glass'] .app-footer {
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+html[data-theme='liquid-glass'] .card::before,
+html[data-theme='liquid-glass'] .kpi-card::before,
+html[data-theme='liquid-glass'] .page-header::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
+  pointer-events: none;
+}
+html[data-theme='liquid-glass'] .form-control::placeholder { color: #7d9cbb; }
+
+/* ─── bento-grid — Modular Grid ───────────────────────────
+   Every panel is a tile in a modular grid: crisp cards, a grid
+   backdrop and a warm, modern palette. */
+html[data-theme='bento-grid'] {
+  --c-primary:        #f97316;
+  --c-primary-hover:  #ea580c;
+  --c-primary-light:  #ffedd5;
+  --c-primary-muted:  #fed7aa;
+  --c-primary-ring:   rgba(249,115,22,.3);
+  --c-bg:             #f4f5f7;
+  --c-surface:        #ffffff;
+  --c-surface-alt:    #f8f9fb;
+  --c-surface-hover:  #f1f3f7;
+  --c-text:           #111827;
+  --c-text-secondary: #4b5563;
+  --c-text-muted:     #9ca3af;
+  --c-border:         #e6e8ec;
+  --c-border-subtle:  #eef0f4;
+  --c-border-strong:  #d1d5db;
+  --shadow-sm: 0 1px 2px rgba(17,24,39,.05);
+  --shadow-md: 0 6px 18px rgba(17,24,39,.08);
+  --shadow-lg: 0 12px 32px rgba(17,24,39,.1);
+  --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-xl: 22px; --r-2xl: 26px;
+  --card-radius: 22px;
+  --card-shadow: 0 4px 16px rgba(17,24,39,.07);
+  --card-shadow-hover: 0 10px 30px rgba(249,115,22,.18);
+  --card-hover-lift: -3px;
+  --header-bg: #ffffff;
+  --header-accent-gradient: linear-gradient(135deg, rgba(249,115,22,.06), transparent 60%);
+  --control-radius: 14px;
+  --btn-radius: 14px;
+  --table-head-bg: #f8f9fb;
+  --c-primary-shadow: rgba(249,115,22,.35);
+  --c-primary-shadow-lg: rgba(249,115,22,.45);
+  --page-bg-image:
+    linear-gradient(rgba(17,24,39,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17,24,39,.04) 1px, transparent 1px);
+  --page-bg-size: 28px 28px;
+  --nav-bg: #111827;
+  --nav-fg: #ffffff;
+  --nav-fg-muted: #c7cbd4;
+  --nav-fg-faint: rgba(255,255,255,.35);
+  --nav-border: rgba(255,255,255,.1);
+  --nav-item-bg: rgba(255,255,255,.08);
+  --nav-item-active-bg: #f97316;
+  --nav-icon-bg: rgba(255,255,255,.07);
+  --nav-accent: #f97316;
+  --nav-accent-soft: rgba(249,115,22,.3);
+  --nav-item-radius: 14px;
+  --nav-shadow: 4px 0 24px rgba(17,24,39,.25);
+  --nav-tooltip-bg: #f97316;
+  --footer-bg: #111827;
+  --footer-fg: #c7cbd4;
+  --footer-border: rgba(255,255,255,.1);
+  --auth-bg: linear-gradient(rgba(17,24,39,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(17,24,39,.04) 1px, transparent 1px), #f4f5f7;
+  --auth-card-bg: #ffffff;
+  --auth-card-radius: 26px;
+  --auth-card-shadow: 0 16px 40px rgba(17,24,39,.14);
+  --modal-bg: #ffffff;
+  --modal-radius: 22px;
+  --modal-shadow: 0 16px 40px rgba(17,24,39,.16);
+}
+html[data-theme='bento-grid'] .kpi-card { border-top: 4px solid var(--c-primary); }
+
+/* ─── spatial-ui — 3D Spatial Design ──────────────────────
+   Panels float in space with perspective, depth shadows and a
+   subtle tilt on hover to suggest a three-dimensional scene. */
+html[data-theme='spatial-ui'] {
+  --c-primary:        #6366f1;
+  --c-primary-hover:  #4f46e5;
+  --c-primary-light:  rgba(99,102,241,.14);
+  --c-primary-muted:  rgba(99,102,241,.28);
+  --c-primary-ring:   rgba(99,102,241,.35);
+  --c-bg:             #0b1020;
+  --c-surface:        rgba(30,41,74,.85);
+  --c-surface-alt:    rgba(38,51,89,.7);
+  --c-surface-hover:  rgba(51,66,110,.85);
+  --c-text:           #e8ecff;
+  --c-text-secondary: #a9b4dd;
+  --c-text-muted:     #7c88b4;
+  --c-border:         rgba(255,255,255,.12);
+  --c-border-subtle:  rgba(255,255,255,.08);
+  --c-border-strong:  rgba(255,255,255,.24);
+  --shadow-sm: 0 4px 12px rgba(0,0,0,.4);
+  --shadow-md: 0 12px 30px rgba(0,0,0,.45);
+  --shadow-lg: 0 20px 48px rgba(0,0,0,.5);
+  --shadow-xl: 0 32px 80px rgba(0,0,0,.6);
+  --r-sm: 12px; --r-md: 16px; --r-lg: 22px; --r-xl: 28px; --r-2xl: 32px;
+  --card-radius: 28px;
+  --card-shadow: 0 20px 50px rgba(0,0,0,.5);
+  --card-shadow-hover: 0 34px 80px rgba(0,0,0,.62);
+  --card-hover-lift: -6px;
+  --header-bg: rgba(30,41,74,.85);
+  --header-accent-gradient: linear-gradient(135deg, rgba(99,102,241,.22), transparent 60%);
+  --control-radius: 16px;
+  --btn-radius: 16px;
+  --table-head-bg: rgba(38,51,89,.8);
+  --c-primary-shadow: rgba(99,102,241,.45);
+  --c-primary-shadow-lg: rgba(99,102,241,.6);
+  --page-bg-image:
+    radial-gradient(circle at 20% 15%, rgba(99,102,241,.4) 0, transparent 42%),
+    radial-gradient(circle at 82% 25%, rgba(236,72,153,.25) 0, transparent 42%),
+    radial-gradient(circle at 60% 95%, rgba(56,189,248,.28) 0, transparent 45%),
+    linear-gradient(160deg, #0b1020 0%, #131a36 55%, #080c18 100%);
+  --page-bg-size: cover;
+  --nav-bg: rgba(19,26,54,.9);
+  --nav-fg: #e8ecff;
+  --nav-fg-muted: #a9b4dd;
+  --nav-fg-faint: rgba(232,236,255,.4);
+  --nav-border: rgba(255,255,255,.1);
+  --nav-item-bg: rgba(99,102,241,.18);
+  --nav-item-active-bg: rgba(99,102,241,.4);
+  --nav-icon-bg: rgba(255,255,255,.07);
+  --nav-accent: #818cf8;
+  --nav-accent-soft: rgba(99,102,241,.35);
+  --nav-item-radius: 16px;
+  --nav-shadow: 6px 0 40px rgba(0,0,0,.6);
+  --nav-tooltip-bg: #6366f1;
+  --footer-bg: rgba(19,26,54,.9);
+  --footer-fg: #a9b4dd;
+  --footer-border: rgba(255,255,255,.1);
+  --auth-bg: radial-gradient(circle at 25% 20%, rgba(99,102,241,.45) 0, transparent 45%), radial-gradient(circle at 80% 85%, rgba(236,72,153,.3) 0, transparent 45%), linear-gradient(160deg, #0b1020, #080c18);
+  --auth-card-bg: rgba(30,41,74,.85);
+  --auth-card-radius: 32px;
+  --auth-card-shadow: 0 32px 80px rgba(0,0,0,.65);
+  --modal-bg: rgba(19,26,54,.95);
+  --modal-radius: 28px;
+  --modal-shadow: 0 32px 80px rgba(0,0,0,.65);
+  --banner-bg: rgba(99,102,241,.2);
+  --banner-border: rgba(129,140,248,.5);
+  --banner-title: #dbe2ff;
+  --banner-text: #b9c2ef;
+  --backdrop-color: rgba(5,8,18,.75);
+}
+html[data-theme='spatial-ui'] .card,
+html[data-theme='spatial-ui'] .kpi-card,
+html[data-theme='spatial-ui'] .page-header {
+  transform: perspective(1400px) translateZ(0);
+}
+html[data-theme='spatial-ui'] .card:hover,
+html[data-theme='spatial-ui'] .kpi-card:hover {
+  transform: perspective(1400px) translateY(-6px) rotateX(1.4deg);
+}
+html[data-theme='spatial-ui'] .form-control::placeholder { color: #7c88b4; }
+
+/* ─── Accessibility & dark-theme form bits ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme='spatial-ui'] .card:hover,
+  html[data-theme='spatial-ui'] .kpi-card:hover {
+    transform: none;
+  }
+}

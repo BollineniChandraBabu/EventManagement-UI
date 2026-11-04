@@ -10,6 +10,7 @@ import { ChatWidgetComponent } from './shared/chat-widget/chat-widget.component'
 import { ToastService } from './core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from './core/services/api.service';
+import { ThemeService } from './core/services/theme.service';
 import { NotificationRealtimeService } from './core/services/notification-realtime.service';
 import { NotificationItem, WishPreviewResponse } from './core/models/api.models';
 
@@ -29,6 +30,7 @@ export class AppComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
+  private readonly theme = inject(ThemeService);
   readonly currentYear = new Date().getFullYear();
   private router = inject(Router);
   private readonly notificationRealtime = inject(NotificationRealtimeService);
@@ -42,6 +44,15 @@ export class AppComponent {
   private scheduleIntervalId: number | null = null;
 
   constructor() {
+    effect(() => {
+      // Load the signed-in user's theme; fall back to the default styling on sign-out.
+      if (this.auth.authenticated()) {
+        this.theme.load();
+      } else {
+        this.theme.reset();
+      }
+    });
+
     effect(() => {
       if (!this.auth.authenticated()) {
         this.isWishPreviewVisible = false;

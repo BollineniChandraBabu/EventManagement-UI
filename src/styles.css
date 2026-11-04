@@ -61,6 +61,67 @@
 
   /* Typography */
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: var(--font-body);
+
+  /* ── Theming hooks ───────────────────────────────────────
+     Re-declared per theme in themes.css. Keeping them here means
+     every component that uses tokens is themed automatically. */
+  --c-border-strong:     #cbd5e1;
+  --c-primary-shadow:    rgba(37,99,235,.3);
+  --c-primary-shadow-lg: rgba(37,99,235,.4);
+  --page-bg-image:       none;
+  --page-bg-size:        auto;
+  --page-bg-repeat:      no-repeat;
+  --header-accent-gradient: linear-gradient(135deg, rgba(37,99,235,.03) 0%, transparent 60%);
+  --header-bg:           var(--c-surface);
+  --card-radius:         var(--r-xl);
+  --card-border-width:   1px;
+  --card-border-style:   solid;
+  --card-shadow:         var(--shadow-sm);
+  --card-shadow-hover:   var(--shadow-md);
+  --card-hover-lift:     0px;
+  --card-backdrop:       none;
+  --control-radius:      var(--r-md);
+  --btn-radius:          var(--r-md);
+  --section-gap:         1.5rem;
+  --card-decoration:     none;
+  --table-head-bg:       var(--c-surface-alt);
+
+  /* App shell */
+  --nav-bg:        linear-gradient(175deg, #1e3a8a 0%, #1e2d6b 55%, #14204f 100%);
+  --nav-fg:        #ffffff;
+  --nav-fg-muted:  rgba(255,255,255,.72);
+  --nav-fg-faint:  rgba(255,255,255,.35);
+  --nav-border:    rgba(255,255,255,.08);
+  --nav-item-bg:   rgba(255,255,255,.1);
+  --nav-item-active-bg: rgba(255,255,255,.15);
+  --nav-icon-bg:   rgba(255,255,255,.07);
+  --nav-accent:    #60a5fa;
+  --nav-accent-soft: rgba(96,165,250,.2);
+  --nav-item-radius: 10px;
+  --nav-shadow:    4px 0 24px rgba(14,30,80,.18);
+  --nav-tooltip-bg: #1e3a8a;
+  --footer-bg:     #f8f9fb;
+  --footer-fg:     #6b7aa6;
+  --footer-border: rgba(59,113,202,.12);
+
+  /* Auth screens */
+  --auth-bg:       linear-gradient(135deg, #eff6ff 0%, #f0f5ff 50%, #f5f3ff 100%);
+  --auth-card-bg:  var(--c-surface);
+  --auth-card-radius: var(--r-2xl);
+  --auth-card-shadow: var(--shadow-xl);
+  --auth-card-backdrop: none;
+
+  /* Banners & overlays */
+  --banner-bg:        #fff8e1;
+  --banner-border:    #f0c36d;
+  --banner-title:     #78350f;
+  --banner-text:      #7c5a17;
+  --modal-bg:         #ffffff;
+  --modal-radius:     var(--r-lg);
+  --modal-shadow:     0 20px 50px rgba(15,23,42,.25);
+  --backdrop-color:   rgba(15,23,42,.62);
+  --brand-icon-bg:    linear-gradient(135deg, #60a5fa, #a78bfa);
 }
 
 /* ─── Reset & Base ───────────────────────────────────────── */
@@ -69,18 +130,26 @@
 html, body {
   margin: 0;
   font-family: var(--font-body);
-  background: var(--c-bg);
+  background-color: var(--c-bg);
+  background-image: var(--page-bg-image);
+  background-size: var(--page-bg-size);
+  background-repeat: var(--page-bg-repeat);
+  background-attachment: fixed;
   color: var(--c-text);
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
 /* ─── Page scaffold ──────────────────────────────────────── */
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--section-gap);
   animation: page-enter 0.3s ease both;
 }
 
@@ -91,15 +160,15 @@ html, body {
 
 /* ─── Page Header ─────────────────────────────────────────── */
 .page-header {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-xl);
+  background: var(--header-bg);
+  border: var(--card-border-width) var(--card-border-style) var(--c-border);
+  border-radius: var(--card-radius);
   padding: 1.75rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--card-shadow);
   flex-wrap: wrap;
   position: relative;
   overflow: hidden;
@@ -109,7 +178,7 @@ html, body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(37,99,235,.03) 0%, transparent 60%);
+  background: var(--header-accent-gradient);
   pointer-events: none;
 }
 
@@ -163,16 +232,28 @@ html, body {
 
 /* ─── Cards ──────────────────────────────────────────────── */
 .card {
+  position: relative;
   background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-xl) !important;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--t-base);
+  border: var(--card-border-width) var(--card-border-style) var(--c-border);
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: var(--card-backdrop);
+  -webkit-backdrop-filter: var(--card-backdrop);
+  transition: box-shadow var(--t-base), transform var(--t-base), border-color var(--t-base);
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--card-decoration);
+  pointer-events: none;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
-  transform: none;
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(var(--card-hover-lift));
 }
 
 .card-body {
@@ -185,19 +266,31 @@ html, body {
 
 /* ─── KPI Cards ──────────────────────────────────────────── */
 .kpi-card {
+  position: relative;
   background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
+  border: var(--card-border-width) var(--card-border-style) var(--c-border);
+  border-radius: var(--card-radius);
   padding: 1.25rem 1.5rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: var(--card-backdrop);
+  -webkit-backdrop-filter: var(--card-backdrop);
   transition: box-shadow var(--t-base), transform var(--t-base);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--card-decoration);
+  pointer-events: none;
+}
+
 .kpi-card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--card-shadow-hover);
   transform: translateY(-2px);
 }
 
@@ -235,7 +328,7 @@ html, body {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.875rem;
-  border-radius: var(--r-md) !important;
+  border-radius: var(--btn-radius) !important;
   padding: 0.5rem 1.1rem;
   transition: all var(--t-fast);
   display: inline-flex;
@@ -249,13 +342,13 @@ html, body {
   background: var(--c-primary) !important;
   border-color: var(--c-primary) !important;
   color: #fff !important;
-  box-shadow: 0 2px 8px rgba(37,99,235,.3);
+  box-shadow: 0 2px 8px var(--c-primary-shadow);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--c-primary-hover) !important;
   border-color: var(--c-primary-hover) !important;
-  box-shadow: 0 4px 14px rgba(37,99,235,.4);
+  box-shadow: 0 4px 14px var(--c-primary-shadow-lg);
   transform: translateY(-1px);
 }
 
@@ -278,7 +371,7 @@ html, body {
 
 .btn-outline-secondary:hover:not(:disabled) {
   background: var(--c-surface-hover) !important;
-  border-color: #cbd5e1 !important;
+  border-color: var(--c-border-strong) !important;
 }
 
 .btn-outline-danger {
@@ -328,7 +421,7 @@ html, body {
   font-size: 0.875rem;
   font-weight: 500;
   border: 1.5px solid var(--c-border) !important;
-  border-radius: var(--r-md) !important;
+  border-radius: var(--control-radius) !important;
   color: var(--c-text) !important;
   background: var(--c-surface) !important;
   padding: 0.55rem 0.9rem !important;
@@ -366,11 +459,11 @@ html, body {
 }
 
 .input-group .btn {
-  border-radius: 0 var(--r-md) var(--r-md) 0 !important;
+  border-radius: 0 var(--control-radius) var(--control-radius) 0 !important;
 }
 
 .input-group .form-control:first-child {
-  border-radius: var(--r-md) 0 0 var(--r-md) !important;
+  border-radius: var(--control-radius) 0 0 var(--control-radius) !important;
 }
 
 /* ─── Tables ──────────────────────────────────────────────── */
@@ -388,7 +481,7 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--c-text-muted);
-  background: var(--c-surface-alt) !important;
+  background: var(--table-head-bg) !important;
   border-bottom: 1px solid var(--c-border) !important;
   padding: 0.85rem 1rem !important;
   white-space: nowrap;
@@ -566,7 +659,7 @@ html, body {
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #eff6ff 0%, #f0f5ff 50%, #f5f3ff 100%);
+  background: var(--auth-bg);
   position: relative;
   overflow: hidden;
 }
@@ -597,10 +690,12 @@ html, body {
 
 .auth-card {
   width: min(480px, 100%);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-2xl);
-  box-shadow: var(--shadow-xl);
+  background: var(--auth-card-bg);
+  border: var(--card-border-width) var(--card-border-style) var(--c-border);
+  border-radius: var(--auth-card-radius);
+  box-shadow: var(--auth-card-shadow);
+  backdrop-filter: var(--auth-card-backdrop);
+  -webkit-backdrop-filter: var(--auth-card-backdrop);
   padding: 2.5rem;
   position: relative;
   z-index: 1;

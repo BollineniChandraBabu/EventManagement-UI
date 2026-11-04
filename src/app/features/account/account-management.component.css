@@ -1,10 +1,10 @@
 /* Account Hero */
 .account-hero {
-  background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-xl);
+  background: var(--header-bg);
+  border: var(--card-border-width) var(--card-border-style) var(--c-border);
+  border-radius: var(--card-radius);
   padding: 1.75rem 2rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--card-shadow);
 }
 
 .account-hero-content {
@@ -17,13 +17,13 @@
 .account-avatar {
   width: 64px;
   height: 64px;
-  border-radius: var(--r-lg);
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  border-radius: var(--card-radius);
+  background: linear-gradient(135deg, var(--c-primary), var(--c-primary-hover));
   color: #fff;
   display: grid;
   place-items: center;
   font-size: 1.5rem;
-  box-shadow: 0 8px 24px rgba(37,99,235,.3);
+  box-shadow: 0 8px 24px var(--c-primary-shadow);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -38,9 +38,9 @@
 .impersonation-badge {
   display: inline-flex;
   align-items: center;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #92400e;
+  background: var(--c-warning-bg);
+  border: 1px solid var(--c-warning-border);
+  color: var(--c-warning);
   font-size: 0.8rem;
   font-weight: 600;
   padding: 0.25rem 0.75rem;
@@ -60,7 +60,7 @@
   gap: 0.85rem;
   padding: 0.9rem 1rem;
   border: 1.5px solid var(--c-border);
-  border-radius: var(--r-lg);
+  border-radius: var(--card-radius);
   background: var(--c-surface-alt);
   transition: all var(--t-base);
 }
@@ -96,33 +96,33 @@
 
 /* Return to admin card */
 .return-admin-card {
-  border-color: #fde68a !important;
-  background: linear-gradient(135deg, #fffbeb 0%, #fef9c3 100%) !important;
+  border-color: var(--c-warning-border) !important;
+  background: var(--c-warning-bg) !important;
 }
 
 .btn-warning {
-  background: #d97706 !important;
-  border-color: #d97706 !important;
+  background: var(--c-warning) !important;
+  border-color: var(--c-warning) !important;
   color: #fff !important;
   font-weight: 600;
 }
 
 .btn-warning:hover {
-  background: #b45309 !important;
-  border-color: #b45309 !important;
+  background: var(--c-warning) !important;
+  filter: brightness(0.92);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(217,119,6,.35);
 }
 
 .pollinations-balance-card {
-  border: 1px solid #bfdbfe;
-  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--c-info-border);
+  background: var(--c-info-bg);
+  border-radius: var(--card-radius);
   padding: 0.875rem 1rem;
 }
 
 .pollinations-balance-label {
-  color: #1e40af;
+  color: var(--c-info);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -130,7 +130,7 @@
 }
 
 .pollinations-balance-value {
-  color: #1e3a8a;
+  color: var(--c-text);
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
@@ -138,7 +138,7 @@
 
 .profile-picture-panel {
   border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
+  border-radius: var(--card-radius);
   background: var(--c-surface-alt);
   padding: 1rem;
   display: flex;
@@ -151,7 +151,7 @@
   height: 72px;
   border-radius: 50%;
   border: 1px solid var(--c-border);
-  background: #f8fafc;
+  background: var(--c-surface-alt);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -165,7 +165,7 @@
 }
 
 .profile-picture-placeholder {
-  color: #64748b;
+  color: var(--c-text-muted);
   font-size: 1.5rem;
 }
 
@@ -178,4 +178,99 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--c-text);
+}
+
+/* Theme picker */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.6rem;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font: inherit;
+  color: var(--c-text);
+  background: var(--c-surface-alt);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--control-radius);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+}
+
+.theme-option:hover:not(:disabled) {
+  border-color: var(--c-primary);
+  transform: translateY(-1px);
+}
+
+.theme-option:focus-visible {
+  outline: 3px solid var(--c-primary-ring);
+  outline-offset: 2px;
+}
+
+.theme-option:disabled { cursor: progress; opacity: 0.85; }
+
+.theme-option--active {
+  border-color: var(--c-primary);
+  background: var(--c-primary-light);
+  box-shadow: 0 0 0 2px var(--c-primary-ring);
+}
+
+.theme-swatch {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid rgba(15,23,42,.12);
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+}
+
+.theme-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.theme-option-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-option-code {
+  font-size: 0.7rem;
+  color: var(--c-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-option-check { flex: 0 0 auto; font-size: 0.95rem; color: var(--c-primary); }
+
+/* Swatch previews — one per technical theme name. */
+.theme-swatch[data-preview='default']       { background: linear-gradient(135deg, #eff6ff, #2563eb); }
+.theme-swatch[data-preview='skeuomorphism'] { background: linear-gradient(135deg, #fbf6ea, #8a5a2b); }
+.theme-swatch[data-preview='neomorphism']   { background: linear-gradient(135deg, #ffffff, #c9d1e2); }
+.theme-swatch[data-preview='glassmorphism'] { background: linear-gradient(135deg, #a78bfa, #60a5fa 55%, #f472b6); }
+.theme-swatch[data-preview='claymorphism']  { background: linear-gradient(135deg, #ffe9f0, #f4739a 55%, #c4b5fd); }
+.theme-swatch[data-preview='minimalism']    { background: linear-gradient(135deg, #ffffff, #e5e7eb 55%, #111827); }
+.theme-swatch[data-preview='maximalism']    { background: linear-gradient(135deg, #ffd60a, #e11d8f 55%, #2b0057); }
+.theme-swatch[data-preview='brutalism']     { background: linear-gradient(135deg, #ffff00, #000000 60%); }
+.theme-swatch[data-preview='liquid-glass']  { background: linear-gradient(135deg, #22d3ee, #129 55%, #061229); }
+.theme-swatch[data-preview='bento-grid']    { background: linear-gradient(135deg, #ffffff 0 33%, #f97316 33% 66%, #111827 66%); }
+.theme-swatch[data-preview='spatial-ui']    { background: linear-gradient(135deg, #818cf8, #6366f1 55%, #0b1020); }
+
+@media (max-width: 575px) {
+  .theme-grid { grid-template-columns: 1fr; }
+  .theme-option { min-height: 60px; }
 }

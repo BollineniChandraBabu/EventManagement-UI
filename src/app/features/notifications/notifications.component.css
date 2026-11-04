@@ -29,18 +29,18 @@ textarea{resize:vertical}
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: var(--c-text-muted);
   white-space: nowrap;
 }
 
 .notification-cell-title {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--c-text);
   margin-bottom: 0.2rem;
 }
 
 .notification-cell-message {
-  color: #64748b;
+  color: var(--c-text-muted);
   max-width: 420px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -63,8 +63,8 @@ textarea{resize:vertical}
   max-width: 100%;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1e3a8a;
+  background: var(--c-primary-light);
+  color: var(--c-primary);
   font-size: 0.75rem;
   white-space: normal;
   overflow-wrap: anywhere;

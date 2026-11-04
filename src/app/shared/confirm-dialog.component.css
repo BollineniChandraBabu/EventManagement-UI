@@ -16,9 +16,9 @@
   --confirm-accent-soft: var(--c-primary-light);
   width: min(100%, 420px);
   overflow: hidden;
-  border-radius: var(--r-xl);
+  border-radius: var(--card-radius);
   background: var(--c-surface);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--card-shadow-hover);
   animation: confirm-enter 0.18s ease-out;
 }
 .confirm-dialog--danger {
@@ -54,7 +54,7 @@
 .confirm-btn {
   min-height: 40px;
   padding: 0.5rem 1.1rem;
-  border-radius: var(--r-md);
+  border-radius: var(--btn-radius);
   border: 1px solid var(--c-border);
   font-family: var(--font-body);
   font-size: 0.875rem;

@@ -6,7 +6,7 @@
   align-items: center;
   background: var(--c-surface);
   border: 1.5px solid var(--c-border);
-  border-radius: var(--r-md);
+  border-radius: var(--control-radius);
   color: var(--c-text-secondary);
   cursor: pointer;
   display: inline-flex;
@@ -65,8 +65,8 @@
   max-width: 88vw;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow-hover);
   padding: 0.6rem;
   text-align: left;
 }
@@ -75,7 +75,7 @@
   align-items: center;
   background: var(--c-surface-alt);
   border: 1.5px solid var(--c-border);
-  border-radius: var(--r-md);
+  border-radius: var(--control-radius);
   display: flex;
   gap: 0.4rem;
   padding: 0.3rem 0.55rem;
