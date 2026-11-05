@@ -323,7 +323,7 @@ export class ChatWidgetComponent {
     if (!this.isHoverDevice) return;
     const nextTarget = event.relatedTarget as HTMLElement | null;
     // If mouse is moving into the floating UI, don't dismiss
-    if (nextTarget?.closest('.msg-actions, .reactions-bar')) return;
+    if (nextTarget?.closest('.msg-float-ui, .msg-actions, .reactions-bar')) return;
     this.scheduleClearHoveredMessage(messageId);
   }
 
@@ -777,7 +777,7 @@ export class ChatWidgetComponent {
     const target = event.target as HTMLElement | null;
     if (!target) return;
     // Don't dismiss if clicking inside the chat widget
-    if (target.closest('.chat-message, .msg-actions, .reactions-bar, .msg-reactions')) return;
+    if (target.closest('.chat-message, .msg-float-ui, .msg-actions, .reactions-bar, .msg-reactions')) return;
     this.clearActiveMessageState();
   }
 
@@ -1150,7 +1150,7 @@ export class ChatWidgetComponent {
     if (!target) return true;
     return !!target.closest(
         'button, textarea, input, a, ' +
-        '.msg-actions, .reactions-bar, .msg-reactions, ' +
+        '.msg-float-ui, .msg-actions, .reactions-bar, .msg-reactions, ' +
         '.reaction-pill, .attachment-chip, .reply-context-btn, ' +
         '.edit-shell, .swipe-reply-hint'
     );

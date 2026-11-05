@@ -760,13 +760,37 @@
 
 .swipe-reply-hint.show { opacity: 1; transform: translateY(-50%) scale(1); }
 
-/* ── Floating reactions bar ──
-   FIX: positioned ABOVE bubble, only shown for active message
-   Ensure it appears above other message rows via parent z-index
-── */
-.reactions-bar {
+/* ── Floating actions (reactions + message actions) ──
+   Both live inside one absolutely-positioned wrapper so the cursor can move from the
+   bubble to the buttons without leaving the message's hit area. The wrapper is a single
+   contiguous box (no dead gap), reactions stacked directly above the action row. While
+   hidden it ignores pointer events so it never blocks the message above. */
+.msg-float-ui {
   position: absolute;
-  bottom: calc(100% + 4px);
+  bottom: 100%;
+  /* Transparent bridge keeps the wrapper's hit area contiguous with the bubble, so the
+     cursor can travel from the bubble to the buttons without ever leaving the message. */
+  padding-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(.34,1.4,.64,1);
+}
+
+.chat-message:not(.mine) .msg-float-ui { left: 0; align-items: flex-start; }
+.chat-message.mine .msg-float-ui { right: 0; align-items: flex-end; }
+
+.chat-message.msg-ui-active .msg-float-ui.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.reactions-bar {
   display: flex;
   align-items: center;
   gap: 1px;
@@ -778,21 +802,6 @@
   padding: 4px 6px;
   box-shadow: 0 4px 16px rgba(11,20,26,.18);
   white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transform: scale(0.75) translateY(8px);
-  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(.34,1.4,.64,1);
-  z-index: 100;
-}
-
-.chat-message:not(.mine) .reactions-bar { left: 0; }
-.chat-message.mine .reactions-bar { right: 0; }
-
-/* ONLY show when parent message is elevated AND has .show class */
-.chat-message.msg-ui-active .reactions-bar.show {
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1) translateY(0);
 }
 
 .reactions-bar button {
@@ -814,8 +823,6 @@
 
 /* ── Message actions ── */
 .msg-actions {
-  position: absolute;
-  bottom: calc(100% + 4px);
   display: flex;
   align-items: center;
   gap: 2px;
@@ -826,40 +833,6 @@
   border-radius: 10px;
   padding: 3px;
   box-shadow: 0 4px 16px rgba(11,20,26,.18);
-  pointer-events: none;
-  opacity: 0;
-  transform: scale(0.85) translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(.34,1.4,.64,1);
-  z-index: 99;
-}
-
-/* Position: reactions bar is above, actions are beside or below reactions */
-.chat-message:not(.mine) .msg-actions {
-  left: 0;
-  bottom: calc(100% + 4px);
-}
-.chat-message.mine .msg-actions {
-  right: 0;
-  bottom: calc(100% + 4px);
-}
-
-/* When reactions bar is also showing, push actions further up */
-.chat-message.msg-ui-active .reactions-bar.show ~ .msg-actions,
-.chat-message.msg-ui-active .msg-actions {
-  bottom: calc(100% + 4px);
-}
-
-/* Show actions when parent is active */
-.chat-message.msg-ui-active .msg-actions.show {
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1) translateY(0);
-}
-
-/* When both reactions + actions show, offset actions */
-.chat-message.msg-ui-active .reactions-bar.show + .msg-actions.show,
-.chat-message.msg-ui-active:has(.reactions-bar.show) .msg-actions.show {
-  bottom: calc(100% + 42px);
 }
 
 .action-btn {
