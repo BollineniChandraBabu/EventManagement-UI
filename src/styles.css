@@ -26,6 +26,9 @@
   --c-border:         #e2e8f2;
   --c-border-subtle:  #eef2fa;
 
+  /* Toggle switch (unchecked track). Solid so translucent theme borders don't wash it out. */
+  --switch-track:     #cbd5e1;
+
   /* Semantic */
   --c-success:        #059669;
   --c-success-bg:     #ecfdf5;
@@ -89,6 +92,11 @@
 
   /* App shell */
   --nav-bg:        linear-gradient(175deg, #1e3a8a 0%, #1e2d6b 55%, #14204f 100%);
+  /* Background for the mobile slide-down menu. Defaults to the theme's nav background; themes
+     whose nav background is translucent override it with an opaque panel so page content never
+     bleeds through behind the nav icons. */
+  --nav-panel-bg:  var(--nav-bg);
+  --nav-panel-blur: none;
   --nav-fg:        #ffffff;
   --nav-fg-muted:  rgba(255,255,255,.72);
   --nav-fg-faint:  rgba(255,255,255,.35);
@@ -98,6 +106,8 @@
   --nav-icon-bg:   rgba(255,255,255,.07);
   --nav-accent:    #60a5fa;
   --nav-accent-soft: rgba(96,165,250,.2);
+  /* Glyph colour used on top of a solid --nav-accent chip (active/hover nav icons). */
+  --nav-accent-fg: #0b1220;
   --nav-item-radius: 10px;
   --nav-shadow:    4px 0 24px rgba(14,30,80,.18);
   --nav-tooltip-bg: #1e3a8a;
@@ -456,6 +466,92 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-check-input:focus {
   box-shadow: 0 0 0 3px var(--c-primary-ring) !important;
+}
+
+/* ─── Toggle switches ─────────────────────────────────────────
+   MDB renders a switch knob with an absolutely-positioned ::after that inherits the
+   checkbox checkmark's rotate(45deg), and positions it against the page instead of the
+   control. We replace it with a self-contained, theme-aware switch: the input itself is
+   the track and ::after is the sliding knob. Scoped to .form-switch so plain checkboxes
+   keep their native checkmark. */
+.form-check.form-switch {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.55rem;
+  padding-left: 0;
+}
+
+.form-check.form-switch .form-check-input {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-color: var(--switch-track) !important;
+  background-image: none !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 1.375rem !important;
+  margin: 0 !important;
+  position: relative;
+  transition: background-color var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast) !important;
+  width: 2.5rem !important;
+}
+
+/* Knob. MDB's focus ripple (::before) is neutralised and ::after is the moving knob. */
+.form-check.form-switch .form-check-input::before {
+  background: transparent !important;
+  box-shadow: none !important;
+  content: none !important;
+  transform: none !important;
+}
+
+.form-check.form-switch .form-check-input::after {
+  background-color: #fff !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.35) !important;
+  content: '' !important;
+  height: 1.0625rem !important;
+  left: 2px;
+  margin: 0 !important;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) !important;
+  transition: transform var(--t-fast), background-color var(--t-fast) !important;
+  width: 1.0625rem !important;
+}
+
+.form-check.form-switch .form-check-input:checked {
+  background-color: var(--c-primary) !important;
+  background-image: none !important;
+}
+
+.form-check.form-switch .form-check-input:checked::after {
+  transform: translate(1.1875rem, -50%) !important;
+}
+
+.form-check.form-switch .form-check-input:focus-visible {
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-ring) !important;
+  outline: none;
+}
+
+.form-check.form-switch .form-check-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.form-check.form-switch .form-check-label {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-text-secondary);
+  margin-bottom: 0;
+}
+
+.form-check.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .input-group .btn {

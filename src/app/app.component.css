@@ -210,12 +210,12 @@
 
 .nav-item:hover .nav-icon,
 .nav-item.active .nav-icon {
-  background: var(--nav-accent-soft);
-  color: var(--nav-accent);
+  background: var(--nav-accent);
+  color: var(--nav-accent-fg);
 }
 
 .nav-item.active .nav-icon {
-  background: var(--nav-accent-soft);
+  background: var(--nav-accent);
 }
 
 /* ─── Nav label ──────────────────────────────────────────── */
@@ -448,7 +448,9 @@
     top: 64px;
     left: 0;
     right: 0;
-    background: var(--nav-bg);
+    background: var(--nav-panel-bg);
+    backdrop-filter: var(--nav-panel-blur);
+    -webkit-backdrop-filter: var(--nav-panel-blur);
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
     padding: 0.75rem 1rem 1rem;

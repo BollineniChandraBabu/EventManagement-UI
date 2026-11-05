@@ -145,6 +145,7 @@ html[data-theme='neomorphism'] {
   --nav-icon-bg: #e6ebf5;
   --nav-accent: #5b6bd6;
   --nav-accent-soft: #d3d9f5;
+  --nav-accent-fg: #ffffff;
   --nav-item-radius: 14px;
   --nav-shadow: 6px 0 18px rgba(163,175,203,.5);
   --nav-tooltip-bg: #3a4360;
@@ -221,9 +222,13 @@ html[data-theme='glassmorphism'] {
   --nav-icon-bg: rgba(255,255,255,.45);
   --nav-accent: #7c3aed;
   --nav-accent-soft: rgba(124,58,237,.22);
+  --nav-accent-fg: #ffffff;
   --nav-item-radius: 14px;
   --nav-shadow: 4px 0 30px rgba(80,60,160,.2);
   --nav-tooltip-bg: #1e1b4b;
+  /* Translucent nav needs a solid mobile menu so icons stay legible over page content. */
+  --nav-panel-bg: rgba(255,255,255,.92);
+  --nav-panel-blur: blur(18px) saturate(160%);
   --footer-bg: rgba(255,255,255,.4);
   --footer-fg: #4c4a75;
   --footer-border: rgba(255,255,255,.5);
@@ -288,6 +293,7 @@ html[data-theme='claymorphism'] {
   --nav-icon-bg: #f0ebff;
   --nav-accent: #f4739a;
   --nav-accent-soft: #ffd0de;
+  --nav-accent-fg: #3d1f2b;
   --nav-item-radius: 18px;
   --nav-shadow: 6px 0 24px rgba(120,90,200,.16);
   --nav-tooltip-bg: #4b3b6b;
@@ -352,6 +358,7 @@ html[data-theme='minimalism'] {
   --nav-icon-bg: transparent;
   --nav-accent: #111827;
   --nav-accent-soft: #e5e7eb;
+  --nav-accent-fg: #ffffff;
   --nav-item-radius: 6px;
   --nav-shadow: none;
   --nav-tooltip-bg: #111827;
@@ -419,6 +426,7 @@ html[data-theme='maximalism'] {
   --nav-icon-bg: rgba(255,214,10,.18);
   --nav-accent: #ffd60a;
   --nav-accent-soft: rgba(255,214,10,.3);
+  --nav-accent-fg: #000000;
   --nav-item-radius: 8px;
   --nav-shadow: 6px 0 0 #e11d8f;
   --nav-tooltip-bg: #e11d8f;
@@ -482,6 +490,7 @@ html[data-theme='brutalism'] {
   --nav-icon-bg: transparent;
   --nav-accent: #ffff00;
   --nav-accent-soft: rgba(255,255,0,.35);
+  --nav-accent-fg: #000000;
   --nav-item-radius: 0px;
   --nav-shadow: 6px 0 0 #ffff00;
   --nav-tooltip-bg: #ffff00;
@@ -556,6 +565,9 @@ html[data-theme='liquid-glass'] {
   --nav-item-radius: 16px;
   --nav-shadow: 4px 0 40px rgba(0,0,0,.5);
   --nav-tooltip-bg: #22d3ee;
+  /* Translucent nav needs a solid mobile menu so icons stay legible over page content. */
+  --nav-panel-bg: rgba(11,17,36,.94);
+  --nav-panel-blur: blur(24px) saturate(160%);
   --footer-bg: rgba(255,255,255,.05);
   --footer-fg: #a9c6e0;
   --footer-border: rgba(255,255,255,.14);
@@ -708,6 +720,9 @@ html[data-theme='spatial-ui'] {
   --nav-item-radius: 16px;
   --nav-shadow: 6px 0 40px rgba(0,0,0,.6);
   --nav-tooltip-bg: #6366f1;
+  /* Translucent nav needs a solid mobile menu so icons stay legible over page content. */
+  --nav-panel-bg: rgba(16,22,46,.95);
+  --nav-panel-blur: blur(20px) saturate(150%);
   --footer-bg: rgba(19,26,54,.9);
   --footer-fg: #a9b4dd;
   --footer-border: rgba(255,255,255,.1);

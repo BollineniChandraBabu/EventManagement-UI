@@ -235,40 +235,42 @@
                   <i class="fa-solid fa-reply"></i>
                 </span>
 
-                                <!-- Quick reactions bar — only rendered for active message -->
-                                <div class="reactions-bar"
+                                <!-- Floating actions (reactions + message actions) in one
+                                     contiguous container so the cursor can travel from the
+                                     bubble to the delete/edit buttons without crossing a gap
+                                     that belongs to the message above. -->
+                                <div class="msg-float-ui"
                                      [class.show]="isMessageActive(message.messageId)"
                                      (mouseenter)="onFloatingUiEnter(message.messageId)"
                                      (mouseleave)="onFloatingUiLeave(message.messageId)"
                                      (click)="$event.stopPropagation()">
-                                    <button type="button"
-                                            *ngFor="let emoji of quickReactions"
-                                            (click)="toggleReaction(message, emoji)"
-                                            [title]="emoji">{{ emoji }}</button>
-                                </div>
+                                    <!-- Quick reactions bar -->
+                                    <div class="reactions-bar">
+                                        <button type="button"
+                                                *ngFor="let emoji of quickReactions"
+                                                (click)="toggleReaction(message, emoji)"
+                                                [title]="emoji">{{ emoji }}</button>
+                                    </div>
 
-                                <!-- Action buttons -->
-                                <div class="msg-actions"
-                                     [class.show]="isMessageActive(message.messageId)"
-                                     (mouseenter)="onFloatingUiEnter(message.messageId)"
-                                     (mouseleave)="onFloatingUiLeave(message.messageId)"
-                                     (click)="$event.stopPropagation()">
-                                    <button type="button" class="action-btn" (click)="startReply(message)">
-                                        <i class="fa-solid fa-reply"></i> Reply
-                                    </button>
-                                    <button type="button" class="action-btn" (click)="toggleStarMessage(message)" [class.starred]="isMessageStarred(message.messageId)">
-                                        <i class="fa-solid fa-star"></i> {{ isMessageStarred(message.messageId) ? 'Unstar' : 'Star' }}
-                                    </button>
-                                    <button type="button" class="action-btn"
-                                            *ngIf="canEdit(message) && editingMessageId !== message.messageId"
-                                            (click)="startEdit(message)">
-                                        <i class="fa-solid fa-pen"></i> Edit
-                                    </button>
-                                    <button type="button" class="action-btn danger"
-                                            *ngIf="message.mine && canDelete(message) && editingMessageId !== message.messageId"
-                                            (click)="deleteMessage(message)">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
+                                    <!-- Action buttons -->
+                                    <div class="msg-actions">
+                                        <button type="button" class="action-btn" (click)="startReply(message)">
+                                            <i class="fa-solid fa-reply"></i> Reply
+                                        </button>
+                                        <button type="button" class="action-btn" (click)="toggleStarMessage(message)" [class.starred]="isMessageStarred(message.messageId)">
+                                            <i class="fa-solid fa-star"></i> {{ isMessageStarred(message.messageId) ? 'Unstar' : 'Star' }}
+                                        </button>
+                                        <button type="button" class="action-btn"
+                                                *ngIf="canEdit(message) && editingMessageId !== message.messageId"
+                                                (click)="startEdit(message)">
+                                            <i class="fa-solid fa-pen"></i> Edit
+                                        </button>
+                                        <button type="button" class="action-btn danger"
+                                                *ngIf="message.mine && canDelete(message) && editingMessageId !== message.messageId"
+                                                (click)="deleteMessage(message)">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Reply preview -->

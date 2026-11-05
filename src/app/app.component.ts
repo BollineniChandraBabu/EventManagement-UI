@@ -6,6 +6,7 @@ import { ImpersonationService } from './core/services/impersonation.service';
 import { ToastContainerComponent } from './shared/toast-container.component';
 import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
 import { LoadingOverlayComponent } from './shared/loading-overlay.component';
+import { OfflineOverlayComponent } from './shared/offline-overlay.component';
 import { ChatWidgetComponent } from './shared/chat-widget/chat-widget.component';
 import { ToastService } from './core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,7 +21,7 @@ const PUBLISHED_NOTIFICATION_DISMISSED_KEY = 'fw_published_notification_dismisse
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastContainerComponent, ConfirmDialogComponent, LoadingOverlayComponent, ChatWidgetComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastContainerComponent, ConfirmDialogComponent, LoadingOverlayComponent, ChatWidgetComponent, OfflineOverlayComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -45,12 +46,22 @@ export class AppComponent {
 
   constructor() {
     effect(() => {
-      // Load the signed-in user's theme; fall back to the default styling on sign-out.
-      if (this.auth.authenticated()) {
-        this.theme.load();
-      } else {
-        this.theme.reset();
-      }
+      const authenticated = this.auth.authenticated();
+      // The theme belongs to the effective user, so it must reload when impersonation starts or
+      // ends — not only on sign-in/sign-out. Reading the impersonated user here makes this effect
+      // re-run on those transitions.
+      void this.impersonation.impersonatedUser();
+      // Signal writes are not allowed inside an effect, and loading the theme writes signals
+      // (and triggers HTTP that writes the loading signal). Defer the work to a microtask so it
+      // runs once the auth state has settled, outside the effect's write guard.
+      queueMicrotask(() => {
+        if (authenticated) {
+          // Force a reload so a user switch picks up that user's saved theme.
+          this.theme.load(true);
+        } else {
+          this.theme.reset();
+        }
+      });
     });
 
     effect(() => {
