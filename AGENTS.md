@@ -27,13 +27,23 @@ Repository notes for automated agents working on the EventManagement UI (Angular
 
 ## Offline handling
 
-- `ConnectivityService` tracks `navigator.onLine` plus the `online`/`offline` events, and confirms
-  recovery with a same-origin `HEAD` probe.
+- `ConnectivityService` decides whether the backend is reachable. It starts from `navigator.onLine`,
+  follows the `online`/`offline` events, and also probes the API host on a heartbeat. The heartbeat
+  is required: the browser does not fire `offline` when the link is up but the uplink is dead, and an
+  idle app makes no request that could fail. `navigator.onLine` alone never detects that case.
+- The probe is a `no-cors` `HEAD` to the API origin, so any HTTP response (even 403) counts as
+  reachable. A same-origin probe would wrongly report "online" when the backend is down, and would
+  always succeed on a local dev server. A single failed heartbeat is treated as a blip; two in a row
+  mark the app offline.
+- The HTTP interceptor calls `reportRequestFailure()` on a status `0` response to a backend URL. It
+  does not mark offline directly, because status `0` is ambiguous: it also covers a CORS rejection.
+  The probe disambiguates. Non-backend URLs (e.g. `ipapi.co`) are ignored so a blocked third-party
+  request never shows the offline screen.
 - `OfflineOverlayComponent` renders a full-screen notice, then a short "You're back online" state
-  that auto-dismisses so the user stays on the same route.
-- The HTTP interceptor only marks the app offline for status `0` responses when `navigator.onLine`
-  is already `false`. Without that guard, a blocked third-party request (e.g. `ipapi.co`) makes a
-  fully online app show the offline screen.
+  that auto-dismisses so the user stays on the same route. It owns no polling; the service does.
+- To test offline locally, note that the backend CORS allow-list does not include
+  `localhost:12000`/`127.0.0.1:12000` (it does include `localhost:4200`), so API calls fail with
+  status 0 there. That is a CORS rejection, not a connectivity loss, and must not show the overlay.
 
 ## Gotchas
 

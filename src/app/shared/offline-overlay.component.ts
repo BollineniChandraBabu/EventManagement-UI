@@ -175,7 +175,6 @@ export class OfflineOverlayComponent implements OnDestroy {
 
   private readonly restoredState = signal(false);
   private restoreTimer?: ReturnType<typeof setTimeout>;
-  private readonly pollTimer?: ReturnType<typeof setInterval>;
   private wasOnline = this.connectivity.online();
 
   /** True while either offline, or briefly after reconnecting to show the "back online" state. */
@@ -183,13 +182,6 @@ export class OfflineOverlayComponent implements OnDestroy {
   readonly restored = computed(() => this.restoredState());
 
   constructor() {
-    // Poll while offline so recovery is detected even if the browser misses the `online` event.
-    this.pollTimer = setInterval(() => {
-      if (!this.connectivity.online()) {
-        this.connectivity.confirmOnline();
-      }
-    }, 5000);
-
     // Watch for the moment connectivity returns and show the confirmation briefly. The signal
     // write is deferred to a microtask: writing signals directly inside an effect throws NG0600.
     effect(() => {
@@ -202,7 +194,6 @@ export class OfflineOverlayComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.pollTimer);
     clearTimeout(this.restoreTimer);
   }
 
