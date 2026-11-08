@@ -13,10 +13,8 @@ import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 import { BulkSelection } from '../../shared/bulk-selection';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { MEDIA_ACCEPT, MEDIA_HINT, MediaPreviewKind, mediaError, previewKindFor } from '../../core/utils/media';
 
-/** Same limits as the server (only real PNG, JPEG, GIF or WebP images). */
-const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 /** "Festival" is used for every festival that has no image of its own. */
 const GENERAL_EVENT_TYPES = ['Birthday', 'Anniversary', 'Festival'];
 
@@ -57,13 +55,15 @@ export class WishImagesComponent implements OnDestroy {
   editing?: WishImage;
   selectedFile?: File;
   previewUrl?: string;
+  /** How the selected file can be shown; null means it has no inline preview. */
+  previewKind: MediaPreviewKind = null;
   selectedImage: WishImage | null = null;
   eventTypeSuggestions: string[] = GENERAL_EVENT_TYPES;
   eventTypeOptions: MultiSelectOption[] = [];
   userOptions: MultiSelectOption[] = [];
   fileError = '';
-  readonly imageHint = 'PNG, JPEG, GIF or WebP, up to 5 MB';
-  readonly acceptedTypes = ALLOWED_IMAGE_TYPES.join(',');
+  readonly imageHint = MEDIA_HINT;
+  readonly acceptedTypes = MEDIA_ACCEPT;
   form = { eventType: '', userId: '', active: true };
 
   constructor() {
@@ -110,12 +110,17 @@ export class WishImagesComponent implements OnDestroy {
   previousPage(): void { if (this.page) { this.page--; this.loadImages(); } }
   nextPage(): void { if (this.page + 1 < this.totalPages) { this.page++; this.loadImages(); } }
 
-  openCreate(): void { this.releasePreview(); this.editing = undefined; this.form = { eventType: '', userId: '', active: true }; this.selectedFile = undefined; this.previewUrl = undefined; this.fileError = ''; this.editorOpen = true; }
-  openEdit(image: WishImage): void { this.releasePreview(); this.editing = image; this.form = { eventType: image.eventType, userId: image.userId ? String(image.userId) : '', active: image.active }; this.selectedFile = undefined; this.previewUrl = image.imageUrl; this.fileError = ''; this.editorOpen = true; }
+  openCreate(): void { this.releasePreview(); this.editing = undefined; this.form = { eventType: '', userId: '', active: true }; this.selectedFile = undefined; this.previewUrl = undefined; this.previewKind = null; this.fileError = ''; this.editorOpen = true; }
+  openEdit(image: WishImage): void { this.releasePreview(); this.editing = image; this.form = { eventType: image.eventType, userId: image.userId ? String(image.userId) : '', active: image.active }; this.selectedFile = undefined; this.previewUrl = image.imageUrl; this.previewKind = this.mediaKindFor(image.imageUrl); this.fileError = ''; this.editorOpen = true; }
   closeEditor(): void { if (!this.saving) { this.editorOpen = false; this.releasePreview(); } }
 
   openImagePreview(image: WishImage): void { this.selectedImage = image; }
   closeImagePreview(): void { this.selectedImage = null; }
+
+  /** The kind of an already-uploaded file, worked out from its stored extension. */
+  mediaKindFor(url: string | null | undefined): MediaPreviewKind {
+    return previewKindFor(null, url);
+  }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
@@ -133,20 +138,20 @@ export class WishImagesComponent implements OnDestroy {
     }
     this.releasePreview();
     this.selectedFile = file;
+    this.previewKind = previewKindFor(file.type, file.name);
     this.previewUrl = URL.createObjectURL(file);
   }
 
   /** Mirrors the server rules, so a bad file is explained before anything is uploaded. */
   private validateFile(file: File): string {
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return `${file.name || 'This file'} is not supported. Use ${this.imageHint}.`;
-    if (file.size > MAX_IMAGE_BYTES) return `The image is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is 5 MB.`;
-    return '';
+    return mediaError(file) ?? '';
   }
 
   /** Object URLs keep the whole file in memory until they are released. */
   private releasePreview(): void {
     if (this.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(this.previewUrl);
     this.previewUrl = undefined;
+    this.previewKind = null;
   }
 
   private loadEventTypeSuggestions(): void {
@@ -170,15 +175,15 @@ export class WishImagesComponent implements OnDestroy {
     const eventType = this.form.eventType.trim();
     if (!eventType) { this.toast.error('Event type is required.'); return; }
     if (eventType.length > 150) { this.toast.error('Event type must be at most 150 characters.'); return; }
-    if (!this.editing && !this.selectedFile) { this.toast.error('Please select an image to upload.'); return; }
+    if (!this.editing && !this.selectedFile) { this.toast.error('Please select a media file to upload.'); return; }
     this.saving = true;
     const userId = this.form.userId ? Number(this.form.userId) : undefined;
     const request = this.editing
       ? this.api.updateWishImage(this.editing.id, eventType, this.form.active, userId, !userId, this.selectedFile)
       : this.api.createWishImage(this.selectedFile!, eventType, this.form.active, userId);
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.toast.success(this.editing ? 'Wish image updated.' : 'Wish image uploaded.'); this.saving = false; this.editorOpen = false; this.releasePreview(); this.loadImages(); },
-      error: (error: HttpErrorResponse) => { this.toast.error(error.error?.message || 'Unable to save the wish image right now.'); this.saving = false; }
+      next: () => { this.toast.success(this.editing ? 'Wish media updated.' : 'Wish media uploaded.'); this.saving = false; this.editorOpen = false; this.releasePreview(); this.loadImages(); },
+      error: (error: HttpErrorResponse) => { this.toast.error(error.error?.message || 'Unable to save the wish media right now.'); this.saving = false; }
     });
   }
 

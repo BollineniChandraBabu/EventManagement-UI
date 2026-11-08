@@ -1,4 +1,4 @@
-import { isLeapYear, parseCalendarDate, startOfDay } from '../calendar/calendar.utils';
+import { daysBetween, isLeapYear, parseCalendarDate, startOfDay } from '../calendar/calendar.utils';
 
 export interface NextOccurrence {
   date: Date;
@@ -31,14 +31,6 @@ export function nextOccurrence(eventDate: string, recurring: boolean, today: Dat
     }
   }
   return null;
-}
-
-export function daysBetween(from: Date, to: Date): number {
-  const msPerDay = 24 * 60 * 60 * 1000;
-  // Date.UTC avoids an off-by-one when a daylight-saving change falls between the two dates.
-  const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
-  const b = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
-  return Math.round((b - a) / msPerDay);
 }
 
 export function daysUntilText(daysUntil: number): string {

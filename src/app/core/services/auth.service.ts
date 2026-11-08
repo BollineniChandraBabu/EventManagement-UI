@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginOtpVerifyRequest, LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
+import { DirectLoginRequest, LoginOtpVerifyRequest, LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
 import {AppUser, AuthSSOClientResponse} from '../models/api.models';
 import { ImpersonationService } from './impersonation.service';
@@ -19,6 +19,7 @@ export class AuthService {
   private readonly impersonation = inject(ImpersonationService);
   private readonly isAuthed = signal(this.hasToken());
   private readonly currentRole = signal(this.getStoredValue(ROLE) ?? ROLE_USER);
+  private readonly concurrentLoginState = signal<string | null>(null);
   private tokenExpiryTimeout?: ReturnType<typeof setTimeout>;
   private refreshTimerSub?: Subscription;
 
@@ -26,6 +27,11 @@ export class AuthService {
   readonly ROLE_USER = ROLE_USER;
   readonly authenticated = computed(() => this.isAuthed());
   readonly role = computed(() => this.currentRole());
+  /**
+   * Set when the backend reports this session was superseded by a newer sign-in on an account that
+   * allows only one session. Non-null drives the full-screen notice that lets the user sign in again.
+   */
+  readonly concurrentLoginNotice = this.concurrentLoginState.asReadonly();
 
   /**
    * isAdmin returns false when impersonating a non-admin user so that all
@@ -54,6 +60,16 @@ export class AuthService {
 
   googleSsoToken(): Observable<AuthSSOClientResponse> {
     return this.http.get<AuthSSOClientResponse>(`${environment.apiUrl}/auth/sso/token`);
+  }
+
+  /**
+   * Signs in with a one-time link token from an email (for example a circle request). The session
+   * is kept in `localStorage`, matching how the other token-based flows persist.
+   */
+  directLogin(request: DirectLoginRequest): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/direct-login`, request).pipe(
+      tap((res) => this.setSession(res, true))
+    );
   }
 
   loginAsUser(email: string): Observable<TokenResponse> {
@@ -117,6 +133,7 @@ export class AuthService {
       return;
     }
 
+    this.concurrentLoginState.set(null);
     this.clearStoredSession();
     this.isAuthed.set(false);
     this.currentRole.set(ROLE_USER);
@@ -125,6 +142,21 @@ export class AuthService {
     this.router.navigate(['/login'], {
       queryParams: redirectUrl ? { redirectUrl } : undefined
     });
+  }
+
+  /**
+   * Records that the backend rejected this session because a newer sign-in replaced it. The stored
+   * tokens are dropped so no further request is made with them, but the user is not navigated away:
+   * a full-screen notice explains what happened and offers a sign-in again action.
+   */
+  flagConcurrentLogin(message: string): void {
+    if (this.impersonation.isImpersonating()) {
+      this.impersonation.stopImpersonation();
+    }
+    this.clearStoredSession();
+    this.isAuthed.set(false);
+    this.cancelTimers();
+    this.concurrentLoginState.set(message);
   }
 
   getAccessToken(): string | null {
@@ -149,6 +181,7 @@ export class AuthService {
   private setSession(response: TokenResponse, rememberMe: boolean): void {
     const storage = this.getStorage(rememberMe);
 
+    this.concurrentLoginState.set(null);
     this.clearStoredSession();
     storage.setItem(ACCESS_TOKEN, response.accessToken);
     storage.setItem(REFRESH_TOKEN, response.refreshToken);

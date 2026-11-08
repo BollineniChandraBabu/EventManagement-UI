@@ -39,6 +39,19 @@ export interface LoginOtpVerifyRequest {
   longitude?: number;
 }
 
+/**
+ * One-click sign-in from an emailed link (circle requests). The token comes from
+ * `POST /api/auth/direct-login`'s `token`; `email` must match the token's owner.
+ */
+export interface DirectLoginRequest {
+  token: string;
+  email?: string;
+  loginLocation?: string;
+  ipAddress?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 
 export interface UserProfile {
   fullName: string;

@@ -40,9 +40,11 @@
   <section class="calendar card" aria-label="Event calendar">
     <div class="calendar-toolbar">
       <div class="calendar-navigation">
+        <button class="btn btn-outline-secondary nav-btn" type="button" (click)="jumpYear(-1)" aria-label="Previous year" title="Previous year"><i class="fa-solid fa-angles-left"></i></button>
         <button class="btn btn-outline-secondary nav-btn" type="button" (click)="previous()" aria-label="Previous period"><i class="fa-solid fa-chevron-left"></i></button>
         <button class="btn btn-outline-secondary" type="button" (click)="goToToday()" [disabled]="isCurrentPeriod && view !== 'month' && view !== 'agenda'">Today</button>
         <button class="btn btn-outline-secondary nav-btn" type="button" (click)="next()" aria-label="Next period"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="btn btn-outline-secondary nav-btn" type="button" (click)="jumpYear(1)" aria-label="Next year" title="Next year"><i class="fa-solid fa-angles-right"></i></button>
         <h2 class="calendar-title" aria-live="polite">{{ title }}</h2>
       </div>
 
@@ -169,7 +171,16 @@
         <h2>{{ day.date | date: 'EEEE, MMMM d' }}</h2>
         <p>{{ day.entries.length }} {{ day.entries.length === 1 ? 'event' : 'events' }}</p>
       </div>
-      <button class="btn-close" type="button" (click)="closeDay()" aria-label="Close day details"></button>
+      <div class="day-sheet__tools">
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="copyDaySummary(day.date)" [attr.aria-label]="'Copy ' + (day.date | date: 'longDate') + ' summary'">
+          <i class="fa-solid" [class.fa-copy]="copiedEntryKey !== day.key" [class.fa-check]="copiedEntryKey === day.key"></i>
+          <span class="d-none d-sm-inline ms-1">{{ copiedEntryKey === day.key ? 'Copied' : 'Copy' }}</span>
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="downloadIcs(day.date)" aria-label="Download this day as an .ics file" title="Download .ics">
+          <i class="fa-solid fa-file-arrow-down"></i><span class="d-none d-sm-inline ms-1">.ics</span>
+        </button>
+        <button class="btn-close" type="button" (click)="closeDay()" aria-label="Close day details"></button>
+      </div>
     </header>
     <div class="day-sheet__list">
       <button
@@ -205,6 +216,16 @@
       <p class="celebration-modal__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ selected.date | date: 'EEEE, MMMM d, y' }}</p>
       <p class="celebration-modal__milestone" *ngIf="selected.entry.subtitle && selected.entry.kind !== 'festival'"><i class="fa-solid fa-star" aria-hidden="true"></i>{{ selected.entry.subtitle }}</p>
       <p class="celebration-modal__description">{{ description(selected.entry.kind) }}</p>
+
+      <div class="celebration-modal__tools">
+        <a class="btn btn-sm btn-outline-secondary" [href]="googleCalendarUrl(selected.date, selected.entry)" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-calendar-plus me-1" aria-hidden="true"></i>Add to Google</a>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="downloadIcs(selected.date)"><i class="fa-solid fa-file-arrow-down me-1" aria-hidden="true"></i>Download .ics</button>
+      </div>
+
+      <app-festival-wishes-panel
+        *ngIf="selected.entry.kind === 'festival'"
+        [festivalId]="festivalIdOf(selected.entry)"
+        [festivalName]="selected.entry.title" />
     </div>
     <footer class="celebration-modal__footer"><button class="btn btn-primary" type="button" (click)="closeEntry()">Done</button></footer>
   </section>

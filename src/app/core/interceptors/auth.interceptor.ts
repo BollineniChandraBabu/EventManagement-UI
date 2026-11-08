@@ -4,6 +4,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth.service';
 import { ConnectivityService } from '../services/connectivity.service';
+import { concurrentLoginMessage, isConcurrentLoginError } from '../utils/api-error';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -29,6 +30,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       if (error.status === 401) {
+        // A concurrent-login rejection is not a stale access token: the session itself is gone, so a
+        // refresh would only fail again. Surface it and stop here so the user can sign in afresh.
+        if (isConcurrentLoginError(error)) {
+          auth.flagConcurrentLogin(concurrentLoginMessage(error));
+          return throwError(() => error);
+        }
+
         return auth.refreshToken().pipe(
           switchMap((res) =>
             next(
@@ -39,9 +47,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                   })
             )
           ),
-          catchError(() => {
-            auth.logout();
-            return throwError(() => error);
+          catchError((refreshError) => {
+            // The refresh was itself rejected for concurrent login, so show the notice rather than
+            // bouncing to the login screen with no explanation.
+            if (isConcurrentLoginError(refreshError)) {
+              auth.flagConcurrentLogin(concurrentLoginMessage(refreshError));
+            } else {
+              auth.logout();
+            }
+            return throwError(() => refreshError);
           })
         );
       }

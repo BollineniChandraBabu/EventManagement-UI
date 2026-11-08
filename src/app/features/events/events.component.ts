@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { EventItem } from '../../core/models/api.models';
+import { MediaPreviewKind, previewKindFor } from '../../core/utils/media';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import {AuthService} from "../../core/services/auth.service";
@@ -275,6 +276,11 @@ export class EventsComponent {
     if (event.imageUrl) {
       this.previewImage = event;
     }
+  }
+
+  /** The kind of the uploaded greeting file, worked out from its stored extension. */
+  mediaKindFor(url: string | null | undefined): MediaPreviewKind {
+    return previewKindFor(null, url);
   }
 
   closeImage(): void {

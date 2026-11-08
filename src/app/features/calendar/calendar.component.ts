@@ -20,9 +20,11 @@ import {
   relativeDayLabel,
   startOfDay,
   startOfWeek,
+  toIsoDate,
   upcomingEntries,
   visibleDays
 } from './calendar.utils';
+import { FestivalWishesPanelComponent } from './festival-wishes-panel.component';
 
 /** A day plus what fits in its month-grid cell. */
 interface DayView extends CalendarDay {
@@ -42,13 +44,16 @@ const ALL_KINDS: CelebrationKind[] = ['festival', 'birthday', 'anniversary', 'ot
 
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FestivalWishesPanelComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.css'
 })
 export class CalendarComponent {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+
+  private static readonly VIEW_STORAGE_KEY = 'fw_calendar_view';
+  private static readonly KINDS_STORAGE_KEY = 'fw_calendar_kinds';
 
   readonly weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   readonly views: Array<{ id: CalendarView; label: string }> = [
@@ -67,6 +72,7 @@ export class CalendarComponent {
   view: CalendarView = 'month';
   cursor = this.today;
   enabledKinds = new Set<CelebrationKind>(ALL_KINDS);
+  copiedEntryKey: string | null = null;
 
   days: DayView[] = [];
   agenda: DayView[] = [];
@@ -84,7 +90,37 @@ export class CalendarComponent {
   private touchStart: { x: number; y: number } | null = null;
 
   constructor() {
+    this.restorePreferences();
     this.refresh();
+  }
+
+  // ------------------------------------------------------------------ preferences
+
+  private restorePreferences(): void {
+    try {
+      const storedView = localStorage.getItem(CalendarComponent.VIEW_STORAGE_KEY);
+      if (storedView === 'month' || storedView === 'week' || storedView === 'day' || storedView === 'agenda') {
+        this.view = storedView;
+      }
+      const storedKinds = localStorage.getItem(CalendarComponent.KINDS_STORAGE_KEY);
+      if (storedKinds) {
+        const parsed = storedKinds.split(',').filter((kind): kind is CelebrationKind => (ALL_KINDS as string[]).includes(kind));
+        if (parsed.length) {
+          this.enabledKinds = new Set(parsed);
+        }
+      }
+    } catch {
+      // A blocked or unavailable localStorage just means the defaults are used.
+    }
+  }
+
+  private persistPreferences(): void {
+    try {
+      localStorage.setItem(CalendarComponent.VIEW_STORAGE_KEY, this.view);
+      localStorage.setItem(CalendarComponent.KINDS_STORAGE_KEY, [...this.enabledKinds].join(','));
+    } catch {
+      // Ignore storage failures; the calendar still works for this session.
+    }
   }
 
   // ------------------------------------------------------------------ header
@@ -144,8 +180,14 @@ export class CalendarComponent {
   setView(view: CalendarView): void {
     if (view !== this.view) {
       this.view = view;
+      this.persistPreferences();
       this.refresh();
     }
+  }
+
+  /** Steps the cursor by a whole year (month and agenda keep the month/day; week keeps the week). */
+  jumpYear(delta: 1 | -1): void {
+    this.setCursor(addMonths(this.cursor, 12 * delta));
   }
 
   reload(): void {
@@ -189,6 +231,7 @@ export class CalendarComponent {
       next.add(kind);
     }
     this.enabledKinds = next;
+    this.persistPreferences();
     this.rebuild();
   }
 
@@ -201,6 +244,99 @@ export class CalendarComponent {
 
   closeEntry(): void {
     this.selectedEntry = null;
+    this.copiedEntryKey = null;
+  }
+
+  /** Festival rows carry the special-event id in the calendar response, used to look up wishes. */
+  festivalIdOf(entry: CalendarEntry): number {
+    return entry.source.id;
+  }
+
+  // ------------------------------------------------------------------ export / share
+
+  private static readonly ICS_DAYS = 1;
+
+  /** A downloadable .ics file for the selected day's events (opens in any calendar app). */
+  downloadIcs(date: Date): void {
+    const entries = this.entriesOn(date);
+    if (!entries.length) {
+      return;
+    }
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Family Wishes//Calendar//EN',
+      'CALSCALE:GREGORIAN'
+    ];
+    for (const entry of entries) {
+      lines.push(
+        'BEGIN:VEVENT',
+        `UID:${entry.key}-${toIsoDate(date)}@family-wishes`,
+        `DTSTAMP:${this.icsStamp(new Date())}`,
+        `DTSTART;VALUE=DATE:${toIsoDate(date)}`,
+        `DTEND;VALUE=DATE:${toIsoDate(addDays(date, CalendarComponent.ICS_DAYS))}`,
+        `SUMMARY:${this.icsEscape(entry.title)}`,
+        `DESCRIPTION:${this.icsEscape(this.description(entry.kind))}`,
+        'END:VEVENT'
+      );
+    }
+    lines.push('END:VCALENDAR');
+
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${this.icsFileName(date)}.ics`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** Opens Google Calendar's "add event" page for the selected day's first event. */
+  googleCalendarUrl(date: Date, entry: CalendarEntry): string {
+    const start = toIsoDate(date);
+    const end = toIsoDate(addDays(date, CalendarComponent.ICS_DAYS));
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: entry.title,
+      dates: `${start.replace(/-/g, '')}/${end.replace(/-/g, '')}`,
+      details: this.description(entry.kind)
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+
+  /** Copies a short text summary of the day to the clipboard. */
+  copyDaySummary(date: Date): void {
+    const entries = this.entriesOn(date);
+    if (!entries.length) {
+      return;
+    }
+    const dateText = date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const text = [dateText, ...entries.map((entry) => `• ${entry.title}${entry.subtitle ? ` (${entry.subtitle})` : ''}`)].join('\n');
+    navigator.clipboard?.writeText(text).then(
+      () => (this.copiedEntryKey = toIsoDate(date)),
+      () => (this.copiedEntryKey = null)
+    );
+  }
+
+  private entriesOn(date: Date): CalendarEntry[] {
+    const day = this.days.find((candidate) => candidate.key === toIsoDate(date));
+    if (day) {
+      return day.entries;
+    }
+    const selected = this.selectedEntry;
+    return selected && selected.date.getTime() === date.getTime() ? [selected.entry] : [];
+  }
+
+  private icsStamp(date: Date): string {
+    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  }
+
+  private icsFileName(date: Date): string {
+    return `family-wishes-${toIsoDate(date)}`;
+  }
+
+  private icsEscape(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/([,;])/g, '\\$1').replace(/\n/g, '\\n');
   }
 
   openDay(day: DayView, event?: Event): void {

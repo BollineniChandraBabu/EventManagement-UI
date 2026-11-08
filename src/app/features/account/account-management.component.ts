@@ -13,6 +13,7 @@ import { SensitiveDataService } from '../../core/services/sensitive-data.service
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { ThemeService } from '../../core/services/theme.service';
 import { AppUser } from '../../core/models/api.models';
+import { IMAGE_ACCEPT, IMAGE_HINT, imageError } from '../../core/utils/media';
 
 @Component({
   standalone: true,
@@ -54,6 +55,10 @@ export class AccountManagementComponent {
     mfaEnabled: [false]
   });
 
+  readonly concurrentLoginForm = this.fb.nonNullable.group({
+    concurrentLoginAllowed: [true]
+  });
+
   readonly changePasswordForm = this.fb.nonNullable.group({
     currentPassword: ['', [Validators.required]],
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
@@ -62,6 +67,7 @@ export class AccountManagementComponent {
 
   isChangingPassword = false;
   isSavingMfa = false;
+  isSavingConcurrentLogin = false;
   isBalanceLoading = false;
   pollinationsBalance: number | null = null;
   showCurrentPassword = false;
@@ -70,6 +76,8 @@ export class AccountManagementComponent {
   profilePictureUrl: string | null = null;
   isUploadingProfilePicture = false;
   isRemovingProfilePicture = false;
+  readonly acceptedImageTypes = IMAGE_ACCEPT;
+  readonly imageHint = IMAGE_HINT;
 
   constructor() {
     this.theme.load();
@@ -151,6 +159,34 @@ export class AccountManagementComponent {
     });
   }
 
+  /** Turns the single-session requirement on or off for this account. */
+  saveConcurrentLoginSetting(): void {
+    if (this.impersonation.isImpersonating()) {
+      this.toast.warning('Security settings cannot be changed while impersonating.');
+      return;
+    }
+
+    const concurrentLoginAllowed = this.concurrentLoginForm.controls.concurrentLoginAllowed.value;
+    this.isSavingConcurrentLogin = true;
+    this.api.updateMyConcurrentLogin({ concurrentLoginAllowed }).subscribe({
+      next: (profile) => {
+        this.concurrentLoginForm.patchValue({ concurrentLoginAllowed: profile.concurrentLoginAllowed !== false });
+        this.isSavingConcurrentLogin = false;
+        this.toast.success(
+          concurrentLoginAllowed
+            ? 'Concurrent sign-in is allowed. You can stay signed in on several devices.'
+            : 'Single session is on. Signing in elsewhere signs out your other devices.'
+        );
+      },
+      error: () => {
+        // Put the switch back so it never shows a value the server did not accept.
+        this.concurrentLoginForm.patchValue({ concurrentLoginAllowed: !concurrentLoginAllowed });
+        this.isSavingConcurrentLogin = false;
+        this.toast.error('Unable to update the sign-in setting. Please try again.');
+      }
+    });
+  }
+
   onProfilePictureSelected(event: Event): void {
     if (this.impersonation.isImpersonating()) {
       this.toast.warning('Profile picture updates are disabled while impersonating.');
@@ -163,8 +199,9 @@ export class AccountManagementComponent {
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      this.toast.error('Please select a valid image file.');
+    const mediaIssue = imageError(file);
+    if (mediaIssue) {
+      this.toast.error(mediaIssue);
       input.value = '';
       return;
     }
@@ -297,6 +334,7 @@ export class AccountManagementComponent {
       isGoodNightEnabled: !!profile.isGoodNightEnabled,
     });
     this.mfaForm.patchValue({ mfaEnabled: !!profile.mfaEnabled });
+    this.concurrentLoginForm.patchValue({ concurrentLoginAllowed: profile.concurrentLoginAllowed !== false });
     this.profilePictureUrl = profile.profilePictureUrl ?? null;
   }
 }

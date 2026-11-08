@@ -45,6 +45,11 @@
             <span class="nav-label">Calendar</span>
           </a>
 
+          <a class="nav-item" routerLink="/circles" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Family &amp; Friends">
+            <span class="nav-icon"><i class="fa-solid fa-people-group"></i></span>
+            <span class="nav-label">Family &amp; Friends</span>
+          </a>
+
           <a class="nav-item" routerLink="/email-status" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()" data-tooltip="Email Status">
             <span class="nav-icon"><i class="fa-solid fa-envelope-circle-check"></i></span>
             <span class="nav-label">Email Status</span>
@@ -74,6 +79,11 @@
             <a class="nav-item" routerLink="/email-status/forgot-password" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Forgot Password">
               <span class="nav-icon"><i class="fa-solid fa-lock-open"></i></span>
               <span class="nav-label">Forgot Password</span>
+            </a>
+
+            <a class="nav-item" routerLink="/email-status/circle-request" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Circle Request Emails">
+              <span class="nav-icon"><i class="fa-solid fa-user-group"></i></span>
+              <span class="nav-label">Circle Request Emails</span>
             </a>
 
             <a class="nav-item" routerLink="/schedulers" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Schedulers">
@@ -230,3 +240,4 @@
 <app-confirm-dialog></app-confirm-dialog>
 <app-loading-overlay></app-loading-overlay>
 <app-offline-overlay></app-offline-overlay>
+<app-concurrent-login-overlay></app-concurrent-login-overlay>

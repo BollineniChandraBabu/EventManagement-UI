@@ -29,7 +29,9 @@ button.fw-kpi:focus-visible { outline: 3px solid var(--c-primary-ring); outline-
 .fw-thumb:hover { border-color: var(--c-primary); }
 .fw-thumb:focus-visible { outline: 3px solid var(--c-primary-ring); outline-offset: 1px; }
 .fw-thumb img { width: 40px; height: 40px; object-fit: cover; border-radius: calc(var(--r-md) - 1px); display: block; }
+.fw-thumb-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--c-text-muted); font-size: 1rem; line-height: 1; }
 .fw-cards .fw-thumb img { width: 36px; height: 36px; }
+.fw-cards .fw-thumb-icon { width: 36px; height: 36px; }
 
 /* Image lightbox */
 .fw-lightbox { position: fixed; inset: 0; z-index: 1400; display: grid; place-items: center; padding: 1rem; background: rgb(15 23 42 / 78%); backdrop-filter: blur(3px); }

@@ -21,6 +21,7 @@ import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/mult
 import { BulkSelection } from '../../shared/bulk-selection';
 import { WISHES_URL_MAX_LENGTH, wishesUrlError } from '../../core/utils/wishes-url';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { MEDIA_ACCEPT, MEDIA_HINT, MediaPreviewKind, mediaError, previewKindFor } from '../../core/utils/media';
 import { startOfDay } from '../calendar/calendar.utils';
 import {
   FestivalTiming,
@@ -28,6 +29,8 @@ import {
   addIds,
   bulkResultMessage,
   festivalTiming,
+  festivalOccurrence,
+  festivalTimingNext,
   filterUsers,
   lastSentLabel,
   pickableFestivals,
@@ -109,7 +112,6 @@ export class FestivalWishMappingsComponent {
   referenceLoaded = false;
   referenceLoading = false;
   referenceFailed = false;
-  showPastFestivals = false;
   selectedFestivalId: number | null = null;
   userQuery = '';
   selectedUserIds = new Set<number>();
@@ -120,10 +122,13 @@ export class FestivalWishMappingsComponent {
   wishesUrl = '';
   saving = false;
 
-  // ---- image upload in editor
+  // ---- media upload in editor
   selectedImageFile?: File;
   imagePreviewUrl?: string;
+  imagePreviewKind: MediaPreviewKind = null;
   imageError = '';
+  readonly acceptedTypes = MEDIA_ACCEPT;
+  readonly imageHint = MEDIA_HINT;
 
   // ---- image lightbox
   previewImage?: FestivalWishMapping;
@@ -414,7 +419,6 @@ export class FestivalWishMappingsComponent {
     this.active = true;
     this.note = '';
     this.wishesUrl = '';
-    this.showPastFestivals = false;
     this.navigateEditor(true);
   }
 
@@ -426,6 +430,7 @@ export class FestivalWishMappingsComponent {
     this.wishesUrl = mapping.wishesUrl ?? '';
     if (mapping.imageUrl) {
       this.imagePreviewUrl = mapping.imageUrl;
+      this.imagePreviewKind = previewKindFor(null, mapping.imageUrl);
     }
     this.navigateEditor(true);
   }
@@ -436,20 +441,16 @@ export class FestivalWishMappingsComponent {
     if (!file) {
       return;
     }
-    const allowed = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-    if (!allowed.includes(file.type)) {
-      this.imageError = 'Unsupported image format. Use PNG, JPEG, GIF or WebP.';
-      input.value = '';
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      this.imageError = 'File size exceeds 5 MB limit.';
+    const error = mediaError(file);
+    if (error) {
+      this.imageError = error;
       input.value = '';
       return;
     }
     this.imageError = '';
     this.clearEditorImagePreview();
     this.selectedImageFile = file;
+    this.imagePreviewKind = previewKindFor(file.type, file.name);
     this.imagePreviewUrl = URL.createObjectURL(file);
   }
 
@@ -457,11 +458,17 @@ export class FestivalWishMappingsComponent {
     this.clearEditorImage();
   }
 
+  /** The kind of an already-uploaded file, worked out from its stored extension. */
+  mediaKindFor(url: string | null | undefined): MediaPreviewKind {
+    return previewKindFor(null, url);
+  }
+
   private clearEditorImagePreview(): void {
     if (this.imagePreviewUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(this.imagePreviewUrl);
     }
     this.imagePreviewUrl = undefined;
+    this.imagePreviewKind = null;
   }
 
   private clearEditorImage(): void {
@@ -508,7 +515,7 @@ export class FestivalWishMappingsComponent {
   }
 
   get pickerFestivals(): FestivalItem[] {
-    return pickableFestivals(this.festivals, this.today, this.showPastFestivals);
+    return pickableFestivals(this.festivals, this.today);
   }
 
   get selectedFestival(): FestivalItem | undefined {
@@ -516,7 +523,11 @@ export class FestivalWishMappingsComponent {
   }
 
   festivalTimingOf(festival: FestivalItem): FestivalTiming {
-    return festivalTiming(festival.eventDate, this.today);
+    return festivalTimingNext(festival, this.today);
+  }
+
+  festivalOccurrenceOf(festival: FestivalItem): Date {
+    return festivalOccurrence(festival, this.today);
   }
 
   get visibleUsers(): AppUser[] {

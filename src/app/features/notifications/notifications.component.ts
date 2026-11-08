@@ -11,6 +11,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { MultiSelectFilterComponent, MultiSelectOption } from '../../shared/multi-select-filter.component';
 import { BulkSelection } from '../../shared/bulk-selection';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { scheduleError } from '../../core/utils/notification-schedule';
 
 @Component({
   standalone: true,
@@ -151,10 +152,23 @@ export class NotificationsComponent {
   }
 
   publish(item: NotificationItem): void {
+    // A draft whose schedule has already elapsed cannot be published: the backend stamps the
+    // publish time from `scheduledFrom`, so it would go out back-dated. Tell the user to reschedule.
+    const scheduleIssue = scheduleError(item);
+    if (scheduleIssue) {
+      this.toast.error(`“${item.title}” can’t be published yet. ${scheduleIssue} Edit the notification to set a future schedule.`);
+      return;
+    }
+
     this.api.publishNotification(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.toast.success('Notification published for all users.'); this.load(); },
-      error: () => this.toast.error('Unable to publish notification right now.')
+      error: (error) => this.toast.error(apiErrorMessage(error, 'Unable to publish notification right now.'))
     });
+  }
+
+  /** The reason this draft cannot be published yet, or null when it can. */
+  publishBlockedReason(item: NotificationItem): string | null {
+    return scheduleError(item);
   }
 
   unpublish(item: NotificationItem): void {

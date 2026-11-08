@@ -46,7 +46,8 @@ export class UserEditorComponent {
     isGoodMorningEnabled: [false],
     isGoodNightEnabled: [false],
     birthdayWishesUrl: ['', [wishesUrlValidator]],
-    mfaEnabled: [false]
+    mfaEnabled: [false],
+    concurrentLoginAllowed: [true]
   });
 
   readonly wishesUrlMaxLength = WISHES_URL_MAX_LENGTH;
@@ -167,7 +168,8 @@ export class UserEditorComponent {
       isGoodMorningEnabled: !!user.isGoodMorningEnabled,
       isGoodNightEnabled: !!user.isGoodNightEnabled,
       birthdayWishesUrl: user.birthdayWishesUrl ?? '',
-      mfaEnabled: !!user.mfaEnabled
+      mfaEnabled: !!user.mfaEnabled,
+      concurrentLoginAllowed: user.concurrentLoginAllowed !== false
     });
   }
 
@@ -184,7 +186,8 @@ export class UserEditorComponent {
       isGoodMorningEnabled: false,
       isGoodNightEnabled: false,
       birthdayWishesUrl: '',
-      mfaEnabled: false
+      mfaEnabled: false,
+      concurrentLoginAllowed: true
     });
   }
 

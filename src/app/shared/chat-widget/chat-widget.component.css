@@ -375,8 +375,44 @@
   gap: 0.6rem;
   cursor: pointer;
   transition: background 0.1s;
-  border-bottom: 1px solid var(--cw-border);
   position: relative;
+}
+
+.conversation-row-wrap {
+  position: relative;
+  border-bottom: 1px solid var(--cw-border);
+}
+
+.conversation-row-wrap:last-child { border-bottom: none; }
+
+.convo-un-circle {
+  position: absolute;
+  top: 50%;
+  right: 0.6rem;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--cw-meta);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+
+.conversation-row-wrap:hover .convo-un-circle,
+.convo-un-circle:focus-visible { opacity: 1; }
+
+.convo-un-circle:hover { background: var(--cw-hover); color: #b91c1c; }
+
+.circle-only-note {
+  margin: 0.5rem 0.15rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--cw-meta);
 }
 
 .conversation-row:last-child { border-bottom: none; }

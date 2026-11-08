@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   DestroyRef,
@@ -24,10 +25,19 @@ import {
   ChatUser,
 } from '../../core/models/chat.models';
 import { ChatService } from '../../core/services/chat.service';
+import { CircleService } from '../../core/services/circle.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { ToastService } from '../../core/services/toast.service';
 import { BulkSelection } from '../bulk-selection';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import {
+  canMessage,
+  filterCircleConversations,
+  filterCircleUsers,
+  isInCircle,
+  messageLockReason,
+} from '../../core/utils/circle-chat';
+import { MAX_ATTACHMENT_BYTES, MediaPreviewKind, formatBytes, previewKindFor } from '../../core/utils/media';
 
 interface ChatTimelineEntry {
   kind: 'day' | 'message';
@@ -37,8 +47,13 @@ interface ChatTimelineEntry {
 }
 
 const SCROLL_THRESHOLD = 120;
-const IMAGE_MIME_PREFIXES = ['image/'];
-const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i;
+/** Icons for attachments that have no inline preview. */
+const ATTACHMENT_ICONS: Record<string, string> = {
+  video: 'fa-file-video',
+  audio: 'fa-file-audio',
+  pdf: 'fa-file-pdf',
+  other: 'fa-file'
+};
 
 @Component({
   selector: 'app-chat-widget',
@@ -49,6 +64,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i;
 })
 export class ChatWidgetComponent {
   private readonly chat = inject(ChatService);
+  private readonly circles = inject(CircleService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
@@ -88,7 +104,7 @@ export class ChatWidgetComponent {
   // Attachment preview
   attachmentPreviewUrl: string | null = null;
   attachmentPreviewSafeUrl: SafeResourceUrl | null = null;
-  attachmentPreviewType: 'image' | 'pdf' | null = null;
+  attachmentPreviewType: MediaPreviewKind = null;
   attachmentPreviewName = '';
   attachmentPreviewLoading = false;
   attachmentPreviewOpen = false;
@@ -125,6 +141,10 @@ export class ChatWidgetComponent {
   // New chat
   showNewChatPicker = false;
   newChatSearch = '';
+
+  // Circles gate the chat: only accepted circle members can be messaged.
+  circleUserIds = new Set<number>();
+  circleIds = new Map<number, number>();
 
   // Data
   conversations: ChatConversation[] = [];
@@ -199,20 +219,52 @@ export class ChatWidgetComponent {
   }
 
   get canSendToActiveUser(): boolean {
-    return !!this.activeConversation && this.activeConversation.otherUserActive !== false;
+    const conversation = this.activeConversation;
+    return canMessage(
+        conversation
+            ? { userId: conversation.otherUserId, active: conversation.otherUserActive }
+            : null,
+        this.circleUserIds
+    );
   }
 
   get filteredNewChatUsers(): ChatUser[] {
-    const query = this.newChatSearch.trim().toLowerCase();
-    return this.users
-        .filter((u) => u.active !== false)
-        .filter(
-            (u) =>
-                !query ||
-                u.name.toLowerCase().includes(query) ||
-                u.email.toLowerCase().includes(query)
-        )
-        .slice(0, 8);
+    return filterCircleUsers(this.users, this.circleUserIds, this.newChatSearch);
+  }
+
+  /** True when the user is in the accepted circle, so chat is allowed. */
+  isInMyCircle(userId: number): boolean {
+    return isInCircle(this.circleUserIds, userId);
+  }
+
+  /** Only conversations with accepted circle members are listed. */
+  get visibleConversations(): ChatConversation[] {
+    return filterCircleConversations(this.conversations, this.circleUserIds);
+  }
+
+  /** Conversations with users outside the circle stay visible but read-only. */
+  conversationLocked(conversation: ChatConversation | null): boolean {
+    return !!conversation && !this.isInMyCircle(conversation.otherUserId);
+  }
+
+  /** Whether the signed-in user has any accepted circle member to chat with. */
+  get hasCircleMembers(): boolean {
+    return this.circleUserIds.size > 0;
+  }
+
+  /** The reason the composer is locked, used for the inline note. */
+  get chatLockedReason(): string {
+    const conversation = this.activeConversation;
+    return messageLockReason(
+        conversation
+            ? { userId: conversation.otherUserId, active: conversation.otherUserActive }
+            : null,
+        this.circleUserIds
+    );
+  }
+
+  get isChatLocked(): boolean {
+    return !!this.chatLockedReason;
   }
 
   isTyping(): boolean {
@@ -808,7 +860,14 @@ export class ChatWidgetComponent {
   triggerAttachment(): void { this.attachmentInput?.nativeElement.click(); }
 
   onAttachmentSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (file && file.size > MAX_ATTACHMENT_BYTES) {
+      this.toast.error(`The file is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_ATTACHMENT_BYTES)}.`);
+      input.value = '';
+      this.selectedAttachment = null;
+      return;
+    }
     this.selectedAttachment = file;
   }
 
@@ -929,10 +988,19 @@ export class ChatWidgetComponent {
   }
 
   isImageAttachment(message: ChatMessage): boolean {
-    if (!message.attachmentFileName) return false;
-    const ct = (message.attachmentContentType || '').toLowerCase();
-    const fn = message.attachmentFileName.toLowerCase();
-    return IMAGE_MIME_PREFIXES.some(p => ct.startsWith(p)) || IMAGE_EXTENSIONS.test(fn);
+    return this.attachmentPreviewKind(message) === 'image';
+  }
+
+  /** How an attachment can be previewed: image, video, audio, pdf, or null when it cannot. */
+  attachmentPreviewKind(message: ChatMessage): MediaPreviewKind {
+    if (!message.attachmentFileName) return null;
+    return previewKindFor(message.attachmentContentType, message.attachmentFileName);
+  }
+
+  /** A Font Awesome icon for an attachment that has no inline preview. */
+  attachmentIcon(message: ChatMessage): string {
+    const kind = this.attachmentPreviewKind(message);
+    return ATTACHMENT_ICONS[kind ?? 'other'] ?? ATTACHMENT_ICONS['other'];
   }
 
   onImageError(event: Event): void {
@@ -1013,6 +1081,7 @@ export class ChatWidgetComponent {
 
   private reloadLists(): void {
     this.reloadConversationsOnly();
+    this.reloadCircleMembers();
     forkJoin({ all: this.chat.listUsers(), active: this.chat.listActiveUsers() })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(({ all, active }) => {
@@ -1025,6 +1094,62 @@ export class ChatWidgetComponent {
         });
   }
 
+  /** Loads the accepted circle, which decides who can be messaged. */
+  private reloadCircleMembers(): void {
+    this.circles.list()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (response) => {
+            const members = response.circles ?? [];
+            this.circleUserIds = new Set(members.map((member) => member.userId));
+            this.circleIds = new Map(members.map((member) => [member.userId, member.circleId]));
+            if (this.activeConversation) {
+              this.activeConversation = { ...this.activeConversation };
+            } else {
+              const firstVisible = this.visibleConversations[0];
+              if (firstVisible) this.chooseConversation(firstVisible);
+            }
+          },
+          error: () => {
+            this.circleUserIds = new Set<number>();
+            this.circleIds = new Map<number, number>();
+          }
+        });
+  }
+
+  /** Removes a person from the circle; chat with them is locked afterwards. */
+  removeFromCircle(conversation: ChatConversation): void {
+    const circleId = this.circleIds.get(conversation.otherUserId);
+    if (!circleId) {
+      this.toast.error('This person is not in your circle.');
+      return;
+    }
+    this.confirmDialog
+      .confirm({
+        title: 'Remove from circle',
+        message: `Remove ${conversation.otherUserName} from your circle? Chat with them will be locked until you send a new request and they accept.`,
+        confirmText: 'Remove',
+        tone: 'danger',
+        icon: 'fa-user-minus'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.circles.remove(circleId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: () => {
+            this.circleUserIds.delete(conversation.otherUserId);
+            this.circleIds.delete(conversation.otherUserId);
+            if (this.activeConversation) {
+              this.activeConversation = { ...this.activeConversation };
+            }
+            this.toast.success(`${conversation.otherUserName} was removed from your circle.`);
+          },
+          error: (error: HttpErrorResponse) => {
+            this.toast.error(apiErrorMessage(error, 'Unable to remove them from your circle right now.'));
+          }
+        });
+      });
+  }
+
   private reloadConversationsOnly(): void {
     this.chat.listConversations()
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -1035,7 +1160,8 @@ export class ChatWidgetComponent {
             otherUserActive: c.otherUserActive ?? userMap.get(c.otherUserId) ?? true,
           }));
           if (items.length && !this.activeConversation) {
-            this.chooseConversation(this.conversations[0]);
+            const firstVisible = this.visibleConversations[0];
+            if (firstVisible) this.chooseConversation(firstVisible);
           }
           if (this.activeConversation) {
             const matched = this.conversations.find(
@@ -1235,16 +1361,12 @@ export class ChatWidgetComponent {
   }
 
   // ── Attachment helpers ────────────────────────────────────────────────────
-  private resolveAttachmentPreviewType(message: ChatMessage): 'image' | 'pdf' | null {
-    const ct = (message.attachmentContentType || '').toLowerCase();
-    const fn = (message.attachmentFileName || '').toLowerCase();
-    if (IMAGE_MIME_PREFIXES.some(p => ct.startsWith(p)) || IMAGE_EXTENSIONS.test(fn)) return 'image';
-    if (ct === 'application/pdf' || fn.endsWith('.pdf')) return 'pdf';
-    return null;
+  private resolveAttachmentPreviewType(message: ChatMessage): MediaPreviewKind {
+    return previewKindFor(message.attachmentContentType, message.attachmentFileName);
   }
 
   private isPreviewSupported(message: ChatMessage): boolean {
-    return this.resolveAttachmentPreviewType(message) !== null;
+    return this.attachmentPreviewKind(message) !== null;
   }
 
   private downloadBlob(blob: Blob, fileName: string): void {

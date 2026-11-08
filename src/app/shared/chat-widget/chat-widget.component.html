@@ -65,15 +65,23 @@
                                 </div>
                                 <span class="online-dot" *ngIf="user.online"></span>
                             </button>
-                            <p style="margin:.5rem;font-size:.75rem;color:#667781;" *ngIf="!filteredNewChatUsers.length">No users found.</p>
+                            <p class="circle-only-note" *ngIf="!hasCircleMembers">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                You can only chat with people in your circle. Add them from the
+                                <strong>Family &amp; Friends</strong> page first.
+                            </p>
+                            <p class="circle-only-note" *ngIf="hasCircleMembers && !filteredNewChatUsers.length">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                No one matches your search in your circle.
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 <div class="convo-list">
                     <div class="convo-list-label">Recent</div>
-                    <button type="button" class="conversation-row"
-                            *ngFor="let convo of conversations"
+                    <div class="conversation-row-wrap" *ngFor="let convo of visibleConversations">
+                        <button type="button" class="conversation-row"
                             [class.active]="activeConversation?.conversationId === convo.conversationId"
                             (click)="chooseConversation(convo)">
                         <div class="convo-avatar-wrap">
@@ -103,9 +111,16 @@
                 </span>
                             </div>
                         </div>
-                    </button>
+                        </button>
+                        <button *ngIf="isInMyCircle(convo.otherUserId)" type="button" class="convo-un-circle"
+                                (click)="removeFromCircle(convo)"
+                                title="Remove from circle"
+                                [attr.aria-label]="'Remove ' + convo.otherUserName + ' from your circle'">
+                            <i class="fa-solid fa-user-minus"></i>
+                        </button>
+                    </div>
 
-                    <div *ngIf="!conversations.length" style="padding:1.5rem 0.75rem;text-align:center;">
+                    <div *ngIf="!visibleConversations.length" style="padding:1.5rem 0.75rem;text-align:center;">
                         <i class="fa-regular fa-comments" style="font-size:1.8rem;color:#d1d7db;"></i>
                         <p style="font-size:.75rem;color:#667781;margin:.5rem 0 0;">No conversations yet</p>
                     </div>
@@ -145,6 +160,9 @@
                     </div>
 
                     <div class="header-actions">
+                        <button *ngIf="isInMyCircle(activeConversation.otherUserId)" type="button" class="icon-btn" (click)="removeFromCircle(activeConversation)" title="Remove from circle">
+                            <i class="fa-solid fa-user-minus"></i>
+                        </button>
                         <button type="button" class="icon-btn" [class.active]="selectMode" (click)="toggleSelectMode()" [title]="selectMode ? 'Cancel selection' : 'Select messages'">
                             <i class="fa-solid" [class.fa-list-check]="!selectMode" [class.fa-xmark]="selectMode"></i>
                         </button>
@@ -309,7 +327,7 @@
                                         <button class="attachment-chip" type="button"
                                                 *ngIf="message.attachmentFileName && !isImageAttachment(message)"
                                                 (click)="openAttachment(message); $event.stopPropagation()">
-                                            <i class="fa-solid fa-paperclip"></i>
+                                            <i class="fa-solid" [ngClass]="attachmentIcon(message)"></i>
                                             {{ message.attachmentFileName }}
                                         </button>
 
@@ -373,9 +391,9 @@
                 <div class="chat-composer-shell">
                     <input #attachmentInput type="file" hidden (change)="onAttachmentSelected($event)">
 
-                    <div class="composer-pills" *ngIf="replyingToMessage || selectedAttachment || !canSendToActiveUser">
-                        <div class="disabled-chat-note" *ngIf="!canSendToActiveUser">
-                            <i class="fa-solid fa-lock"></i> This user is disabled — read only.
+                    <div class="composer-pills" *ngIf="replyingToMessage || selectedAttachment || isChatLocked">
+                        <div class="disabled-chat-note" *ngIf="isChatLocked">
+                            <i class="fa-solid fa-lock"></i> {{ chatLockedReason }}
                         </div>
                         <div class="replying-pill" *ngIf="replyingToMessage">
                             <i class="fa-solid fa-reply" style="font-size:11px;flex-shrink:0;"></i>
@@ -472,6 +490,10 @@
                 </div>
                 <img *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'image' && attachmentPreviewUrl"
                      [src]="attachmentPreviewUrl" [alt]="attachmentPreviewName">
+                <video *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'video' && attachmentPreviewUrl"
+                       [src]="attachmentPreviewUrl" controls></video>
+                <audio *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'audio' && attachmentPreviewUrl"
+                       [src]="attachmentPreviewUrl" controls></audio>
                 <iframe *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'pdf' && attachmentPreviewSafeUrl"
                         [src]="attachmentPreviewSafeUrl" title="PDF preview"></iframe>
             </div>

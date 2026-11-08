@@ -1,0 +1,152 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <span class="page-header-icon violet"><i class="fa-solid fa-people-group"></i></span>
+      <div>
+        <h1 class="page-header-title">Family &amp; Friends</h1>
+        <p class="page-header-subtitle">Your circle is mutual — a request becomes a circle once the other person accepts</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <span class="badge badge-primary">{{ members.length }} in circle</span>
+      <button class="btn btn-outline-secondary" type="button" (click)="load()" [disabled]="loading">
+        <i class="fa-solid me-1" [class.fa-rotate]="!loading" [class.fa-spinner]="loading" [class.fa-spin]="loading"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Add a person -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="section-title mb-3"><i class="fa-solid fa-user-plus me-2" style="color:#7c3aed;"></i>Add someone to your circle</h2>
+      <div class="input-group">
+        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input class="form-control" type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)"
+               placeholder="Search people by name or email…" autocomplete="off" aria-label="Search people">
+      </div>
+      <p class="form-text mt-1" *ngIf="searchTerm.trim().length < 2">Type at least two characters to search.</p>
+
+      <div class="circle-search-results" *ngIf="searchTerm.trim().length >= 2">
+        <div *ngIf="searching" class="circle-search-status"><i class="fa-solid fa-spinner fa-spin me-2"></i>Searching…</div>
+        <div *ngIf="!searching && !searchResults.length" class="circle-search-status">No people matched “{{ searchTerm }}”.</div>
+        <ul class="circle-search-list" *ngIf="!searching && searchResults.length">
+          <li *ngFor="let user of searchResults" class="circle-search-item">
+            <span class="circle-avatar">
+              <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" [alt]="user.name" />
+              <span *ngIf="!user.profilePictureUrl">{{ user.name.charAt(0) | uppercase }}</span>
+            </span>
+            <div class="circle-search-info">
+              <div class="circle-name">{{ user.name }}</div>
+              <div class="circle-sub">{{ user.email | sensitiveEmail }}</div>
+            </div>
+            <span class="badge badge-secondary me-2" *ngIf="relationFor(user.id) === 'member'">In your circle</span>
+            <span class="badge badge-info me-2" *ngIf="relationFor(user.id) === 'outgoing'">Request sent</span>
+            <span class="badge badge-warning me-2" *ngIf="relationFor(user.id) === 'incoming'">Sent you a request</span>
+            <button class="btn btn-sm btn-primary" type="button" (click)="sendRequest(user)"
+                    [disabled]="relationFor(user.id) === 'member' || relationFor(user.id) === 'outgoing' || busyIds.has(user.id)">
+              <i class="fa-solid me-1" [class.fa-paper-plane]="!busyIds.has(user.id)" [class.fa-spinner]="busyIds.has(user.id)" [class.fa-spin]="busyIds.has(user.id)"></i>
+              {{ relationFor(user.id) === 'incoming' ? 'Accept request' : 'Add to circle' }}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="circle-columns">
+    <!-- Pending requests -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="section-title mb-3"><i class="fa-solid fa-inbox me-2" style="color:#0ea5e9;"></i>Requests <span class="badge badge-secondary ms-1">{{ incoming.length + outgoing.length }}</span></h2>
+
+        <div *ngIf="!incoming.length && !outgoing.length" class="empty-state py-3">
+          <div class="empty-state-icon"><i class="fa-solid fa-envelope-open"></i></div>
+          <p class="empty-state-title mb-1">No pending requests</p>
+          <p class="empty-state-subtitle">Requests you send and receive appear here.</p>
+        </div>
+
+        <div *ngIf="incoming.length">
+          <div class="circle-list-label">Received</div>
+          <ul class="circle-list">
+            <li *ngFor="let request of incoming; trackBy: trackByCircleId" class="circle-list-item">
+              <span class="circle-avatar">
+                <img *ngIf="request.profilePictureUrl" [src]="request.profilePictureUrl" [alt]="request.name" />
+                <span *ngIf="!request.profilePictureUrl">{{ request.name.charAt(0) | uppercase }}</span>
+              </span>
+              <div class="circle-search-info">
+                <div class="circle-name">{{ request.name }}</div>
+                <div class="circle-sub">{{ request.email | sensitiveEmail }}</div>
+              </div>
+              <div class="circle-actions">
+                <button class="btn btn-sm btn-success" type="button" (click)="accept(request)" [disabled]="busyIds.has(request.circleId)">
+                  <i class="fa-solid me-1" [class.fa-check]="!busyIds.has(request.circleId)" [class.fa-spinner]="busyIds.has(request.circleId)" [class.fa-spin]="busyIds.has(request.circleId)"></i>Accept
+                </button>
+                <button class="btn btn-sm btn-outline-danger" type="button" (click)="reject(request)" [disabled]="busyIds.has(request.circleId)">
+                  <i class="fa-solid fa-xmark me-1"></i>Reject
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div *ngIf="outgoing.length" class="mt-3">
+          <div class="circle-list-label">Sent — waiting for a reply</div>
+          <ul class="circle-list">
+            <li *ngFor="let request of outgoing; trackBy: trackByCircleId" class="circle-list-item">
+              <span class="circle-avatar">
+                <img *ngIf="request.profilePictureUrl" [src]="request.profilePictureUrl" [alt]="request.name" />
+                <span *ngIf="!request.profilePictureUrl">{{ request.name.charAt(0) | uppercase }}</span>
+              </span>
+              <div class="circle-search-info">
+                <div class="circle-name">{{ request.name }}</div>
+                <div class="circle-sub">{{ request.email | sensitiveEmail }}</div>
+              </div>
+              <span class="badge badge-info me-2">Pending</span>
+              <button class="btn btn-sm btn-outline-danger" type="button" (click)="cancelRequest(request)" [disabled]="busyIds.has(request.circleId)">
+                <i class="fa-solid me-1" [class.fa-xmark]="!busyIds.has(request.circleId)" [class.fa-spinner]="busyIds.has(request.circleId)" [class.fa-spin]="busyIds.has(request.circleId)"></i>Cancel
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Circle members -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="section-title mb-3"><i class="fa-solid fa-circle-nodes me-2" style="color:#16a34a;"></i>Your circle <span class="badge badge-primary ms-1">{{ members.length }}</span></h2>
+
+        <div *ngIf="loading" class="circle-search-status"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading…</div>
+
+        <div *ngIf="!loading && loadFailed" class="circle-search-status">
+          Could not load your circle. <button class="btn btn-sm btn-link" type="button" (click)="load()">Try again</button>
+        </div>
+
+        <div *ngIf="!loading && !loadFailed && !members.length" class="empty-state py-3">
+          <div class="empty-state-icon"><i class="fa-solid fa-people-group"></i></div>
+          <p class="empty-state-title mb-1">Your circle is empty</p>
+          <p class="empty-state-subtitle">Search above to add family and friends.</p>
+        </div>
+
+        <ul class="circle-list" *ngIf="!loading && members.length">
+          <li *ngFor="let member of members; trackBy: trackByCircleId" class="circle-list-item">
+            <span class="circle-avatar">
+              <img *ngIf="member.profilePictureUrl" [src]="member.profilePictureUrl" [alt]="member.name" />
+              <span *ngIf="!member.profilePictureUrl">{{ member.name.charAt(0) | uppercase }}</span>
+              <span class="circle-presence" [class.is-online]="member.online" [attr.aria-label]="member.online ? 'Online' : 'Offline'"></span>
+            </span>
+            <div class="circle-search-info">
+              <div class="circle-name">{{ member.name }}</div>
+              <div class="circle-sub">{{ member.email | sensitiveEmail }}</div>
+              <div class="circle-sub">{{ lastSeenText(member) }}</div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(member)" [disabled]="busyIds.has(member.circleId)">
+              <i class="fa-solid me-1" [class.fa-user-minus]="!busyIds.has(member.circleId)" [class.fa-spinner]="busyIds.has(member.circleId)" [class.fa-spin]="busyIds.has(member.circleId)"></i>Remove
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
