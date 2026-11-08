@@ -24,6 +24,11 @@ export class CircleService {
     );
   }
 
+  /** Ids of the users in the accepted circle; used to gate who can be messaged. */
+  acceptedUserIds(): Observable<Set<number>> {
+    return this.list().pipe(map((response) => new Set((response.circles ?? []).map((circle) => circle.userId))));
+  }
+
   /** Sends a request; sending back to someone who already asked accepts instead. */
   sendRequest(userId: number): Observable<CircleRequest> {
     return this.http.post<ApiResponse<CircleRequest>>(`${environment.apiUrl}/circles/requests`, { userId }).pipe(

@@ -45,7 +45,11 @@ Repository notes for automated agents working on the EventManagement UI (Angular
   who already asked accepts instead); `POST /requests/accept|reject` and `DELETE` act on a
   `circleId`. The UI is `features/circles`.
 - Chat can be restricted to accepted circle members by the backend (`app.chat.circles-only`,
-  default off), so the Circles page is where those links are made.
+  default off). The chat widget enforces this on the client too: `CircleService.list()` feeds
+  `circleUserIds`, and only accepted members appear in the new-chat picker and the conversation
+  list. A conversation with anyone outside the circle stays read-only, and each member row/thread
+  header offers "remove from circle" (same `DELETE /api/circles`). For server-side enforcement the
+  backend flag must be on (`APP_CHAT_CIRCLES_ONLY=true`).
 
 ## Concurrent login
 
