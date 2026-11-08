@@ -161,6 +161,35 @@ export class CirclesComponent implements OnInit {
     });
   }
 
+  /** Withdraws a request the user sent before the other person responds. */
+  cancelRequest(request: CircleRequest): void {
+    this.confirmDialog
+      .confirm({
+        title: 'Cancel request',
+        message: `Withdraw your circle request to ${request.name}?`,
+        confirmText: 'Cancel request',
+        tone: 'danger',
+        icon: 'fa-xmark'
+      })
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.performCancel(request));
+  }
+
+  private performCancel(request: CircleRequest): void {
+    this.busyIds.add(request.circleId);
+    this.circles.remove(request.circleId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.busyIds.delete(request.circleId);
+        this.toast.success(`Request to ${request.name} was withdrawn.`);
+        this.load();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.busyIds.delete(request.circleId);
+        this.toast.error(apiErrorMessage(error, 'Unable to cancel the request right now.'));
+      }
+    });
+  }
+
   remove(member: CircleMember): void {
     this.confirmDialog
       .confirm({

@@ -102,7 +102,10 @@
                 <div class="circle-name">{{ request.name }}</div>
                 <div class="circle-sub">{{ request.email | sensitiveEmail }}</div>
               </div>
-              <span class="badge badge-info">Pending</span>
+              <span class="badge badge-info me-2">Pending</span>
+              <button class="btn btn-sm btn-outline-danger" type="button" (click)="cancelRequest(request)" [disabled]="busyIds.has(request.circleId)">
+                <i class="fa-solid me-1" [class.fa-xmark]="!busyIds.has(request.circleId)" [class.fa-spinner]="busyIds.has(request.circleId)" [class.fa-spin]="busyIds.has(request.circleId)"></i>Cancel
+              </button>
             </li>
           </ul>
         </div>
