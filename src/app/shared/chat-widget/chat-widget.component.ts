@@ -28,6 +28,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { ToastService } from '../../core/services/toast.service';
 import { BulkSelection } from '../bulk-selection';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { MAX_ATTACHMENT_BYTES, MediaPreviewKind, formatBytes, previewKindFor } from '../../core/utils/media';
 
 interface ChatTimelineEntry {
   kind: 'day' | 'message';
@@ -37,8 +38,13 @@ interface ChatTimelineEntry {
 }
 
 const SCROLL_THRESHOLD = 120;
-const IMAGE_MIME_PREFIXES = ['image/'];
-const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i;
+/** Icons for attachments that have no inline preview. */
+const ATTACHMENT_ICONS: Record<string, string> = {
+  video: 'fa-file-video',
+  audio: 'fa-file-audio',
+  pdf: 'fa-file-pdf',
+  other: 'fa-file'
+};
 
 @Component({
   selector: 'app-chat-widget',
@@ -88,7 +94,7 @@ export class ChatWidgetComponent {
   // Attachment preview
   attachmentPreviewUrl: string | null = null;
   attachmentPreviewSafeUrl: SafeResourceUrl | null = null;
-  attachmentPreviewType: 'image' | 'pdf' | null = null;
+  attachmentPreviewType: MediaPreviewKind = null;
   attachmentPreviewName = '';
   attachmentPreviewLoading = false;
   attachmentPreviewOpen = false;
@@ -808,7 +814,14 @@ export class ChatWidgetComponent {
   triggerAttachment(): void { this.attachmentInput?.nativeElement.click(); }
 
   onAttachmentSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (file && file.size > MAX_ATTACHMENT_BYTES) {
+      this.toast.error(`The file is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_ATTACHMENT_BYTES)}.`);
+      input.value = '';
+      this.selectedAttachment = null;
+      return;
+    }
     this.selectedAttachment = file;
   }
 
@@ -929,10 +942,19 @@ export class ChatWidgetComponent {
   }
 
   isImageAttachment(message: ChatMessage): boolean {
-    if (!message.attachmentFileName) return false;
-    const ct = (message.attachmentContentType || '').toLowerCase();
-    const fn = message.attachmentFileName.toLowerCase();
-    return IMAGE_MIME_PREFIXES.some(p => ct.startsWith(p)) || IMAGE_EXTENSIONS.test(fn);
+    return this.attachmentPreviewKind(message) === 'image';
+  }
+
+  /** How an attachment can be previewed: image, video, audio, pdf, or null when it cannot. */
+  attachmentPreviewKind(message: ChatMessage): MediaPreviewKind {
+    if (!message.attachmentFileName) return null;
+    return previewKindFor(message.attachmentContentType, message.attachmentFileName);
+  }
+
+  /** A Font Awesome icon for an attachment that has no inline preview. */
+  attachmentIcon(message: ChatMessage): string {
+    const kind = this.attachmentPreviewKind(message);
+    return ATTACHMENT_ICONS[kind ?? 'other'] ?? ATTACHMENT_ICONS['other'];
   }
 
   onImageError(event: Event): void {
@@ -1235,16 +1257,12 @@ export class ChatWidgetComponent {
   }
 
   // ── Attachment helpers ────────────────────────────────────────────────────
-  private resolveAttachmentPreviewType(message: ChatMessage): 'image' | 'pdf' | null {
-    const ct = (message.attachmentContentType || '').toLowerCase();
-    const fn = (message.attachmentFileName || '').toLowerCase();
-    if (IMAGE_MIME_PREFIXES.some(p => ct.startsWith(p)) || IMAGE_EXTENSIONS.test(fn)) return 'image';
-    if (ct === 'application/pdf' || fn.endsWith('.pdf')) return 'pdf';
-    return null;
+  private resolveAttachmentPreviewType(message: ChatMessage): MediaPreviewKind {
+    return previewKindFor(message.attachmentContentType, message.attachmentFileName);
   }
 
   private isPreviewSupported(message: ChatMessage): boolean {
-    return this.resolveAttachmentPreviewType(message) !== null;
+    return this.attachmentPreviewKind(message) !== null;
   }
 
   private downloadBlob(blob: Blob, fileName: string): void {

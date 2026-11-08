@@ -45,6 +45,11 @@
             <span class="nav-label">Calendar</span>
           </a>
 
+          <a class="nav-item" routerLink="/circles" routerLinkActive="active" (click)="closeMobileMenu()" data-tooltip="Family &amp; Friends">
+            <span class="nav-icon"><i class="fa-solid fa-people-group"></i></span>
+            <span class="nav-label">Family &amp; Friends</span>
+          </a>
+
           <a class="nav-item" routerLink="/email-status" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()" data-tooltip="Email Status">
             <span class="nav-icon"><i class="fa-solid fa-envelope-circle-check"></i></span>
             <span class="nav-label">Email Status</span>

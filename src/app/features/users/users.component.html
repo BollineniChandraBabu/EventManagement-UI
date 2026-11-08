@@ -132,6 +132,7 @@
                   <span class="user-avatar">{{ user.name.charAt(0) | uppercase }}</span>
                   {{ user.name }}
                   <i *ngIf="user.mfaEnabled" class="fa-solid fa-shield-halved text-success ms-1" title="Two-step sign-in is on" aria-label="Two-step sign-in is on"></i>
+                  <i *ngIf="user.concurrentLoginAllowed === false" class="fa-solid fa-mobile-screen-button text-info ms-1" title="Single session only" aria-label="Single session only"></i>
                 </div>
               </td>
               <td><span class="text-muted">{{ user.email | sensitiveEmail }}</span></td>

@@ -309,7 +309,7 @@
                                         <button class="attachment-chip" type="button"
                                                 *ngIf="message.attachmentFileName && !isImageAttachment(message)"
                                                 (click)="openAttachment(message); $event.stopPropagation()">
-                                            <i class="fa-solid fa-paperclip"></i>
+                                            <i class="fa-solid" [ngClass]="attachmentIcon(message)"></i>
                                             {{ message.attachmentFileName }}
                                         </button>
 
@@ -472,6 +472,10 @@
                 </div>
                 <img *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'image' && attachmentPreviewUrl"
                      [src]="attachmentPreviewUrl" [alt]="attachmentPreviewName">
+                <video *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'video' && attachmentPreviewUrl"
+                       [src]="attachmentPreviewUrl" controls></video>
+                <audio *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'audio' && attachmentPreviewUrl"
+                       [src]="attachmentPreviewUrl" controls></audio>
                 <iframe *ngIf="!attachmentPreviewLoading && attachmentPreviewType === 'pdf' && attachmentPreviewSafeUrl"
                         [src]="attachmentPreviewSafeUrl" title="PDF preview"></iframe>
             </div>

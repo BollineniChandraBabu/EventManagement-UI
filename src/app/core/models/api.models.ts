@@ -153,6 +153,8 @@ export interface AppUser {
   birthdayWishesUrl?: string | null;
   /** When true, signing in also requires a one-time code sent by email. */
   mfaEnabled?: boolean;
+  /** When false, a new sign-in revokes this user's earlier sessions (single-session). */
+  concurrentLoginAllowed?: boolean;
 }
 
 export interface SaveUserPayload {
@@ -170,10 +172,16 @@ export interface SaveUserPayload {
   birthdayWishesUrl?: string;
   /** Admin choice for the account: require an emailed one-time code at sign-in. */
   mfaEnabled?: boolean;
+  /** Admin choice for the account: false = only the newest session stays signed in. */
+  concurrentLoginAllowed?: boolean;
 }
 
 export interface MfaUpdateRequest {
   mfaEnabled: boolean;
+}
+
+export interface ConcurrentLoginUpdateRequest {
+  concurrentLoginAllowed: boolean;
 }
 
 /** An administrator-uploaded image used as a fallback for a generated wish. */

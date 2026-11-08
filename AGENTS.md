@@ -25,6 +25,35 @@ Repository notes for automated agents working on the EventManagement UI (Angular
   maximalism/brutalism/claymorphism/bento-grid, white glyphs for the darker accents such as
   minimalism/glassmorphism/neomorphism).
 
+## Media uploads
+
+- Wish/event/festival uploads accept any supported media, not only images: image (PNG, JPEG, GIF,
+  WebP, BMP, 5 MB), video (50 MB), audio (10 MB) and PDF (20 MB). The rules live in
+  `src/app/core/utils/media.ts` and mirror the backend `MediaValidation`. Profile pictures stay
+  image-only.
+- Validate on the client first (`mediaError`) so a bad file is explained before it is sent, and use
+  `MEDIA_ACCEPT` for the file input's `accept` attribute and `MEDIA_HINT` for the help text.
+- A stored file's kind is worked out from its URL/extension with `previewKindFor`; use
+  `MediaPreviewKind` to pick the right `<img>`/`<video>`/`<audio>`/`<iframe>` (or an icon when there
+  is no inline preview). Chat attachments may be any file, so they fall back to a download chip.
+
+## Circles (family & friends)
+
+- A circle is a mutual, accepted link between two users. `CircleService`
+  (`src/app/core/services/circle.service.ts`) talks to `/api/circles`: `GET` returns `circles`,
+  `incomingRequests` and `outgoingRequests`; `POST /requests` sends a request (sending to someone
+  who already asked accepts instead); `POST /requests/accept|reject` and `DELETE` act on a
+  `circleId`. The UI is `features/circles`.
+- Chat can be restricted to accepted circle members by the backend (`app.chat.circles-only`,
+  default off), so the Circles page is where those links are made.
+
+## Concurrent login
+
+- `User.concurrentLoginAllowed` (default `true`) gates single-session sign-in. Admins set it in the
+  user editor; a user sets their own on the account page (`PATCH /api/users/me/concurrent-login`,
+  admin/self: `PATCH /api/users/{id}/concurrent-login`). When false, a new sign-in revokes the
+  user's earlier refresh tokens.
+
 ## Offline handling
 
 - `ConnectivityService` decides whether the backend is reachable. It starts from `navigator.onLine`,

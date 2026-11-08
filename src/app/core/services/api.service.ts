@@ -32,6 +32,7 @@ import {
   WishSettingsPayload,
   PollinationsBalanceResponse,
   MfaUpdateRequest,
+  ConcurrentLoginUpdateRequest,
   UserStatusUpdateRequest,
   ProfilePictureUploadUrlRequest,
   ProfilePictureUploadUrlResponse,
@@ -624,6 +625,20 @@ export class ApiService {
   /** Turns the one-time-code requirement on or off for the signed-in account. */
   updateMyMfa(payload: MfaUpdateRequest): Observable<AppUser> {
     return this.http.patch<ApiResponse<AppUser>>(`${environment.apiUrl}/users/me/mfa`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  /** Turns the single-session requirement on or off for the signed-in account. */
+  updateMyConcurrentLogin(payload: ConcurrentLoginUpdateRequest): Observable<AppUser> {
+    return this.http.patch<ApiResponse<AppUser>>(`${environment.apiUrl}/users/me/concurrent-login`, payload).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  /** Admin (or the user themselves) changes another account's single-session setting. */
+  updateUserConcurrentLogin(id: number, payload: ConcurrentLoginUpdateRequest): Observable<AppUser> {
+    return this.http.patch<ApiResponse<AppUser>>(`${environment.apiUrl}/users/${id}/concurrent-login`, payload).pipe(
       map((response) => this.unwrap(response))
     );
   }

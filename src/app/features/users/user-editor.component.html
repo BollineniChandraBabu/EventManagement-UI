@@ -77,6 +77,18 @@
               </div>
             </div>
           </div>
+          <div class="col-12">
+            <div class="wish-toggle-card" [class.wish-toggle-card--on]="form.controls.concurrentLoginAllowed.value">
+              <div class="wish-toggle-icon">📱</div>
+              <div class="wish-toggle-info">
+                <div class="wish-toggle-title">Allow concurrent sign-in</div>
+                <div class="wish-toggle-sub">When off, a new sign-in signs this user out of their other devices</div>
+              </div>
+              <div class="form-check form-switch ms-auto">
+                <input class="form-check-input" type="checkbox" id="concurrentLoginAllowed" formControlName="concurrentLoginAllowed" />
+              </div>
+            </div>
+          </div>
         </form>
       </div>
     </div>

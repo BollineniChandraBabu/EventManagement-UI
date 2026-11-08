@@ -12,6 +12,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { WISHES_URL_MAX_LENGTH, wishesUrlError } from '../../core/utils/wishes-url';
 import { wishesUrlValidator } from '../../core/utils/wishes-url.validator';
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
+import { MEDIA_ACCEPT, MEDIA_HINT, MediaPreviewKind, mediaError, previewKindFor } from '../../core/utils/media';
 import { startOfDay } from '../calendar/calendar.utils';
 import { NextOccurrence, daysUntilText, eventTypeIcon, nextOccurrence } from './event.utils';
 
@@ -42,13 +43,14 @@ export class EventEditorComponent {
   loadFailed = false;
   saving = false;
 
-  /** Admin-uploaded greeting image for this event. */
+  /** Admin-uploaded greeting media for this event. */
   selectedImageFile?: File;
   imagePreviewUrl?: string;
+  /** How the current preview can be shown; null means it has no inline preview. */
+  imagePreviewKind: MediaPreviewKind = null;
   imageError = '';
-  readonly imageHint = 'PNG, JPEG, GIF or WebP, up to 5 MB';
-  private readonly allowedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-  private readonly maxImageBytes = 5 * 1024 * 1024;
+  readonly imageHint = MEDIA_HINT;
+  readonly acceptedTypes = MEDIA_ACCEPT;
 
   readonly form = this.fb.nonNullable.group({
     userId: [0, [Validators.required, Validators.min(1)]],
@@ -180,19 +182,16 @@ export class EventEditorComponent {
     if (!file) {
       return;
     }
-    if (!this.allowedImageTypes.includes(file.type)) {
-      this.imageError = 'Unsupported image format. Use PNG, JPEG, GIF or WebP.';
-      input.value = '';
-      return;
-    }
-    if (file.size > this.maxImageBytes) {
-      this.imageError = 'The image must be 5 MB or smaller.';
+    const error = mediaError(file);
+    if (error) {
+      this.imageError = error;
       input.value = '';
       return;
     }
     this.imageError = '';
     this.releaseImagePreview();
     this.selectedImageFile = file;
+    this.imagePreviewKind = previewKindFor(file.type, file.name);
     this.imagePreviewUrl = URL.createObjectURL(file);
   }
 
@@ -211,6 +210,7 @@ export class EventEditorComponent {
       URL.revokeObjectURL(this.imagePreviewUrl);
     }
     this.imagePreviewUrl = undefined;
+    this.imagePreviewKind = null;
   }
 
   // ------------------------------------------------------------------ saving
@@ -268,9 +268,10 @@ export class EventEditorComponent {
       recurring: event.recurring,
       wishesUrl: event.wishesUrl ?? ''
     });
-    // Shows the image the event already has; a new upload replaces it on save.
+    // Shows the media the event already has; a new upload replaces it on save.
     if (event.imageUrl) {
       this.imagePreviewUrl = event.imageUrl;
+      this.imagePreviewKind = previewKindFor(null, event.imageUrl);
     }
     this.form.markAsPristine();
   }

@@ -81,16 +81,19 @@
           <div class="form-text mt-1" id="wishesUrlHelp">If filled in, the email includes a button to this page. Leave it empty and no link is added.</div>
         </section>
 
-        <!-- 5. Image -->
+        <!-- 5. Media -->
         <section class="card editor-card">
-          <h2 class="editor-card__title"><span class="step">5</span>Greeting image <small class="text-muted fw-normal">(optional)</small></h2>
-          <p class="form-text mt-0">Upload an image to use in this event's email. If you leave it empty, one is generated automatically.</p>
+          <h2 class="editor-card__title"><span class="step">5</span>Greeting media <small class="text-muted fw-normal">(optional)</small></h2>
+          <p class="form-text mt-0">Upload an image, video, audio clip or PDF to use in this event's email. If you leave it empty, an image is generated automatically.</p>
           <div class="image-picker" *ngIf="hasImage">
-            <img class="image-picker__preview" [src]="imagePreviewUrl" alt="Greeting image preview" />
+            <img *ngIf="imagePreviewKind === 'image'" class="image-picker__preview" [src]="imagePreviewUrl" alt="Greeting media preview" />
+            <video *ngIf="imagePreviewKind === 'video'" class="image-picker__preview" [src]="imagePreviewUrl" controls muted></video>
+            <audio *ngIf="imagePreviewKind === 'audio'" class="image-picker__preview" [src]="imagePreviewUrl" controls></audio>
+            <span *ngIf="imagePreviewKind === 'pdf'" class="badge badge-secondary"><i class="fa-solid fa-file-pdf me-1"></i>PDF selected</span>
             <div class="image-picker__actions">
               <label class="btn btn-sm btn-outline-primary mb-0">
-                <i class="fa-solid fa-arrow-rotate-right me-1"></i>Replace image
-                <input type="file" class="d-none" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onImageSelected($event)" />
+                <i class="fa-solid fa-arrow-rotate-right me-1"></i>Replace media
+                <input type="file" class="d-none" [accept]="acceptedTypes" (change)="onImageSelected($event)" />
               </label>
               <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeSelectedImage()">
                 <i class="fa-solid fa-trash-can me-1"></i>Remove
@@ -98,7 +101,7 @@
             </div>
           </div>
           <div *ngIf="!hasImage">
-            <input class="form-control" [class.is-invalid]="!!imageError" type="file" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onImageSelected($event)" />
+            <input class="form-control" [class.is-invalid]="!!imageError" type="file" [accept]="acceptedTypes" (change)="onImageSelected($event)" />
           </div>
           <div class="invalid-feedback d-block" *ngIf="imageError">{{ imageError }}</div>
           <div class="form-text" *ngIf="!imageError">{{ imageHint }}</div>

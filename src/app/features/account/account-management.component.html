@@ -241,6 +241,36 @@
         </div>
       </div>
 
+      <!-- Concurrent sign-in (hidden while impersonating) -->
+      <div class="card mb-4" *ngIf="!impersonation.isImpersonating()">
+        <div class="card-body">
+          <h2 class="section-title mb-4">
+            <i class="fa-solid fa-right-to-bracket me-2" style="color:#0ea5e9;"></i>Concurrent sign-in
+          </h2>
+          <form [formGroup]="concurrentLoginForm" novalidate>
+            <div class="wish-toggle-card" [class.wish-toggle-card--on]="concurrentLoginForm.controls.concurrentLoginAllowed.value">
+              <span class="wish-emoji">📱</span>
+              <div class="wish-info">
+                <div class="wish-title">Allow sign-in on several devices</div>
+                <div class="wish-sub">Turn this off to keep only one active session</div>
+              </div>
+              <div class="form-check form-switch ms-auto mb-0">
+                <input class="form-check-input" type="checkbox" id="concurrentLoginAllowed" formControlName="concurrentLoginAllowed" [disabled]="isSavingConcurrentLogin" />
+              </div>
+            </div>
+            <p class="text-muted mt-3 mb-3" style="font-size:.85rem;">
+              When this is off, signing in on a new device signs out your other devices. The device you sign in with always stays active.
+            </p>
+            <div class="d-flex justify-content-end">
+              <button type="button" class="btn btn-primary" (click)="saveConcurrentLoginSetting()" [disabled]="isSavingConcurrentLogin">
+                <i class="fa-solid me-1" [class.fa-floppy-disk]="!isSavingConcurrentLogin" [class.fa-spinner]="isSavingConcurrentLogin" [class.fa-spin]="isSavingConcurrentLogin"></i>
+                {{ isSavingConcurrentLogin ? 'Saving…' : 'Save sign-in setting' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- Change Password (hidden while impersonating) -->
       <div class="card mb-4" *ngIf="!impersonation.isImpersonating()">
         <div class="card-body">
