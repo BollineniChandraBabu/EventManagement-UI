@@ -95,6 +95,14 @@ export function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+/** Whole days from `from` to `to`. Date.UTC avoids an off-by-one across daylight-saving changes. */
+export function daysBetween(from: Date, to: Date): number {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((b - a) / msPerDay);
+}
+
 export function ordinal(n: number): string {
   const lastTwo = n % 100;
   if (lastTwo >= 11 && lastTwo <= 13) {
@@ -160,9 +168,10 @@ export function monthsToLoad(view: CalendarView, cursor: Date, today: Date): num
 // ---------------------------------------------------------------- events on a day
 
 /**
- * Birthdays repeat every year; festivals only fall on their exact date (their dates move yearly);
- * anniversaries repeat unless the event is marked as not recurring. Feb 29 events appear on
- * Feb 28 in non-leap years.
+ * Birthdays and festivals repeat every year on the same month and day; festivals are stored for a
+ * single year (the year they were synced), but a festival like Diwali is shown on its month/day in
+ * every year, so navigating to a later year still finds it. Anniversaries repeat unless the event is
+ * marked as not recurring. Feb 29 events appear on Feb 28 in non-leap years.
  */
 export function occursOn(item: CalendarResItem, date: Date): boolean {
   if (!item.eventDate) {
@@ -173,7 +182,7 @@ export function occursOn(item: CalendarResItem, date: Date): boolean {
     return false;
   }
   const kind = kindOf(item);
-  const exactDateOnly = kind === 'festival' || (kind === 'anniversary' && item.recurring === false);
+  const exactDateOnly = kind === 'anniversary' && item.recurring === false;
   if (exactDateOnly) {
     return isSameDay(eventDate, date);
   }
@@ -181,6 +190,36 @@ export function occursOn(item: CalendarResItem, date: Date): boolean {
     ? 28
     : eventDate.getDate();
   return date.getMonth() === eventDate.getMonth() && date.getDate() === day;
+}
+
+/**
+ * The next date on which the item falls, on or after `today`. Recurring items (birthdays, festivals,
+ * anniversaries) roll forward to the current or next year; a one-time anniversary in the past has no
+ * next occurrence. Returns null when the date is missing or invalid.
+ */
+export function nextOccurrenceOf(item: CalendarResItem, today: Date): Date | null {
+  if (!item.eventDate) {
+    return null;
+  }
+  const eventDate = parseCalendarDate(item.eventDate);
+  if (Number.isNaN(eventDate.getTime())) {
+    return null;
+  }
+  const from = startOfDay(today);
+  if (kindOf(item) === 'anniversary' && item.recurring === false) {
+    return eventDate >= from ? eventDate : null;
+  }
+  for (const year of [from.getFullYear(), from.getFullYear() + 1]) {
+    const day =
+      eventDate.getMonth() === 1 && eventDate.getDate() === 29 && !isLeapYear(year)
+        ? 28
+        : eventDate.getDate();
+    const candidate = new Date(year, eventDate.getMonth(), day);
+    if (candidate >= from) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 export function milestoneFor(item: CalendarResItem, date: Date): string | null {
@@ -258,6 +297,10 @@ export function countByKind(days: CalendarDay[]): Record<CelebrationKind, number
 
 // ---------------------------------------------------------------- coming up
 
+/**
+ * The next few celebrations, soonest first. Each item is placed on its next occurrence (recurring
+ * items roll into the next year when needed), so this works no matter which year is being viewed.
+ */
 export function upcomingEntries(
   items: CalendarResItem[],
   today: Date,
@@ -265,16 +308,22 @@ export function upcomingEntries(
   horizonDays = 30,
   limit = 4
 ): UpcomingEntry[] {
+  const from = startOfDay(today);
+  const horizon = addDays(from, horizonDays);
   const result: UpcomingEntry[] = [];
-  for (let offset = 0; offset <= horizonDays && result.length < limit; offset++) {
-    const date = addDays(today, offset);
-    for (const entry of entriesFor(items, date, enabledKinds)) {
-      if (result.length < limit) {
-        result.push({ entry, date, daysUntil: offset });
-      }
+  for (const item of items) {
+    if (item.active === false || !enabledKinds.has(kindOf(item))) {
+      continue;
     }
+    const date = nextOccurrenceOf(item, from);
+    if (!date || date > horizon) {
+      continue;
+    }
+    result.push({ entry: toEntry(item, date), date, daysUntil: daysBetween(from, date) });
   }
-  return result;
+  return result
+    .sort((a, b) => a.date.getTime() - b.date.getTime() || KIND_ORDER[a.entry.kind] - KIND_ORDER[b.entry.kind] || a.entry.title.localeCompare(b.entry.title))
+    .slice(0, limit);
 }
 
 export function relativeDayLabel(daysUntil: number): string {

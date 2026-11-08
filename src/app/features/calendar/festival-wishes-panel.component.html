@@ -1,0 +1,110 @@
+<section class="fw-panel" aria-label="Festival wishes">
+  <div class="fw-panel-head">
+    <h3><i class="fa-solid fa-gift" aria-hidden="true"></i> Festival wishes</h3>
+    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="retry()" [disabled]="loading" aria-label="Reload wishes">
+      <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="loading"></i>
+    </button>
+  </div>
+
+  <p class="fw-panel-state" *ngIf="loading"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading wishes…</p>
+  <div class="fw-panel-state fw-panel-state--error" *ngIf="failed" role="alert">
+    <span>Wishes could not be loaded.</span>
+    <button class="btn btn-sm btn-outline-danger" type="button" (click)="retry()">Try again</button>
+  </div>
+
+  <!-- Regular users: their own wish for this festival -->
+  <ng-container *ngIf="!isAdmin()">
+    <div class="fw-own" *ngIf="myMapping as mine; else noOwnWish">
+      <div class="fw-own-row">
+        <span class="fw-badge" [ngClass]="'fw-badge--' + statusOf(mine)">{{ statusOf(mine) === 'failed' ? 'Failed' : statusOf(mine) === 'inactive' ? 'Not sent' : 'Will be sent' }}</span>
+        <span class="fw-panel-sub">Last sent: {{ lastSent(mine) }}</span>
+      </div>
+      <p class="fw-own-note" *ngIf="mine.customMessage"><i class="fa-regular fa-comment-dots me-1" aria-hidden="true"></i>{{ mine.customMessage }}</p>
+      <a class="fw-own-link" *ngIf="mine.wishesUrl" [href]="mine.wishesUrl" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square me-1" aria-hidden="true"></i>Open your wishes page</a>
+      <div class="fw-own-media" *ngIf="mine.imageUrl">
+        <img *ngIf="mediaKindFor(mine.imageUrl) === 'image'" [src]="mine.imageUrl" [alt]="festivalName + ' wish'" />
+        <video *ngIf="mediaKindFor(mine.imageUrl) === 'video'" [src]="mine.imageUrl" controls muted></video>
+        <audio *ngIf="mediaKindFor(mine.imageUrl) === 'audio'" [src]="mine.imageUrl" controls></audio>
+        <a *ngIf="mediaKindFor(mine.imageUrl) === 'pdf'" [href]="mine.imageUrl" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf me-1" aria-hidden="true"></i>Your wish attachment</a>
+      </div>
+    </div>
+    <ng-template #noOwnWish>
+      <p class="fw-panel-state" *ngIf="!loading && !failed"><i class="fa-regular fa-face-smile me-2" aria-hidden="true"></i>No personal wish is set up for this festival.</p>
+    </ng-template>
+  </ng-container>
+
+  <!-- Admins: who gets this festival's wish, with inline editing -->
+  <ng-container *ngIf="isAdmin()">
+    <div class="fw-summary" *ngIf="!loading && !failed">
+      <span><strong>{{ mappings.length }}</strong> {{ mappings.length === 1 ? 'person' : 'people' }}</span>
+      <span class="fw-panel-sub">{{ activeCount }} active</span>
+    </div>
+
+    <ul class="fw-people" *ngIf="mappings.length">
+      <li class="fw-person" *ngFor="let mapping of mappings; trackBy: trackById" [class.is-failed]="statusOf(mapping) === 'failed'">
+        <div class="fw-person-main">
+          <span class="fw-person-name">{{ mapping.userName }}</span>
+          <span class="fw-badge" [ngClass]="'fw-badge--' + statusOf(mapping)">{{ statusOf(mapping) === 'failed' ? 'Failed' : statusOf(mapping) === 'inactive' ? 'Inactive' : 'Active' }}</span>
+          <span class="fw-panel-sub">Last sent: {{ lastSent(mapping) }}</span>
+        </div>
+
+        <div class="fw-person-actions" *ngIf="editingId !== mapping.id">
+          <label class="form-check form-switch m-0" [title]="mapping.active ? 'Wish is sent' : 'Wish is not sent'">
+            <input class="form-check-input" type="checkbox" role="switch" [checked]="mapping.active" [disabled]="togglingIds.has(mapping.id)" (change)="toggleActive(mapping)" [attr.aria-label]="(mapping.active ? 'Stop sending to ' : 'Send to ') + mapping.userName" />
+          </label>
+          <button class="btn btn-sm btn-outline-primary" type="button" (click)="startEdit(mapping)"><i class="fa-solid fa-pen-to-square me-1"></i>Edit</button>
+          <button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(mapping)" [disabled]="deletingIds.has(mapping.id)" aria-label="Remove wish"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+
+        <div class="fw-edit" *ngIf="editingId === mapping.id">
+          <label class="form-label fw-label" [attr.for]="'fw-note-' + mapping.id">Personal note</label>
+          <textarea [id]="'fw-note-' + mapping.id" class="form-control" rows="2" [maxlength]="noteMaxLength" [(ngModel)]="editNote" placeholder="Shown at the end of the email"></textarea>
+
+          <label class="form-label fw-label mt-2" [attr.for]="'fw-url-' + mapping.id">Custom wishes page <span class="text-muted fw-normal">(optional)</span></label>
+          <input [id]="'fw-url-' + mapping.id" class="form-control" type="url" inputmode="url" autocomplete="off" placeholder="https://example.com/wishes.html" [maxlength]="wishesUrlMaxLength" [class.is-invalid]="!!editWishesUrlMessage" [(ngModel)]="editWishesUrl" />
+          <div class="invalid-feedback d-block" *ngIf="editWishesUrlMessage">{{ editWishesUrlMessage }}</div>
+
+          <label class="form-label fw-label mt-2" [attr.for]="'fw-media-' + mapping.id">Custom wish media <span class="text-muted fw-normal">(optional)</span></label>
+          <div class="d-flex align-items-center gap-2">
+            <input [id]="'fw-media-' + mapping.id" class="form-control form-control-sm" type="file" (change)="onEditImageSelected($event)" />
+            <button class="btn btn-sm btn-outline-secondary" type="button" *ngIf="editImage" (click)="clearEditImage()">Clear</button>
+          </div>
+          <div class="form-text text-danger" *ngIf="editImageError">{{ editImageError }}</div>
+          <div class="form-text" *ngIf="editImage">New media: {{ editImage.name }}</div>
+
+          <div class="fw-edit-actions">
+            <button class="btn btn-sm btn-outline-secondary" type="button" (click)="cancelEdit()" [disabled]="savingEdit">Cancel</button>
+            <button class="btn btn-sm btn-primary" type="button" (click)="saveEdit(mapping)" [disabled]="!canSaveEdit"><i class="fa-solid me-1" [class.fa-floppy-disk]="!savingEdit" [class.fa-spinner]="savingEdit" [class.fa-spin]="savingEdit"></i>{{ savingEdit ? 'Saving…' : 'Save' }}</button>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <p class="fw-panel-state" *ngIf="!loading && !failed && !mappings.length">No one is linked to this festival yet.</p>
+
+    <!-- Link people -->
+    <div class="fw-link" *ngIf="usersLoaded">
+      <label class="form-label fw-label" for="fw-link-search">Link people to {{ festivalName }}</label>
+      <div class="fw-link-tools">
+        <input id="fw-link-search" class="form-control form-control-sm" type="search" placeholder="Search by name or email" [(ngModel)]="userQuery" autocomplete="off" />
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="toggleAllAvailable()" [disabled]="!availableUsers.length">{{ allAvailableSelected ? 'Unselect' : 'Select all' }}</button>
+      </div>
+      <ul class="fw-link-list" role="listbox" aria-multiselectable="true" aria-label="People to link">
+        <li *ngFor="let user of availableUsers; trackBy: trackByUser">
+          <label class="fw-link-user" [class.is-selected]="isNewSelected(user.id)">
+            <input class="form-check-input" type="checkbox" [checked]="isNewSelected(user.id)" (change)="toggleNewUser(user.id)" />
+            <span class="fw-link-text"><strong>{{ user.name }}</strong><span class="fw-panel-sub">{{ user.email }}</span></span>
+          </label>
+        </li>
+        <li class="fw-panel-state" *ngIf="!availableUsers.length">Everyone shown is already linked.</li>
+      </ul>
+      <button class="btn btn-sm btn-primary" type="button" (click)="addSelected()" [disabled]="adding || !newUserIds.size">
+        <i class="fa-solid me-1" [class.fa-user-plus]="!adding" [class.fa-spinner]="adding" [class.fa-spin]="adding"></i>{{ adding ? 'Linking…' : 'Link ' + newUserIds.size + ' ' + (newUserIds.size === 1 ? 'person' : 'people') }}
+      </button>
+    </div>
+    <p class="fw-panel-state" *ngIf="usersFailed && !usersLoaded">
+      People could not be loaded.
+      <button class="btn btn-sm btn-outline-danger" type="button" (click)="retry()">Try again</button>
+    </p>
+  </ng-container>
+</section>

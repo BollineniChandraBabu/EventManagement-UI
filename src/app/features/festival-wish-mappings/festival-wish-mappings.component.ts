@@ -29,6 +29,8 @@ import {
   addIds,
   bulkResultMessage,
   festivalTiming,
+  festivalOccurrence,
+  festivalTimingNext,
   filterUsers,
   lastSentLabel,
   pickableFestivals,
@@ -110,7 +112,6 @@ export class FestivalWishMappingsComponent {
   referenceLoaded = false;
   referenceLoading = false;
   referenceFailed = false;
-  showPastFestivals = false;
   selectedFestivalId: number | null = null;
   userQuery = '';
   selectedUserIds = new Set<number>();
@@ -418,7 +419,6 @@ export class FestivalWishMappingsComponent {
     this.active = true;
     this.note = '';
     this.wishesUrl = '';
-    this.showPastFestivals = false;
     this.navigateEditor(true);
   }
 
@@ -515,7 +515,7 @@ export class FestivalWishMappingsComponent {
   }
 
   get pickerFestivals(): FestivalItem[] {
-    return pickableFestivals(this.festivals, this.today, this.showPastFestivals);
+    return pickableFestivals(this.festivals, this.today);
   }
 
   get selectedFestival(): FestivalItem | undefined {
@@ -523,7 +523,11 @@ export class FestivalWishMappingsComponent {
   }
 
   festivalTimingOf(festival: FestivalItem): FestivalTiming {
-    return festivalTiming(festival.eventDate, this.today);
+    return festivalTimingNext(festival, this.today);
+  }
+
+  festivalOccurrenceOf(festival: FestivalItem): Date {
+    return festivalOccurrence(festival, this.today);
   }
 
   get visibleUsers(): AppUser[] {

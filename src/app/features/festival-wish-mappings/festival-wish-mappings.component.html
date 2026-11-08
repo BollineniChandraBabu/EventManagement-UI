@@ -167,9 +167,8 @@
         <label class="form-label fw-label" for="fw-festival">Festival</label>
         <select id="fw-festival" class="form-select" [(ngModel)]="selectedFestivalId" (ngModelChange)="onFestivalChanged()">
           <option [ngValue]="null" disabled>Select a festival…</option>
-          <option *ngFor="let festival of pickerFestivals" [ngValue]="festival.id">{{ festival.eventName }} · {{ festival.eventDate | date: 'MMM d, y' }} ({{ festivalTimingOf(festival).label }})</option>
+          <option *ngFor="let festival of pickerFestivals" [ngValue]="festival.id">{{ festival.eventName }} · next on {{ festivalOccurrenceOf(festival) | date: 'MMM d, y' }} ({{ festivalTimingOf(festival).label }})</option>
         </select>
-        <div class="form-check mt-2"><input class="form-check-input" id="fw-past" type="checkbox" [(ngModel)]="showPastFestivals" /><label class="form-check-label small" for="fw-past">Show festivals that have passed</label></div>
 
         <div class="fw-recipients-head">
           <label class="form-label fw-label mb-0" for="fw-user-search">Recipients <span class="fw-count" *ngIf="selectedUserIds.size">{{ selectedUserIds.size }} selected</span></label>

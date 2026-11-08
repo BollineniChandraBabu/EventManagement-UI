@@ -145,18 +145,20 @@
 .day-sheet__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--c-border); }
 .day-sheet__header h2 { margin: 0; font-size: 1.1rem; font-weight: 800; }
 .day-sheet__header p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--c-text-muted); }
+.day-sheet__tools { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .day-sheet__list { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.85rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
 
 .celebration-modal { --kind-color: #9333ea; width: min(100%, 410px); overflow: hidden; border: 0; border-radius: var(--r-xl); background: var(--c-surface); box-shadow: var(--shadow-xl); animation: sheet-enter 0.2s ease-out; }
 .celebration-modal__header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem 0; }
 .celebration-modal__icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--kind-soft); color: var(--kind-color); font-size: 1.2rem; }
-.celebration-modal__body { padding: 0.85rem 1.25rem 1.35rem; }
+.celebration-modal__body { padding: 0.85rem 1.25rem 1.35rem; max-height: min(70vh, 560px); overflow-y: auto; }
 .celebration-modal__label { margin: 0 0 0.35rem; color: var(--kind-color); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
 .celebration-modal h2 { margin: 0; color: var(--c-text); font-size: 1.4rem; font-weight: 800; overflow-wrap: anywhere; }
 .celebration-modal__date, .celebration-modal__milestone { display: flex; align-items: center; gap: 0.55rem; margin: 1rem 0 0; color: var(--c-text-secondary); font-size: 0.9rem; }
 .celebration-modal__milestone { margin-top: 0.5rem; font-weight: 600; }
 .celebration-modal__date i, .celebration-modal__milestone i { color: var(--kind-color); }
 .celebration-modal__description { margin: 0.75rem 0 0; color: var(--c-text-muted); font-size: 0.9rem; line-height: 1.5; }
+.celebration-modal__tools { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
 .celebration-modal__footer { display: flex; justify-content: flex-end; padding: 0.85rem 1.25rem; border-top: 1px solid var(--c-border); background: var(--c-surface-alt); }
 .celebration-modal__footer .btn { background: var(--kind-color); border-color: var(--kind-color); }
 

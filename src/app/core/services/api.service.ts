@@ -502,6 +502,19 @@ export class ApiService {
     );
   }
 
+  /** The signed-in user's own active festival wish mappings (any authenticated user). */
+  myFestivalWishMappings(
+    page = 0,
+    size = 500,
+    searchKey = '',
+    sortBy = 'id',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ): Observable<PagedResponse<FestivalWishMapping>> {
+    const params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    return this.http.get<ApiResponse<FestivalWishMapping[] | PagedResponse<FestivalWishMapping>>>(`${environment.apiUrl}/festival-wish-mappings/me`, { params })
+      .pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
   saveFestivalWishMappingWithImage(
     specialEventId: number,
     userId: number,

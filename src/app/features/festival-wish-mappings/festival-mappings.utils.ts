@@ -1,11 +1,11 @@
 import type {
   AppUser,
   BulkFestivalWishMappingResult,
+  CalendarResItem,
   FestivalItem,
   FestivalWishMapping
 } from '../../core/models/api.models';
-import { parseCalendarDate, startOfDay } from '../calendar/calendar.utils';
-import { daysBetween } from '../events/event.utils';
+import { daysBetween, nextOccurrenceOf, parseCalendarDate, startOfDay } from '../calendar/calendar.utils';
 
 export type MappingStatus = 'failed' | 'inactive' | 'active';
 
@@ -20,24 +20,57 @@ export function statusOf(mapping: FestivalWishMapping): MappingStatus {
   return mapping.error ? 'failed' : 'active';
 }
 
+function timingLabel(daysUntil: number): string {
+  if (daysUntil === 0) return 'Today';
+  if (daysUntil === 1) return 'Tomorrow';
+  if (daysUntil > 1) return `In ${daysUntil} days`;
+  return daysUntil === -1 ? 'Yesterday' : `${-daysUntil} days ago`;
+}
+
+/** Relative to the festival's stored date, used by the mapping list (a specific year's festival). */
 export function festivalTiming(festivalDate: string, today: Date): FestivalTiming {
   const date = parseCalendarDate(festivalDate);
   if (Number.isNaN(date.getTime())) {
     return { daysUntil: 0, label: '', isPast: false };
   }
   const daysUntil = daysBetween(startOfDay(today), date);
-  if (daysUntil === 0) return { daysUntil, label: 'Today', isPast: false };
-  if (daysUntil === 1) return { daysUntil, label: 'Tomorrow', isPast: false };
-  if (daysUntil > 1) return { daysUntil, label: `In ${daysUntil} days`, isPast: false };
-  return { daysUntil, label: daysUntil === -1 ? 'Yesterday' : `${-daysUntil} days ago`, isPast: true };
+  return { daysUntil, label: timingLabel(daysUntil), isPast: daysUntil < 0 };
 }
 
-/** Festivals to pick from, soonest first. Past ones only when asked for. */
-export function pickableFestivals(festivals: FestivalItem[], today: Date, includePast: boolean): FestivalItem[] {
+/** A festival's next occurrence, on or after today (this year's date, else next year's). */
+export function festivalOccurrence(festival: FestivalItem, today: Date): Date {
+  const item: CalendarResItem = {
+    id: festival.id,
+    eventType: 'festival',
+    eventName: festival.eventName,
+    eventDate: festival.eventDate,
+    active: festival.active
+  };
+  return nextOccurrenceOf(item, today) ?? parseCalendarDate(festival.eventDate);
+}
+
+/**
+ * Relative to the festival's *next* occurrence. Festivals repeat every year, so a festival stored
+ * for an earlier year still shows an upcoming date rather than looking permanently past.
+ */
+export function festivalTimingNext(festival: FestivalItem, today: Date): FestivalTiming {
+  const date = festivalOccurrence(festival, today);
+  if (Number.isNaN(date.getTime())) {
+    return { daysUntil: 0, label: '', isPast: false };
+  }
+  const daysUntil = daysBetween(startOfDay(today), date);
+  return { daysUntil, label: timingLabel(daysUntil), isPast: daysUntil < 0 };
+}
+
+/** Active festivals, soonest next occurrence first. Festivals repeat, so none is ever "past". */
+export function pickableFestivals(festivals: FestivalItem[], today: Date): FestivalItem[] {
   return festivals
     .filter((festival) => festival.active !== false)
-    .filter((festival) => includePast || !festivalTiming(festival.eventDate, today).isPast)
-    .sort((a, b) => a.eventDate.localeCompare(b.eventDate) || a.eventName.localeCompare(b.eventName));
+    .sort(
+      (a, b) =>
+        festivalOccurrence(a, today).getTime() - festivalOccurrence(b, today).getTime() ||
+        a.eventName.localeCompare(b.eventName)
+    );
 }
 
 export function filterUsers(users: AppUser[], query: string): AppUser[] {

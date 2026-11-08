@@ -68,6 +68,27 @@ Repository notes for automated agents working on the EventManagement UI (Angular
   notice whose only action is to sign out and sign in again. The user is deliberately not navigated
   away, so the reason is not missed.
 
+## Calendar and festival wishes
+
+- Festivals are stored for the year the Calendarific sync last ran, but they repeat every year on
+  their month/day. `occursOn` in `features/calendar/calendar.utils.ts` therefore matches festivals
+  by month/day in **any** year, and `nextOccurrenceOf` rolls them (and birthdays/anniversaries)
+  forward to the current or next year. This is why navigating to a later year still shows the same
+  festivals instead of an empty grid; the backend sends `recurring=true` for festivals to match.
+- Only a non-recurring anniversary is tied to its exact date (`occursOn` and `nextOccurrenceOf`).
+- The festival picker in Festival Wishes uses `festivalTimingNext`/`festivalOccurrence`
+  (`features/festival-wish-mappings/festival-mappings.utils.ts`), so a festival stored for an earlier
+  year still reads as upcoming. There is no "show past festivals" toggle any more; festivals are
+  never permanently past.
+- Clicking a festival in the calendar opens `FestivalWishesPanelComponent`
+  (`features/calendar/festival-wishes-panel.component.ts`), embedded in the event dialog. Admins see
+  everyone linked to that festival and can link, edit (note/wishes link/media), toggle or remove
+  them; other users see their own wish via `GET /api/festival-wish-mappings/me`. The panel looks
+  mappings up by the festival id that the calendar response carries in `id`.
+- Calendar extras: whole-year jump buttons, a persisted view/filter preference
+  (`localStorage` keys `fw_calendar_view`, `fw_calendar_kinds`), and per-day `.ics` download,
+  "Add to Google Calendar" and "copy day summary" in the day sheet / event dialog.
+
 ## Offline handling
 
 - `ConnectivityService` decides whether the backend is reachable. It starts from `navigator.onLine`,

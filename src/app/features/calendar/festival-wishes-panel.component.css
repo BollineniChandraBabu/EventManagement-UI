@@ -1,0 +1,46 @@
+:host { display: block; }
+
+.fw-panel { margin-top: 0.85rem; border-top: 1px solid var(--c-border, #e2e8f0); padding-top: 0.85rem; }
+.fw-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.fw-panel-head h3 { margin: 0; font-size: 0.95rem; font-weight: 800; color: var(--c-text, #0f172a); }
+
+.fw-panel-state { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--c-text-muted, #64748b); }
+.fw-panel-state--error { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; color: #b91c1c; }
+.fw-panel-sub { font-size: 0.78rem; color: var(--c-text-muted, #64748b); }
+
+.fw-summary { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 0.5rem; }
+
+.fw-badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+.fw-badge--active { background: #dcfce7; color: #166534; }
+.fw-badge--inactive { background: #e2e8f0; color: #475569; }
+.fw-badge--failed { background: #fee2e2; color: #b91c1c; }
+
+/* Regular users: their own wish */
+.fw-own { display: flex; flex-direction: column; gap: 0.5rem; }
+.fw-own-row { display: flex; align-items: center; gap: 0.6rem; }
+.fw-own-note { margin: 0; font-size: 0.88rem; color: var(--c-text, #0f172a); }
+.fw-own-link { font-size: 0.85rem; }
+.fw-own-media img, .fw-own-media video { max-width: 100%; max-height: 220px; border-radius: 8px; border: 1px solid var(--c-border, #e2e8f0); }
+.fw-own-media audio { width: 100%; }
+
+/* Admin: list of people */
+.fw-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.fw-person { border: 1px solid var(--c-border, #e2e8f0); border-radius: 10px; padding: 0.55rem 0.7rem; }
+.fw-person.is-failed { border-color: #fca5a5; }
+.fw-person-main { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.fw-person-name { font-weight: 700; color: var(--c-text, #0f172a); }
+.fw-person-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; }
+
+.fw-edit { margin-top: 0.5rem; }
+.fw-edit-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
+.fw-label { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.2rem; }
+
+/* Admin: link people */
+.fw-link { margin-top: 0.75rem; }
+.fw-link-tools { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
+.fw-link-list { list-style: none; margin: 0 0 0.5rem; padding: 0; max-height: 220px; overflow-y: auto; }
+.fw-link-user { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.5rem; border-radius: 8px; cursor: pointer; }
+.fw-link-user:hover { background: var(--c-surface-2, #f1f5f9); }
+.fw-link-user.is-selected { background: var(--c-surface-2, #eff6ff); }
+.fw-link-text { display: flex; flex-direction: column; min-width: 0; }
+.fw-link-text strong { font-size: 0.85rem; }
