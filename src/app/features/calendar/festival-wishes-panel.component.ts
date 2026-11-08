@@ -165,8 +165,11 @@ export class FestivalWishesPanelComponent implements OnChanges {
   }
 
   toggleNewUser(userId: number): void {
-    this.newUserIds.clear();
-    this.newUserIds.add(userId);
+    if (this.newUserIds.has(userId)) {
+      this.newUserIds.delete(userId);
+    } else {
+      this.newUserIds.add(userId);
+    }
   }
 
   toggleAllAvailable(): void {
