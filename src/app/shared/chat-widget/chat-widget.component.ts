@@ -30,6 +30,13 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { ToastService } from '../../core/services/toast.service';
 import { BulkSelection } from '../bulk-selection';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import {
+  canMessage,
+  filterCircleConversations,
+  filterCircleUsers,
+  isInCircle,
+  messageLockReason,
+} from '../../core/utils/circle-chat';
 import { MAX_ATTACHMENT_BYTES, MediaPreviewKind, formatBytes, previewKindFor } from '../../core/utils/media';
 
 interface ChatTimelineEntry {
@@ -212,35 +219,27 @@ export class ChatWidgetComponent {
   }
 
   get canSendToActiveUser(): boolean {
-    return (
-        !!this.activeConversation &&
-        this.activeConversation.otherUserActive !== false &&
-        this.isInMyCircle(this.activeConversation.otherUserId)
+    const conversation = this.activeConversation;
+    return canMessage(
+        conversation
+            ? { userId: conversation.otherUserId, active: conversation.otherUserActive }
+            : null,
+        this.circleUserIds
     );
   }
 
   get filteredNewChatUsers(): ChatUser[] {
-    const query = this.newChatSearch.trim().toLowerCase();
-    return this.users
-        .filter((u) => u.active !== false)
-        .filter((u) => this.isInMyCircle(u.userId))
-        .filter(
-            (u) =>
-                !query ||
-                u.name.toLowerCase().includes(query) ||
-                u.email.toLowerCase().includes(query)
-        )
-        .slice(0, 8);
+    return filterCircleUsers(this.users, this.circleUserIds, this.newChatSearch);
   }
 
   /** True when the user is in the accepted circle, so chat is allowed. */
   isInMyCircle(userId: number): boolean {
-    return this.circleUserIds.has(userId);
+    return isInCircle(this.circleUserIds, userId);
   }
 
   /** Only conversations with accepted circle members are listed. */
   get visibleConversations(): ChatConversation[] {
-    return this.conversations.filter((c) => this.isInMyCircle(c.otherUserId));
+    return filterCircleConversations(this.conversations, this.circleUserIds);
   }
 
   /** Conversations with users outside the circle stay visible but read-only. */
@@ -255,12 +254,13 @@ export class ChatWidgetComponent {
 
   /** The reason the composer is locked, used for the inline note. */
   get chatLockedReason(): string {
-    if (!this.activeConversation) return '';
-    if (this.activeConversation.otherUserActive === false) return 'This user is disabled — read only.';
-    if (!this.isInMyCircle(this.activeConversation.otherUserId)) {
-      return 'Only people in your circle can be messaged. Add them from the Family & Friends page.';
-    }
-    return '';
+    const conversation = this.activeConversation;
+    return messageLockReason(
+        conversation
+            ? { userId: conversation.otherUserId, active: conversation.otherUserActive }
+            : null,
+        this.circleUserIds
+    );
   }
 
   get isChatLocked(): boolean {
