@@ -61,4 +61,30 @@ describe('AuthService direct login', () => {
 
     expect(navigate).toHaveBeenCalledWith('/circles');
   });
+
+  it('clears the stored session when a concurrent login is flagged', () => {
+    localStorage.setItem('fw_access_token', 'stale-token');
+    localStorage.setItem('fw_refresh_token', 'stale-refresh');
+
+    service.flagConcurrentLogin('Session replaced.');
+
+    expect(service.getAccessToken()).toBeNull();
+    expect(service.authenticated()).toBeFalse();
+    expect(service.concurrentLoginNotice()).toBe('Session replaced.');
+  });
+
+  it('clears the concurrent-login notice on a new sign-in', () => {
+    service.flagConcurrentLogin('Session replaced.');
+
+    service.directLogin({ token: 'abc123' }).subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/direct-login`).flush({
+      accessToken: 'fresh-access',
+      refreshToken: 'fresh-refresh',
+      expiresIn: 3600,
+      role: 'ROLE_USER',
+    });
+
+    expect(service.concurrentLoginNotice()).toBeNull();
+    expect(service.authenticated()).toBeTrue();
+  });
 });

@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SaveNotificationPayload } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { scheduleError, toDateTimeLocal } from '../../core/utils/notification-schedule';
 
 @Component({
   standalone: true,
@@ -28,7 +29,7 @@ export class NotificationEditorComponent {
 
   /** The earliest time the schedule pickers accept, in the browser's own time zone. */
   get minScheduleValue(): string {
-    return this.toDateTimeLocal(new Date().toISOString()) ?? '';
+    return toDateTimeLocal(new Date().toISOString()) ?? '';
   }
 
   constructor() {
@@ -45,19 +46,10 @@ export class NotificationEditorComponent {
       return;
     }
 
-    if (this.form.scheduledFrom && this.form.scheduledTo && this.form.scheduledTo < this.form.scheduledFrom) {
-      this.toast.error('Schedule end time must be after start time.');
-      return;
-    }
-
     // The server rejects a schedule that is not in the future, so it is caught here first.
-    const now = this.minScheduleValue;
-    if (this.form.scheduledFrom && this.form.scheduledFrom <= now) {
-      this.toast.error('Schedule start time must be in the future.');
-      return;
-    }
-    if (this.form.scheduledTo && this.form.scheduledTo <= now) {
-      this.toast.error('Schedule end time must be in the future.');
+    const scheduleIssue = scheduleError(this.form);
+    if (scheduleIssue) {
+      this.toast.error(scheduleIssue);
       return;
     }
 
@@ -97,8 +89,8 @@ export class NotificationEditorComponent {
           title: item.title,
           message: item.message,
           canSendEmail: !!item.canSendEmail,
-          scheduledFrom: this.toDateTimeLocal(item.scheduledFrom),
-          scheduledTo: this.toDateTimeLocal(item.scheduledTo)
+          scheduledFrom: toDateTimeLocal(item.scheduledFrom),
+          scheduledTo: toDateTimeLocal(item.scheduledTo)
         };
         this.loading = false;
       },
@@ -107,13 +99,5 @@ export class NotificationEditorComponent {
         this.loading = false;
       }
     });
-  }
-
-  private toDateTimeLocal(value?: string | null): string | null {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    const offsetMs = date.getTimezoneOffset() * 60_000;
-    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
   }
 }

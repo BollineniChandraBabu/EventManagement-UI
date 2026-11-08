@@ -59,7 +59,14 @@ Repository notes for automated agents working on the EventManagement UI (Angular
 - `User.concurrentLoginAllowed` (default `true`) gates single-session sign-in. Admins set it in the
   user editor; a user sets their own on the account page (`PATCH /api/users/me/concurrent-login`,
   admin/self: `PATCH /api/users/{id}/concurrent-login`). When false, a new sign-in revokes the
-  user's earlier refresh tokens.
+  user's earlier refresh tokens and mints a fresh session id.
+- A request from a superseded session is rejected by the backend with 401 and a body message
+  beginning `CONCURRENT_LOGIN`. `auth.interceptor.ts` detects that marker (`isConcurrentLoginError`)
+  before attempting a token refresh — refreshing would only fail again — and calls
+  `AuthService.flagConcurrentLogin`. That drops the stored tokens and sets
+  `AuthService.concurrentLoginNotice`, which raises `ConcurrentLoginOverlayComponent`, a full-screen
+  notice whose only action is to sign out and sign in again. The user is deliberately not navigated
+  away, so the reason is not missed.
 
 ## Offline handling
 
