@@ -13,6 +13,7 @@ import { SensitiveDataService } from '../../core/services/sensitive-data.service
 import { SensitiveInfoToggleComponent } from '../../shared/sensitive-info-toggle.component';
 import { ThemeService } from '../../core/services/theme.service';
 import { AppUser } from '../../core/models/api.models';
+import { IMAGE_ACCEPT, IMAGE_HINT, imageError } from '../../core/utils/media';
 
 @Component({
   standalone: true,
@@ -75,6 +76,8 @@ export class AccountManagementComponent {
   profilePictureUrl: string | null = null;
   isUploadingProfilePicture = false;
   isRemovingProfilePicture = false;
+  readonly acceptedImageTypes = IMAGE_ACCEPT;
+  readonly imageHint = IMAGE_HINT;
 
   constructor() {
     this.theme.load();
@@ -196,8 +199,9 @@ export class AccountManagementComponent {
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      this.toast.error('Please select a valid image file.');
+    const mediaIssue = imageError(file);
+    if (mediaIssue) {
+      this.toast.error(mediaIssue);
       input.value = '';
       return;
     }

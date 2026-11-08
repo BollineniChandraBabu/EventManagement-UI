@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, Subscription, tap, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginOtpVerifyRequest, LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
+import { DirectLoginRequest, LoginOtpVerifyRequest, LoginRequest, OtpRequest, OtpVerifyRequest, TokenResponse } from '../models/auth.models';
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
 import {AppUser, AuthSSOClientResponse} from '../models/api.models';
 import { ImpersonationService } from './impersonation.service';
@@ -54,6 +54,16 @@ export class AuthService {
 
   googleSsoToken(): Observable<AuthSSOClientResponse> {
     return this.http.get<AuthSSOClientResponse>(`${environment.apiUrl}/auth/sso/token`);
+  }
+
+  /**
+   * Signs in with a one-time link token from an email (for example a circle request). The session
+   * is kept in `localStorage`, matching how the other token-based flows persist.
+   */
+  directLogin(request: DirectLoginRequest): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/direct-login`, request).pipe(
+      tap((res) => this.setSession(res, true))
+    );
   }
 
   loginAsUser(email: string): Observable<TokenResponse> {

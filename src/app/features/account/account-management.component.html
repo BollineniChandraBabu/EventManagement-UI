@@ -61,6 +61,7 @@
               <h3 class="profile-picture-title">Profile Picture</h3>
               <p class="text-muted mb-3" style="font-size:.85rem;">
                 Upload an image to personalize your account, or remove it to restore the default avatar.
+                <span class="d-block">{{ imageHint }}.</span>
               </p>
               <div class="d-flex flex-wrap gap-2">
                 <label class="btn btn-sm btn-outline-primary mb-0" [class.disabled]="isUploadingProfilePicture">
@@ -68,7 +69,7 @@
                   {{ isUploadingProfilePicture ? 'Uploading…' : 'Upload new picture' }}
                   <input
                     type="file"
-                    accept="image/*"
+                    [accept]="acceptedImageTypes"
                     class="d-none"
                     [disabled]="isUploadingProfilePicture"
                     (change)="onProfilePictureSelected($event)"

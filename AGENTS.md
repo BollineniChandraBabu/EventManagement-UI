@@ -31,8 +31,11 @@ Repository notes for automated agents working on the EventManagement UI (Angular
   WebP, BMP, 5 MB), video (50 MB), audio (10 MB) and PDF (20 MB). The rules live in
   `src/app/core/utils/media.ts` and mirror the backend `MediaValidation`. Profile pictures stay
   image-only.
-- Validate on the client first (`mediaError`) so a bad file is explained before it is sent, and use
-  `MEDIA_ACCEPT` for the file input's `accept` attribute and `MEDIA_HINT` for the help text.
+- Validate on the client first (`mediaError`; `imageError` where only an image is accepted, such as
+  the profile picture) so a bad file is explained before it is sent, and use `MEDIA_ACCEPT` (or
+  `IMAGE_ACCEPT`) for the file input's `accept` attribute and `MEDIA_HINT`/`IMAGE_HINT` for the help
+  text. `accept` lists the exact accepted MIME types, so an unsupported `image/*` subtype such as
+  SVG is never offered.
 - A stored file's kind is worked out from its URL/extension with `previewKindFor`; use
   `MediaPreviewKind` to pick the right `<img>`/`<video>`/`<audio>`/`<iframe>` (or an icon when there
   is no inline preview). Chat attachments may be any file, so they fall back to a download chip.

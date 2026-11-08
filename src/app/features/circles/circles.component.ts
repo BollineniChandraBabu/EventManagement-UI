@@ -4,7 +4,7 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
-import { AppUser, PagedResponse } from '../../core/models/api.models';
+import { DirectoryUser, PagedResponse } from '../../core/models/api.models';
 import { CircleMember, CircleRequest } from '../../core/models/circle.models';
 import { ApiService } from '../../core/services/api.service';
 import { CircleService } from '../../core/services/circle.service';
@@ -42,7 +42,7 @@ export class CirclesComponent implements OnInit {
 
   searchTerm = '';
   searching = false;
-  searchResults: AppUser[] = [];
+  searchResults: DirectoryUser[] = [];
   private readonly search$ = new Subject<string>();
 
   ngOnInit(): void {
@@ -56,11 +56,11 @@ export class CirclesComponent implements OnInit {
           const trimmed = term.trim();
           if (trimmed.length < 2) {
             this.searching = false;
-            return of<PagedResponse<AppUser> | AppUser[]>([]);
+            return of<PagedResponse<DirectoryUser> | DirectoryUser[]>([]);
           }
           this.searching = true;
-          return this.api.users(0, 20, trimmed, 'name', 'asc').pipe(
-            catchError(() => of<PagedResponse<AppUser> | AppUser[]>([]))
+          return this.api.directoryUsers(0, 20, trimmed, 'name', 'asc').pipe(
+            catchError(() => of<PagedResponse<DirectoryUser> | DirectoryUser[]>([]))
           );
         }),
         takeUntilDestroyed(this.destroyRef)
@@ -101,7 +101,7 @@ export class CirclesComponent implements OnInit {
     return 'none';
   }
 
-  sendRequest(user: AppUser): void {
+  sendRequest(user: DirectoryUser): void {
     if (this.busyIds.has(user.id)) return;
     this.busyIds.add(user.id);
     this.circles.sendRequest(user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

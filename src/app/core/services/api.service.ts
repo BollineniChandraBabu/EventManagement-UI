@@ -9,6 +9,7 @@ import {
   AppUser,
   DashboardChartResponse,
   DashboardStats,
+  DirectoryUser,
   LoginLocationChartResponse,
   FestivalItem,
   BulkFestivalWishMappingPayload,
@@ -150,6 +151,23 @@ export class ApiService {
 
     return this.http.get<ApiResponse<PagedResponse<AppUser> | AppUser[]>>(`${environment.apiUrl}/users`, { params })
       .pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
+  }
+
+  /**
+   * Public user directory for the circle search. Unlike {@link users}, this endpoint is available
+   * to any signed-in user, not just admins.
+   */
+  directoryUsers(
+    page = 0,
+    size = 20,
+    searchKey = '',
+    sortBy = 'name',
+    sortDir: 'asc' | 'desc' = 'asc'
+  ): Observable<PagedResponse<DirectoryUser>> {
+    const params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
+    return this.http.get<ApiResponse<PagedResponse<DirectoryUser> | DirectoryUser[]>>(
+      `${environment.apiUrl}/users/directory`, { params }
+    ).pipe(map((response) => this.normalizePaged(this.unwrap(response), page, size)));
   }
 
   getUsersFilterValues(): Observable<{ roles?: string[]; genders?: string[]; active?: boolean[] }> {
@@ -570,6 +588,7 @@ export class ApiService {
     emailTypes?: string[]
   ): Observable<PagedResponse<EmailStatus>> {
     let url = `${environment.apiUrl}/emails/status`;
+    let filterType = emailType;
     if (emailType === 'OTP') {
       url += '/admin/otp';
     } else if (emailType === 'FORGOT_PASSWORD') {
@@ -578,9 +597,13 @@ export class ApiService {
       url += '/festival-wishes';
     } else if (emailType === 'UNREAD_CHAT_MESSAGE') {
       url += '/unread-chat-messages';
+    } else if (emailType === 'CIRCLE_REQUEST') {
+      // No dedicated path; the generic endpoint filters by the emailTypes list.
+      filterType = '';
     }
     let params = this.pagedParams(page, size, searchKey, sortBy, sortDir);
-    if (emailType) params = params.set('emailType', emailType);
+    if (filterType) params = params.set('emailType', filterType);
+    if (emailType === 'CIRCLE_REQUEST') params = params.append('emailTypes', 'CIRCLE_REQUEST');
     if (statuses?.length) statuses.forEach(s => params = params.append('statuses', s));
     if (emailTypes?.length) emailTypes.forEach(et => params = params.append('emailTypes', et));
 

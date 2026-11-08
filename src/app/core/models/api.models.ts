@@ -176,6 +176,20 @@ export interface SaveUserPayload {
   concurrentLoginAllowed?: boolean;
 }
 
+/**
+ * A user as returned by the public directory (`GET /api/users/directory`), used by the circle
+ * search. A small, non-sensitive subset of {@link AppUser}.
+ */
+export interface DirectoryUser {
+  id: number;
+  name: string;
+  email: string;
+  relationShip?: string | null;
+  online?: boolean;
+  lastSeenAt?: string | null;
+  profilePictureUrl?: string | null;
+}
+
 export interface MfaUpdateRequest {
   mfaEnabled: boolean;
 }

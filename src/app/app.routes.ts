@@ -12,6 +12,7 @@ export const routes: Routes = [
   { path: 'forgot-password', canActivate: [locationAccessGuard], loadComponent: () => import('./features/auth/forgot-password.component').then((m) => m.ForgotPasswordComponent) },
   { path: 'reset-password', canActivate: [locationAccessGuard], loadComponent: () => import('./features/auth/reset-password.component').then((m) => m.ResetPasswordComponent) },
   { path: 'password-reset', canActivate: [locationAccessGuard, resetLinkGuard], loadComponent: () => import('./features/auth/reset-password.component').then((m) => m.ResetPasswordComponent) },
+  { path: 'direct-login', canActivate: [locationAccessGuard], loadComponent: () => import('./features/auth/direct-login.component').then((m) => m.DirectLoginComponent) },
   {
     path: '', canActivate: [locationAccessGuard, authGuard], canActivateChild: [locationAccessGuard], children: [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent) },
@@ -35,6 +36,7 @@ export const routes: Routes = [
       { path: 'email-status/forgot-password', canActivate: [adminGuard], data: { title: 'Forgot Password Email Status', emailType: 'FORGOT_PASSWORD' }, loadComponent: () => import('./features/email-status/email-status.component').then((m) => m.EmailStatusComponent) },
       { path: 'email-status/festival-wishes', data: { title: 'Festival Wishes Email Status', emailType: 'FESTIVAL_WISH' }, loadComponent: () => import('./features/email-status/email-status.component').then((m) => m.EmailStatusComponent) },
       { path: 'email-status/unread-chat', data: { title: 'Unread Chat Email Status', emailType: 'UNREAD_CHAT_MESSAGE' }, loadComponent: () => import('./features/email-status/email-status.component').then((m) => m.EmailStatusComponent) },
+      { path: 'email-status/circle-request', canActivate: [adminGuard], data: { title: 'Circle Request Email Status', emailType: 'CIRCLE_REQUEST' }, loadComponent: () => import('./features/email-status/email-status.component').then((m) => m.EmailStatusComponent) },
       { path: 'schedulers', canActivate: [adminGuard], loadComponent: () => import('./features/schedulers/schedulers.component').then((m) => m.SchedulersComponent) },
       { path: 'agents', canActivate: [adminGuard], loadComponent: () => import('./features/agents/agents.component').then((m) => m.AgentsComponent) },
       { path: 'relationship-seeds', canActivate: [adminGuard], loadComponent: () => import('./features/relationship-seeds/relationship-seeds.component').then((m) => m.RelationshipSeedsComponent) },

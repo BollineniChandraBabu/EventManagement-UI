@@ -32,9 +32,25 @@ export const MEDIA_HINT =
   'PNG, JPEG, GIF, WebP or BMP (5 MB), MP4, WebM, MOV, AVI, MKV, MPEG or 3GP (50 MB), ' +
   'MP3, WAV, OGG, M4A or FLAC (10 MB), or PDF (20 MB)';
 
-const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|bmp|avif|heic|svg)$/i;
+const IMAGE_RULE = MEDIA_KIND_RULES.find((rule) => rule.kind === 'image')!;
+
+/** What an image-only input should accept (`MediaValidation.validateImage`). */
+export const IMAGE_ACCEPT = IMAGE_RULE.accept;
+
+export const IMAGE_HINT = 'PNG, JPEG, GIF, WebP or BMP (5 MB)';
+
+const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|bmp)$/i;
 const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|avi|mkv|mpe?g|3gp)$/i;
 const AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|m4a|flac)$/i;
+
+/**
+ * The exact MIME types the server accepts (`MediaContentTypes`). Anything else - including other
+ * `image/*` subtypes such as SVG or TIFF - is rejected, so the UI never offers a file the server
+ * will refuse.
+ */
+const IMAGE_TYPES = new Set(IMAGE_RULE.accept.split(','));
+const VIDEO_TYPES = new Set(MEDIA_KIND_RULES.find((rule) => rule.kind === 'video')!.accept.split(','));
+const AUDIO_TYPES = new Set(MEDIA_KIND_RULES.find((rule) => rule.kind === 'audio')!.accept.split(','));
 
 /** Works out the kind of media from the declared MIME type, falling back to the file name. */
 export function mediaKindOf(file: File): MediaKind {
@@ -46,9 +62,9 @@ function mediaKindFromType(contentType: string): MediaKind | null {
   if (!type) {
     return null;
   }
-  if (type.startsWith('image/')) return 'image';
-  if (type.startsWith('video/')) return 'video';
-  if (type.startsWith('audio/')) return 'audio';
+  if (IMAGE_TYPES.has(type)) return 'image';
+  if (VIDEO_TYPES.has(type)) return 'video';
+  if (AUDIO_TYPES.has(type)) return 'audio';
   if (type === 'application/pdf') return 'document';
   return null;
 }
@@ -90,15 +106,23 @@ export function mediaError(file: File): string | null {
   return null;
 }
 
+/** The reason a file cannot be used where only an image is accepted (`MediaValidation.validateImage`). */
+export function imageError(file: File): string | null {
+  if (mediaKindOf(file) !== 'image') {
+    return `${file.name || 'This file'} is not an image. Use ${IMAGE_HINT}.`;
+  }
+  return mediaError(file);
+}
+
 /** How a piece of media can be shown in the browser, if at all. */
 export type MediaPreviewKind = 'image' | 'video' | 'audio' | 'pdf' | null;
 
 export function previewKindFor(contentType: string | null | undefined, fileName?: string | null): MediaPreviewKind {
   const type = (contentType || '').toLowerCase();
   const name = (fileName || '').toLowerCase();
-  if (type.startsWith('image/') || IMAGE_EXTENSIONS.test(name)) return 'image';
-  if (type.startsWith('video/') || VIDEO_EXTENSIONS.test(name)) return 'video';
-  if (type.startsWith('audio/') || AUDIO_EXTENSIONS.test(name)) return 'audio';
+  if (IMAGE_TYPES.has(type) || IMAGE_EXTENSIONS.test(name)) return 'image';
+  if (VIDEO_TYPES.has(type) || VIDEO_EXTENSIONS.test(name)) return 'video';
+  if (AUDIO_TYPES.has(type) || AUDIO_EXTENSIONS.test(name)) return 'audio';
   if (type === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
   return null;
 }

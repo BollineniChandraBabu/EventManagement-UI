@@ -1,0 +1,12 @@
+.auth-hero-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: var(--c-primary-light);
+  border: 1px solid var(--c-primary-muted);
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  color: var(--c-primary);
+  margin-bottom: 1.25rem;
+}
