@@ -7,6 +7,7 @@ import { DirectLoginRequest, LoginOtpVerifyRequest, LoginRequest, OtpRequest, Ot
 import { ROLE_ADMIN, ROLE_USER } from '../constants/roles.constants';
 import {AppUser, AuthSSOClientResponse} from '../models/api.models';
 import { ImpersonationService } from './impersonation.service';
+import { isConcurrentLoginError } from '../utils/api-error';
 
 const ACCESS_TOKEN = 'fw_access_token';
 const REFRESH_TOKEN = 'fw_refresh_token';
@@ -201,12 +202,36 @@ export class AuthService {
 
     const validExpiry = expiresInSeconds as number;
     const expiryMs = validExpiry * 1000;
-    this.tokenExpiryTimeout = setTimeout(() => this.logout(), expiryMs);
+    this.tokenExpiryTimeout = setTimeout(() => this.autoLogout(), expiryMs);
 
     const refreshInMs = Math.max(validExpiry - 30, 1) * 1000;
-    this.refreshTimerSub = timer(refreshInMs).subscribe(() => {
-      this.refreshToken().subscribe({ error: () => this.logout() });
+    this.refreshTimerSub = timer(refreshInMs).subscribe(() => this.refreshOrLogout());
+  }
+
+  /**
+   * Refreshes the access token just before it expires. A concurrent-login rejection is already
+   * surfaced by the interceptor as the full-screen notice, so it must not sign the user out: that
+   * would clear the notice and bounce them to the login screen before it can be read.
+   */
+  private refreshOrLogout(): void {
+    this.refreshToken().subscribe({
+      error: (error) => {
+        if (!isConcurrentLoginError(error)) {
+          this.autoLogout();
+        }
+      }
     });
+  }
+
+  /**
+   * Sign-out triggered by the token lifetime rather than by the user. It leaves a concurrent-login
+   * notice alone so the explanation stays on screen until the user acts on it.
+   */
+  private autoLogout(): void {
+    if (this.concurrentLoginState() !== null) {
+      return;
+    }
+    this.logout();
   }
 
   private getStorage(rememberMe: boolean): Storage {

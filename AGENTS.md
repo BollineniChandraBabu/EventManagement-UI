@@ -67,6 +67,13 @@ Repository notes for automated agents working on the EventManagement UI (Angular
   `AuthService.concurrentLoginNotice`, which raises `ConcurrentLoginOverlayComponent`, a full-screen
   notice whose only action is to sign out and sign in again. The user is deliberately not navigated
   away, so the reason is not missed.
+- Everything that can sign the user out automatically must leave that notice alone. Clearing the
+  tokens flips `authenticated()` to false, the layout swaps and the route component is rebuilt, so
+  token-less requests start failing; the interceptor ignores those once `concurrentLoginNotice` is
+  set, and `AuthService.autoLogout` (the token-lifetime timeout and the pre-expiry refresh) is a
+  no-op while a notice is showing. Otherwise `logout()` runs, wipes the notice and bounces the user
+  to `/login` with no explanation — the bug this notice exists to prevent. `logout()` stays the
+  notice's own action and the explicit sign-out from the account page.
 
 ## Calendar and festival wishes
 

@@ -15,6 +15,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(clone).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Once the session is known to be superseded, every in-flight request is unauthenticated and
+      // is expected to fail. Acting on those failures (refresh, sign-out) would clear the notice and
+      // bounce the user to the login screen before it can be read, so leave the auth state alone.
+      if (auth.concurrentLoginNotice() !== null) {
+        return throwError(() => error);
+      }
+
       // Status 0 means the request never reached the server. That is ambiguous — a dead connection
       // or a CORS rejection — so ask ConnectivityService to verify rather than assuming offline. Do
       // not consult `navigator.onLine`: it stays `true` when the link is up but the uplink is dead,
