@@ -2,6 +2,7 @@ import { CalendarResItem } from '../../core/models/api.models';
 import {
   buildDays,
   entriesFor,
+  monthYearsToLoad,
   nextOccurrenceOf,
   occursOn,
   parseCalendarDate,
@@ -76,5 +77,26 @@ describe('calendar year handling', () => {
 
   it('parses dates locally so the day does not shift', () => {
     expect(parseCalendarDate('2026-11-08').getDate()).toBe(8);
+  });
+});
+
+describe('monthYearsToLoad', () => {
+  it('carries the year so a viewed year is fetched, not the synced one', () => {
+    const pairs = monthYearsToLoad('month', new Date(2027, 10, 8), new Date(2026, 0, 1));
+    expect(pairs).toContain({ month: 11, year: 2027 });
+  });
+
+  it('adds the current and next month for the coming-up strip', () => {
+    const pairs = monthYearsToLoad('month', new Date(2027, 5, 1), new Date(2026, 11, 1));
+    expect(pairs).toContain({ month: 12, year: 2026 });
+    expect(pairs).toContain({ month: 1, year: 2027 });
+  });
+
+  it('lists each month/year pair once even when the grid spans a year boundary', () => {
+    const pairs = monthYearsToLoad('month', new Date(2027, 0, 1), new Date(2027, 0, 1));
+    const keys = pairs.map((pair) => `${pair.year}-${pair.month}`);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).toContain('2026-12');
+    expect(keys).toContain('2027-1');
   });
 });

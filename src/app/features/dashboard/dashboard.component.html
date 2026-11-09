@@ -10,6 +10,11 @@
     </div>
     <div class="page-header-actions">
       <div class="chart-date-controls">
+        <div class="range-presets" role="group" aria-label="Quick date ranges">
+          <button type="button" class="range-preset" (click)="applyPreset(7)">7d</button>
+          <button type="button" class="range-preset" (click)="applyPreset(30)">30d</button>
+          <button type="button" class="range-preset" (click)="applyPreset(90)">90d</button>
+        </div>
         <div class="chart-date-control">
           <label for="chartStartDate" class="chart-date-label">
             <i class="fa-regular fa-calendar me-1"></i>Start date
@@ -76,6 +81,12 @@
       </div>
     </div>
 
+    <div class="delivery-health" [ngClass]="'delivery-health--' + deliveryHealth(data).tone">
+      <i class="fa-solid fa-heart-pulse"></i>
+      <span class="delivery-health-label">Delivery health</span>
+      <span class="delivery-health-value">{{ deliveryHealth(data).label }}</span>
+    </div>
+
     <!-- Admin sub-flows -->
     <div class="mail-flow-grid" *ngIf="auth.isAdmin()">
       <div class="card" *ngIf="otpMailStats$ | async as otpStats">
@@ -111,6 +122,7 @@
         <app-canvasjs-line-chart *ngIf="mailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
       </div>
     </div>
+  </div>
 
   <!-- Insta Dashboard -->
   <div *ngIf="igdata$ | async as data">
@@ -148,6 +160,4 @@
       </div>
     </div>
   </div>
-</div>
-
 </div>

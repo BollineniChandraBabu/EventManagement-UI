@@ -36,3 +36,27 @@
 .circle-sub { color: var(--c-text-muted); font-size: 0.8rem; overflow-wrap: anywhere; }
 
 .circle-actions { display: flex; gap: 0.4rem; flex: 0 0 auto; }
+
+/* Trailing badge + button (search results, sent requests, members), so they wrap as a unit. */
+.circle-item-controls {
+  display: flex; align-items: center; gap: 0.5rem;
+  flex: 0 0 auto; margin-left: auto;
+}
+.circle-item-controls .badge { margin: 0; }
+
+@media (max-width: 575px) {
+  .page-header-actions { width: 100%; flex-wrap: wrap; }
+  .page-header-actions .btn { flex: 1; justify-content: center; }
+
+  /* Stack the row so the name stays readable and the controls get the full width. */
+  .circle-search-item, .circle-list-item { flex-wrap: wrap; row-gap: 0.6rem; }
+
+  .circle-item-controls,
+  .circle-actions {
+    flex: 1 1 100%; margin-left: 0; flex-wrap: wrap;
+  }
+  .circle-item-controls > .btn,
+  .circle-actions > .btn {
+    flex: 1 1 auto; min-height: 44px; justify-content: center;
+  }
+}
