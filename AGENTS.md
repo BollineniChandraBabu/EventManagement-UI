@@ -70,12 +70,14 @@ Repository notes for automated agents working on the EventManagement UI (Angular
 
 ## Calendar and festival wishes
 
-- Festivals are stored for the year the Calendarific sync last ran, but they repeat every year on
-  their month/day. `occursOn` in `features/calendar/calendar.utils.ts` therefore matches festivals
-  by month/day in **any** year, and `nextOccurrenceOf` rolls them (and birthdays/anniversaries)
-  forward to the current or next year. This is why navigating to a later year still shows the same
-  festivals instead of an empty grid; the backend sends `recurring=true` for festivals to match.
-- Only a non-recurring anniversary is tied to its exact date (`occursOn` and `nextOccurrenceOf`).
+- Festivals are stored **per year** now. The calendar sends the viewed year (`monthYearsToLoad` →
+  `api.calendar(month, year)`, cache keyed by `year-month`), and the backend fetches that year on
+  demand. For a year-scoped response the backend marks the festival `recurring=false`, so the grid
+  shows that year's own dates. `occursOn` in `features/calendar/calendar.utils.ts` matches a
+  recurring festival by month/day in **any** year, and `nextOccurrenceOf` rolls it (and
+  birthdays/anniversaries) forward to the current or next year.
+- Only a non-recurring anniversary (or a year-scoped festival) is tied to its exact date (`occursOn`
+  and `nextOccurrenceOf`).
 - The festival picker in Festival Wishes uses `festivalTimingNext`/`festivalOccurrence`
   (`features/festival-wish-mappings/festival-mappings.utils.ts`), so a festival stored for an earlier
   year still reads as upcoming. There is no "show past festivals" toggle any more; festivals are
