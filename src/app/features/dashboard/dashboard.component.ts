@@ -3,8 +3,9 @@ import { Component, inject } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { DashboardChartPoint, MailFlowStats } from '../../core/models/api.models';
+import { DashboardChartPoint, DashboardStats, MailFlowStats } from '../../core/models/api.models';
 import { CanvasJsLineChartComponent } from './canvasjs-line-chart.component';
+import { DeliveryHealth, deliveryHealth } from './dashboard.utils';
 
 type LineChartData = Array<{ name: string; series: Array<{ name: string; value: number }> }>;
 
@@ -96,6 +97,17 @@ export class DashboardComponent {
       { label: 'Emails sent today', value: safeStats.emailsSentToday ?? 0 },
       { label: 'Failed emails', value: safeStats.failedEmails ?? 0 }
     ];
+  }
+
+  deliveryHealth(stats: DashboardStats | null | undefined): DeliveryHealth {
+    return deliveryHealth(stats);
+  }
+
+  /** The last N days as a range, so a preset button can jump the whole dashboard to it. */
+  applyPreset(days: number): void {
+    this.selectedStartDate = this.toDateInputValue(this.daysAgo(days - 1));
+    this.selectedEndDate = this.maxDate;
+    this.pushDateRange();
   }
 
 

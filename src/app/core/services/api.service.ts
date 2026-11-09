@@ -990,11 +990,15 @@ export class ApiService {
   }
 
   calendar(
-      month?: number
+      month?: number,
+      year?: number
   ): Observable<CalendarResItem[]> {
     let params = new HttpParams();
     if (month) {
       params = params.set('month', month);
+    }
+    if (year) {
+      params = params.set('year', year);
     }
 
     return this.http.get<ApiResponse<CalendarResItem[]>>(`${environment.apiUrl}/calendar`, { params }).pipe(

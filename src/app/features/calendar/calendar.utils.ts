@@ -138,31 +138,29 @@ export function visibleDays(view: CalendarView, cursor: Date): Date[] {
   }
 }
 
-/** Months (1-12) touched by the given days, in order and without duplicates. */
-export function monthsOf(days: Date[]): number[] {
-  const months: number[] = [];
-  for (const day of days) {
-    const month = day.getMonth() + 1;
-    if (!months.includes(month)) {
-      months.push(month);
-    }
-  }
-  return months;
-}
-
 /**
- * Months that must be loaded: everything visible (a month grid shows days of the neighbouring
- * months too) plus this month and next month for the "coming up" strip.
+ * Month/year pairs that must be loaded: everything visible (a month grid shows days of the
+ * neighbouring months too) plus this month and next month for the "coming up" strip. The year is
+ * carried through so the calendar can ask the API for the exact year being viewed (festivals are
+ * stored per year).
  */
-export function monthsToLoad(view: CalendarView, cursor: Date, today: Date): number[] {
-  const months = monthsOf(visibleDays(view, cursor));
-  for (const extra of [today, addMonths(today, 1)]) {
-    const month = extra.getMonth() + 1;
-    if (!months.includes(month)) {
-      months.push(month);
+export function monthYearsToLoad(
+  view: CalendarView,
+  cursor: Date,
+  today: Date
+): Array<{ month: number; year: number }> {
+  const result: Array<{ month: number; year: number }> = [];
+  const seen = new Set<string>();
+  const add = (date: Date): void => {
+    const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push({ month: date.getMonth() + 1, year: date.getFullYear() });
     }
-  }
-  return months;
+  };
+  visibleDays(view, cursor).forEach(add);
+  [today, addMonths(today, 1)].forEach(add);
+  return result;
 }
 
 // ---------------------------------------------------------------- events on a day

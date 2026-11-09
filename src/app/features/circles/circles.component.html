@@ -40,14 +40,16 @@
               <div class="circle-name">{{ user.name }}</div>
               <div class="circle-sub">{{ user.email | sensitiveEmail }}</div>
             </div>
-            <span class="badge badge-secondary me-2" *ngIf="relationFor(user.id) === 'member'">In your circle</span>
-            <span class="badge badge-info me-2" *ngIf="relationFor(user.id) === 'outgoing'">Request sent</span>
-            <span class="badge badge-warning me-2" *ngIf="relationFor(user.id) === 'incoming'">Sent you a request</span>
-            <button class="btn btn-sm btn-primary" type="button" (click)="sendRequest(user)"
-                    [disabled]="relationFor(user.id) === 'member' || relationFor(user.id) === 'outgoing' || busyIds.has(user.id)">
-              <i class="fa-solid me-1" [class.fa-paper-plane]="!busyIds.has(user.id)" [class.fa-spinner]="busyIds.has(user.id)" [class.fa-spin]="busyIds.has(user.id)"></i>
-              {{ relationFor(user.id) === 'incoming' ? 'Accept request' : 'Add to circle' }}
-            </button>
+            <div class="circle-item-controls">
+              <span class="badge badge-secondary" *ngIf="relationFor(user.id) === 'member'">In your circle</span>
+              <span class="badge badge-info" *ngIf="relationFor(user.id) === 'outgoing'">Request sent</span>
+              <span class="badge badge-warning" *ngIf="relationFor(user.id) === 'incoming'">Sent you a request</span>
+              <button class="btn btn-sm btn-primary" type="button" (click)="sendRequest(user)"
+                      [disabled]="relationFor(user.id) === 'member' || relationFor(user.id) === 'outgoing' || busyIds.has(user.id)">
+                <i class="fa-solid me-1" [class.fa-paper-plane]="!busyIds.has(user.id)" [class.fa-spinner]="busyIds.has(user.id)" [class.fa-spin]="busyIds.has(user.id)"></i>
+                {{ relationFor(user.id) === 'incoming' ? 'Accept request' : 'Add to circle' }}
+              </button>
+            </div>
           </li>
         </ul>
       </div>
@@ -102,10 +104,12 @@
                 <div class="circle-name">{{ request.name }}</div>
                 <div class="circle-sub">{{ request.email | sensitiveEmail }}</div>
               </div>
-              <span class="badge badge-info me-2">Pending</span>
-              <button class="btn btn-sm btn-outline-danger" type="button" (click)="cancelRequest(request)" [disabled]="busyIds.has(request.circleId)">
-                <i class="fa-solid me-1" [class.fa-xmark]="!busyIds.has(request.circleId)" [class.fa-spinner]="busyIds.has(request.circleId)" [class.fa-spin]="busyIds.has(request.circleId)"></i>Cancel
-              </button>
+              <div class="circle-item-controls">
+                <span class="badge badge-info">Pending</span>
+                <button class="btn btn-sm btn-outline-danger" type="button" (click)="cancelRequest(request)" [disabled]="busyIds.has(request.circleId)">
+                  <i class="fa-solid me-1" [class.fa-xmark]="!busyIds.has(request.circleId)" [class.fa-spinner]="busyIds.has(request.circleId)" [class.fa-spin]="busyIds.has(request.circleId)"></i>Cancel
+                </button>
+              </div>
             </li>
           </ul>
         </div>
@@ -141,9 +145,11 @@
               <div class="circle-sub">{{ member.email | sensitiveEmail }}</div>
               <div class="circle-sub">{{ lastSeenText(member) }}</div>
             </div>
-            <button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(member)" [disabled]="busyIds.has(member.circleId)">
-              <i class="fa-solid me-1" [class.fa-user-minus]="!busyIds.has(member.circleId)" [class.fa-spinner]="busyIds.has(member.circleId)" [class.fa-spin]="busyIds.has(member.circleId)"></i>Remove
-            </button>
+            <div class="circle-item-controls">
+              <button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(member)" [disabled]="busyIds.has(member.circleId)">
+                <i class="fa-solid me-1" [class.fa-user-minus]="!busyIds.has(member.circleId)" [class.fa-spinner]="busyIds.has(member.circleId)" [class.fa-spin]="busyIds.has(member.circleId)"></i>Remove
+              </button>
+            </div>
           </li>
         </ul>
       </div>

@@ -15,7 +15,7 @@ import {
   agendaGroups,
   buildDays,
   countByKind,
-  monthsToLoad,
+  monthYearsToLoad,
   parseCalendarDate,
   relativeDayLabel,
   startOfDay,
@@ -84,9 +84,9 @@ export class CalendarComponent {
   selectedEntry: { entry: CalendarEntry; date: Date } | null = null;
   selectedDay: DayView | null = null;
 
-  /** Loaded events by month number (1-12). Events repeat yearly, so one entry serves every year. */
-  private readonly monthCache = new Map<number, CalendarResItem[]>();
-  private readonly monthsInFlight = new Set<number>();
+  /** Loaded events by "year-month" key. Festivals are per-year, so the year is part of the key. */
+  private readonly monthCache = new Map<string, CalendarResItem[]>();
+  private readonly monthsInFlight = new Set<string>();
   private touchStart: { x: number; y: number } | null = null;
 
   constructor() {
@@ -430,31 +430,33 @@ export class CalendarComponent {
     }
     this.rebuild();
 
-    const missing = monthsToLoad(this.view, this.cursor, this.today).filter(
-      (month) => !this.monthCache.has(month) && !this.monthsInFlight.has(month)
+    const missing = monthYearsToLoad(this.view, this.cursor, this.today).filter(
+      ({ month, year }) =>
+        !this.monthCache.has(`${year}-${month}`) && !this.monthsInFlight.has(`${year}-${month}`)
     );
     if (missing.length === 0) {
       return;
     }
 
-    missing.forEach((month) => this.monthsInFlight.add(month));
+    missing.forEach(({ month, year }) => this.monthsInFlight.add(`${year}-${month}`));
     this.loading = true;
     this.loadError = false;
 
     forkJoin(
-      missing.map((month) =>
-        this.api.calendar(month).pipe(
-          map((items) => ({ month, items })),
-          catchError(() => of({ month, items: null }))
+      missing.map(({ month, year }) =>
+        this.api.calendar(month, year).pipe(
+          map((items) => ({ month, year, items })),
+          catchError(() => of({ month, year, items: null }))
         )
       )
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((results) => {
-        for (const { month, items } of results) {
-          this.monthsInFlight.delete(month);
+        for (const { month, year, items } of results) {
+          const key = `${year}-${month}`;
+          this.monthsInFlight.delete(key);
           if (items) {
-            this.monthCache.set(month, items);
+            this.monthCache.set(key, items);
           } else {
             this.loadError = true;
           }
