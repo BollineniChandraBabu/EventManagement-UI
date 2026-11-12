@@ -750,6 +750,53 @@ html[data-theme='spatial-ui'] .kpi-card:hover {
 }
 html[data-theme='spatial-ui'] .form-control::placeholder { color: #7c88b4; }
 
+/* ─── Chart palette per theme ─────────────────────────────
+   LineChartComponent reads these tokens at render time, so charts
+   follow the theme instead of staying light on a dark surface. */
+html[data-theme='liquid-glass'],
+html[data-theme='spatial-ui'] {
+  --chart-sent:          #2dd4bf;
+  --chart-sent-soft:     rgba(45,212,191,.26);
+  --chart-failed:        #fb7185;
+  --chart-failed-soft:   rgba(251,113,133,.22);
+  --chart-grid:          rgba(255,255,255,.14);
+  --chart-axis:          #a9c6e0;
+  --chart-legend:        #dbe9f7;
+  --chart-point:         #0b1020;
+  --chart-tooltip-bg:    rgba(9,16,34,.94);
+  --chart-tooltip-fg:    #eaf6ff;
+  --chart-tooltip-border: rgba(255,255,255,.22);
+}
+
+html[data-theme='brutalism'] {
+  --chart-sent:          #000000;
+  --chart-sent-soft:     rgba(0,0,0,.18);
+  --chart-failed:        #dc2626;
+  --chart-failed-soft:   rgba(220,38,38,.2);
+  --chart-grid:          #000000;
+  --chart-axis:          #000000;
+  --chart-legend:        #000000;
+  --chart-point:         #ffff00;
+  --chart-tooltip-bg:    #000000;
+  --chart-tooltip-fg:    #ffff00;
+  --chart-tooltip-border: #000000;
+}
+
+html[data-theme='maximalism'] {
+  --chart-sent:          #7c3aed;
+  --chart-sent-soft:     rgba(124,58,237,.22);
+  --chart-failed:        #e11d8f;
+  --chart-failed-soft:   rgba(225,29,143,.22);
+}
+
+html[data-theme='neomorphism'],
+html[data-theme='claymorphism'] {
+  --chart-sent:          #6d28d9;
+  --chart-sent-soft:     rgba(109,40,217,.2);
+  --chart-failed:        #ef4444;
+  --chart-failed-soft:   rgba(239,68,68,.2);
+}
+
 /* ─── Accessibility & dark-theme form bits ──────────────── */
 @media (prefers-reduced-motion: reduce) {
   html[data-theme='spatial-ui'] .card:hover,

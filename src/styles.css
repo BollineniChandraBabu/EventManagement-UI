@@ -132,6 +132,21 @@
   --modal-shadow:     0 20px 50px rgba(15,23,42,.25);
   --backdrop-color:   rgba(15,23,42,.62);
   --brand-icon-bg:    linear-gradient(135deg, #60a5fa, #a78bfa);
+
+  /* ── Charts (Chart.js) ─────────────────────────────────────
+     Read at render time by LineChartComponent so every theme paints
+     its own palette. Dark themes override these in themes.css. */
+  --chart-sent:          #0d9488;
+  --chart-sent-soft:     rgba(13,148,136,.22);
+  --chart-failed:        #dc2626;
+  --chart-failed-soft:   rgba(220,38,38,.18);
+  --chart-grid:          #e2e8f2;
+  --chart-axis:          #94a3b8;
+  --chart-legend:        #475569;
+  --chart-point:         #ffffff;
+  --chart-tooltip-bg:    #0f172a;
+  --chart-tooltip-fg:    #f8fafc;
+  --chart-tooltip-border: rgba(148,163,184,.35);
 }
 
 /* ─── Reset & Base ───────────────────────────────────────── */
