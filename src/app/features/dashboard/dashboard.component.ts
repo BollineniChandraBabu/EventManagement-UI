@@ -4,14 +4,13 @@ import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardChartPoint, DashboardStats, MailFlowStats } from '../../core/models/api.models';
-import { CanvasJsLineChartComponent } from './canvasjs-line-chart.component';
-import { DeliveryHealth, deliveryHealth } from './dashboard.utils';
-
-type LineChartData = Array<{ name: string; series: Array<{ name: string; value: number }> }>;
+import { LineChartComponent } from './line-chart.component';
+import { LineChartData } from './line-chart.utils';
+import { DeliveryHealth, RANGE_PRESETS, activeRangePreset, deliveryHealth } from './dashboard.utils';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AsyncPipe, CanvasJsLineChartComponent],
+  imports: [CommonModule, AsyncPipe, LineChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -26,6 +25,9 @@ export class DashboardComponent {
   readonly maxDate = this.toDateInputValue(new Date());
   selectedStartDate = this.toDateInputValue(this.daysAgo(6));
   selectedEndDate = this.maxDate;
+  readonly rangePresets = RANGE_PRESETS;
+  /** Which quick-pick is active, so it can be highlighted; null for a custom range. */
+  activePreset: number | null = 7;
 
   private readonly selectedDateRangeSubject = new BehaviorSubject<{ startDate: string; endDate: string }>({
     startDate: this.selectedStartDate,
@@ -90,6 +92,15 @@ export class DashboardComponent {
     this.pushDateRange();
   }
 
+  /** A short "1 Nov – 7 Nov · 7 days" caption shown under the range controls. */
+  rangeSummary(): string {
+    const days = this.rangeDayCount();
+    const start = this.toShortDate(this.selectedStartDate);
+    const end = this.toShortDate(this.selectedEndDate);
+    const dayLabel = days === 1 ? 'day' : 'days';
+    return `${start} – ${end} · ${days} ${dayLabel}`;
+  }
+
   mailFlowCards(stats: MailFlowStats | null | undefined): Array<{ label: string; value: number }> {
     const safeStats = stats ?? { emailsSentToday: 0, failedEmails: 0 };
 
@@ -110,6 +121,22 @@ export class DashboardComponent {
     this.pushDateRange();
   }
 
+  private rangeDayCount(): number {
+    const start = this.parseInputDate(this.selectedStartDate)?.getTime();
+    const end = this.parseInputDate(this.selectedEndDate)?.getTime();
+    if (start == null || end == null || end < start) {
+      return 0;
+    }
+    return Math.round((end - start) / 86_400_000) + 1;
+  }
+
+  private toShortDate(dateValue: string): string {
+    const parsedDate = this.parseInputDate(dateValue);
+    if (!parsedDate) {
+      return dateValue;
+    }
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsedDate);
+  }
 
   private parseInputDate(dateValue: string): Date | null {
     if (!dateValue) {
@@ -202,6 +229,7 @@ export class DashboardComponent {
   }
 
   private pushDateRange(): void {
+    this.activePreset = activeRangePreset(this.selectedStartDate, this.selectedEndDate);
     this.selectedDateRangeSubject.next({
       startDate: this.selectedStartDate,
       endDate: this.selectedEndDate

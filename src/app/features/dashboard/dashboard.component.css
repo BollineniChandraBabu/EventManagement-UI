@@ -5,6 +5,40 @@
   margin-bottom: 1.25rem;
 }
 
+/* Staggered entrance so the KPI row assembles left-to-right instead of popping in at once. */
+.kpi-grid > .kpi-card {
+  animation: kpi-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kpi-grid > .kpi-card:nth-child(1) { animation-delay: 0.02s; }
+.kpi-grid > .kpi-card:nth-child(2) { animation-delay: 0.08s; }
+.kpi-grid > .kpi-card:nth-child(3) { animation-delay: 0.14s; }
+.kpi-grid > .kpi-card:nth-child(4) { animation-delay: 0.2s; }
+.kpi-grid > .kpi-card:nth-child(5) { animation-delay: 0.26s; }
+.kpi-grid > .kpi-card:nth-child(6) { animation-delay: 0.32s; }
+
+@keyframes kpi-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Value pulses subtly when the number changes, drawing the eye to fresh data. */
+.kpi-value {
+  animation: kpi-value-in 0.5s ease both;
+}
+
+@keyframes kpi-value-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-grid > .kpi-card,
+  .kpi-value {
+    animation: none;
+  }
+}
+
 .kpi-grid--compact {
   grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
@@ -44,6 +78,14 @@
   align-items: flex-end;
 }
 
+/* Controls on top, the range caption tucked underneath. */
+.page-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
 .range-presets {
   display: inline-flex;
   gap: 0.35rem;
@@ -62,12 +104,32 @@
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
 .range-preset:hover {
   background: var(--c-surface);
   color: var(--c-text);
+  transform: translateY(-1px);
+}
+
+.range-preset.is-active {
+  background: var(--c-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--c-primary-shadow);
+}
+
+.range-summary {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  display: flex;
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .range-preset:hover { transform: none; }
 }
 
 .delivery-health {
@@ -133,12 +195,59 @@
   height: 300px;
 }
 
+/* Placeholder that holds the chart's height while data loads, so the layout does not jump. */
+.chart-skeleton {
+  height: 300px;
+  display: flex;
+  align-items: flex-end;
+  padding: 1rem 0.5rem;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--c-surface-alt), transparent);
+}
+
+.chart-skeleton-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6%;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-skeleton-bars span {
+  flex: 1;
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(180deg, var(--c-primary-muted), var(--c-surface-alt));
+  animation: chart-shimmer 1.4s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.chart-skeleton-bars span:nth-child(odd) { animation-delay: 0.15s; }
+.chart-skeleton-bars span:nth-child(3n) { animation-delay: 0.3s; }
+
+@keyframes chart-shimmer {
+  0%, 100% { opacity: 0.55; transform: scaleY(0.9); }
+  50%      { opacity: 1; transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-skeleton-bars span { animation: none; }
+}
+
 @media (max-width: 767px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
   .chart-host { height: 240px; }
+
+  .page-header-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .range-summary {
+    justify-content: flex-end;
+  }
 
   .chart-date-controls {
     width: 100%;

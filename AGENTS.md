@@ -118,6 +118,25 @@ Repository notes for automated agents working on the EventManagement UI (Angular
   `localhost:12000`/`127.0.0.1:12000` (it does include `localhost:4200`), so API calls fail with
   status 0 there. That is a CORS rejection, not a connectivity loss, and must not show the overlay.
 
+## Dashboard charts
+
+- Charts are drawn with **Chart.js** (`chart.js`, MIT) through the standalone `LineChartComponent`
+  (`features/dashboard/line-chart.component.ts`), not CanvasJS. The CanvasJS CDN script was removed
+  from `index.html`; CanvasJS is free for non-commercial use only, so it is not a fit here.
+  ApexCharts was considered and rejected: its current license is free only under $2M revenue/budget.
+  If you add another chart type, register just the Chart.js pieces it needs (the line chart
+  registers `LineController`/`LineElement`/`PointElement`/`LinearScale`/`CategoryScale`/`Filler`/
+  `Legend`/`Tooltip`) so the bundle stays tree-shaken — the dashboard is a lazy chunk and holds
+  most of the charting weight.
+- Chart colours come from the `--chart-*` tokens in `styles.css`, read at render time with
+  `readChartTokens()` and overridden per theme in `themes.css` (dark themes, brutalism, maximalism,
+  neo/clay). A `MutationObserver` on `<html data-theme>` repaints the chart when the theme changes,
+  and a `prefers-reduced-motion` listener turns off the entrance animation. Keep chart config logic
+  in the pure `line-chart.utils.ts` so it stays unit-testable without a canvas.
+- The dashboard reuses one chart instance and swaps `data`/`options` on updates, so a new date range
+  animates from the previous values instead of flashing. The `.chart-skeleton` template holds the
+  chart's height while the request is in flight.
+
 ## Gotchas
 
 - **Signal writes inside `effect()` throw NG0600.** Angular 17 does not allow writing signals in an

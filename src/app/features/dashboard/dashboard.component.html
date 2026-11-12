@@ -11,9 +11,14 @@
     <div class="page-header-actions">
       <div class="chart-date-controls">
         <div class="range-presets" role="group" aria-label="Quick date ranges">
-          <button type="button" class="range-preset" (click)="applyPreset(7)">7d</button>
-          <button type="button" class="range-preset" (click)="applyPreset(30)">30d</button>
-          <button type="button" class="range-preset" (click)="applyPreset(90)">90d</button>
+          <button
+            type="button"
+            class="range-preset"
+            *ngFor="let days of rangePresets"
+            [class.is-active]="activePreset === days"
+            [attr.aria-pressed]="activePreset === days"
+            (click)="applyPreset(days)"
+          >{{ days }}d</button>
         </div>
         <div class="chart-date-control">
           <label for="chartStartDate" class="chart-date-label">
@@ -41,6 +46,7 @@
           />
         </div>
       </div>
+      <p class="range-summary"><i class="fa-regular fa-clock me-1"></i>{{ rangeSummary() }}</p>
     </div>
   </div>
 
@@ -98,7 +104,12 @@
               <div class="kpi-value kpi-value--sm">{{ metric.value }}</div>
             </div>
           </div>
-          <app-canvasjs-line-chart *ngIf="otpMailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
+          <app-line-chart
+            *ngIf="otpMailChart$ | async as d; else chartLoading"
+            class="chart-host"
+            [chartData]="d"
+            ariaLabel="OTP mail sent versus failed over the selected range"
+          ></app-line-chart>
         </div>
       </div>
 
@@ -111,7 +122,12 @@
               <div class="kpi-value kpi-value--sm">{{ metric.value }}</div>
             </div>
           </div>
-          <app-canvasjs-line-chart *ngIf="forgotPasswordMailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
+          <app-line-chart
+            *ngIf="forgotPasswordMailChart$ | async as d; else chartLoading"
+            class="chart-host"
+            [chartData]="d"
+            ariaLabel="Forgot-password mail sent versus failed over the selected range"
+          ></app-line-chart>
         </div>
       </div>
     </div>
@@ -119,7 +135,12 @@
     <div class="card">
       <div class="card-body">
         <h3 class="section-title mb-3"><i class="fa-solid fa-chart-line me-2" style="color:#2563eb;"></i>Mail Delivery Trend</h3>
-        <app-canvasjs-line-chart *ngIf="mailChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
+        <app-line-chart
+          *ngIf="mailChart$ | async as d; else chartLoading"
+          class="chart-host"
+          [chartData]="d"
+          ariaLabel="Mail sent versus failed over the selected range"
+        ></app-line-chart>
       </div>
     </div>
   </div>
@@ -156,8 +177,28 @@
     <div class="card">
       <div class="card-body">
         <h3 class="section-title mb-3"><i class="fa-solid fa-chart-line me-2" style="color:#a855f7;"></i>Insta Delivery Trend</h3>
-        <app-canvasjs-line-chart *ngIf="instaChart$ | async as d" class="chart-host" [chartData]="d"></app-canvasjs-line-chart>
+        <app-line-chart
+          *ngIf="instaChart$ | async as d; else chartLoading"
+          class="chart-host"
+          [chartData]="d"
+          ariaLabel="Insta mail sent versus failed over the selected range"
+        ></app-line-chart>
       </div>
     </div>
   </div>
+
+  <!-- Shared skeleton shown while any chart request is in flight -->
+  <ng-template #chartLoading>
+    <div class="chart-skeleton" aria-hidden="true">
+      <div class="chart-skeleton-bars">
+        <span style="height: 40%"></span>
+        <span style="height: 65%"></span>
+        <span style="height: 52%"></span>
+        <span style="height: 78%"></span>
+        <span style="height: 60%"></span>
+        <span style="height: 88%"></span>
+        <span style="height: 70%"></span>
+      </div>
+    </div>
+  </ng-template>
 </div>
