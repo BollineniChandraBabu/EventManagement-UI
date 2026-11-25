@@ -14,6 +14,35 @@ declare global {
   }
 }
 
+const CANVASJS_SRC = 'https://cdn.canvasjs.com/canvasjs.min.js';
+
+let canvasJsPromise: Promise<void> | null = null;
+
+/** Loads the CanvasJS script on first use so pages without charts never pay for it. */
+function loadCanvasJs(): Promise<void> {
+  if (window.CanvasJS) {
+    return Promise.resolve();
+  }
+  if (!canvasJsPromise) {
+    canvasJsPromise = new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector<HTMLScriptElement>('script[data-canvasjs]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(), { once: true });
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = CANVASJS_SRC;
+      script.async = true;
+      script.dataset['canvasjs'] = 'true';
+      script.onload = () => resolve();
+      script.onerror = () => reject();
+      document.head.appendChild(script);
+    });
+  }
+  return canvasJsPromise;
+}
+
 @Component({
   selector: 'app-canvasjs-line-chart',
   standalone: true,
@@ -32,7 +61,7 @@ export class CanvasJsLineChartComponent implements AfterViewInit, OnChanges, OnD
 
   ngAfterViewInit(): void {
     this.viewInitialized = true;
-    this.renderChart();
+    void this.renderChart();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -40,7 +69,7 @@ export class CanvasJsLineChartComponent implements AfterViewInit, OnChanges, OnD
       return;
     }
 
-    this.renderChart();
+    void this.renderChart();
   }
 
   ngOnDestroy(): void {
@@ -48,8 +77,14 @@ export class CanvasJsLineChartComponent implements AfterViewInit, OnChanges, OnD
     this.chartInstance = null;
   }
 
-  private renderChart(): void {
+  private async renderChart(): Promise<void> {
     if (!this.viewInitialized || !this.chartContainer?.nativeElement) {
+      return;
+    }
+
+    try {
+      await loadCanvasJs();
+    } catch {
       return;
     }
 

@@ -59,8 +59,10 @@ export class AppComponent {
         if (authenticated) {
           // Force a reload so a user switch picks up that user's saved theme.
           this.theme.load(true);
+          this.startRealtimeNotifications();
         } else {
           this.theme.reset();
+          this.stopRealtimeNotifications();
         }
       });
     });
@@ -90,21 +92,32 @@ export class AppComponent {
       });
     });
 
-    this.notificationRealtime.connect();
     this.notificationRealtime.published$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((notification) => {
       this.consumeNotification(notification, true);
     });
 
-    queueMicrotask(() => {
-      this.fetchInitialNotification();
-    });
-
     this.destroyRef.onDestroy(() => {
+      this.stopRealtimeNotifications();
       if (this.scheduleIntervalId !== null) {
         window.clearInterval(this.scheduleIntervalId);
         this.scheduleIntervalId = null;
       }
     });
+  }
+
+  private startRealtimeNotifications(): void {
+    this.notificationRealtime.connect();
+    this.fetchInitialNotification();
+  }
+
+  private stopRealtimeNotifications(): void {
+    this.notificationRealtime.disconnect();
+    this.activeNotification = null;
+    this.scheduledCandidate = null;
+    if (this.scheduleIntervalId !== null) {
+      window.clearInterval(this.scheduleIntervalId);
+      this.scheduleIntervalId = null;
+    }
   }
 
   toggleMobileMenu(): void {
