@@ -118,6 +118,25 @@ Repository notes for automated agents working on the EventManagement UI (Angular
   `localhost:12000`/`127.0.0.1:12000` (it does include `localhost:4200`), so API calls fail with
   status 0 there. That is a CORS rejection, not a connectivity loss, and must not show the overlay.
 
+## Web performance (Lighthouse)
+
+- The app is a standalone Angular 17 SPA; `firebase.json` sets long-lived immutable cache headers
+  for hashed assets and a short TTL for HTML/text/XML, so a redeploy still busts the entry document.
+- `IdlePreloadingStrategy` (`src/app/core/strategies/idle-preloading.strategy.ts`) replaces
+  `PreloadAllModules`. Eager preloading competes with the initial route's chunk for bandwidth on
+  slow connections and roughly doubles LCP; the idle strategy warms the other routes afterwards.
+  Set `data: { preload: false }` on a route to opt it out.
+- Third-party scripts are kept off the critical path: `mdb.umd.min.js` is `defer`red, Font Awesome
+  CSS loads via `rel="preload"`+`onload` (with a `<noscript>` fallback), and CanvasJS is injected on
+  first chart render (`canvasjs-line-chart.component.ts`) instead of in `index.html`. A page with no
+  chart never downloads it.
+- The login card reserves the Google SSO button's height (`.google-sso-slot`) because the button is
+  injected after the SSO client id resolves; without it the vertically-centred card grows and the
+  form shifts (CLS).
+- The location guard blocks the login route on `ipapi.co`, so `index.html` preconnects to it.
+- The backend has no `/api/notifications/published` endpoint (404). The app only calls it and opens
+  the notification WebSocket while authenticated, so guests don't log console errors.
+
 ## Gotchas
 
 - **Signal writes inside `effect()` throw NG0600.** Angular 17 does not allow writing signals in an

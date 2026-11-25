@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /users
+Disallow: /admin
+
+Sitemap: https://chandu-goldengreetings.web.app/sitemap.xml

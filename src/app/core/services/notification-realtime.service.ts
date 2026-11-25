@@ -21,6 +21,17 @@ export class NotificationRealtimeService {
     this.socket.onclose = () => { this.connected = false; this.socket = null; };
   }
 
+  disconnect(): void {
+    if (!this.socket) return;
+    this.socket.onopen = null;
+    this.socket.onmessage = null;
+    this.socket.onclose = null;
+    this.socket.onerror = null;
+    this.socket.close();
+    this.socket = null;
+    this.connected = false;
+  }
+
   private handleFrame(frame: string): void {
     if (frame.startsWith('CONNECTED')) {
       this.connected = true;

@@ -41,3 +41,13 @@
 .auth-divider::after  { right: 0; }
 
 .password-toggle-icon { width: 1rem; text-align: center; }
+
+/* The Google button is injected asynchronously after the SSO client id resolves. Reserving its
+   height up front stops the vertically-centred card from growing and shifting the form. */
+.google-sso-slot {
+  min-height: 44px;
+}
+
+.google-sso-slot--off {
+  display: none;
+}

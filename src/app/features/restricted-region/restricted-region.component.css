@@ -2,7 +2,7 @@
   --bg: #f6f7ff;
   --card: #ffffff;
   --text: #3e3f86;
-  --muted: #6d73a9;
+  --muted: #5b6194;
   --accent-2: #5e66d8;
 
   min-height: 100vh;
@@ -122,7 +122,7 @@ h1 {
 
 .note {
   font-size: 0.95rem;
-  color: #8f7668;
+  color: #6b5b4e;
   line-height: 1.6;
   max-width: 48ch;
   margin: 0 auto 8px;
@@ -133,7 +133,7 @@ footer {
   padding-top: 14px;
   border-top: 1px dashed #d9dcff;
   font-size: 0.84rem;
-  color: #838ac4;
+  color: #5f66a8;
 }
 
 .hero-art {
